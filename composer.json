@@ -1,0 +1,27 @@
+{
+    "name": "bigbrush/yii2-big",
+    "type": "yii2-extension",
+    "description": "CMF for Yii 2",
+    "keywords": ["yii2", "cmf"],
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "BIG Brush Agency ApS",
+            "email": "mj@bigbrush-agency.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "*",
+        "yiisoft/yii2-jui": "~2.0.0",
+        "creocoder/yii2-nested-sets": "0.9.*",
+        "tinymce/tinymce": ">=4"
+    },
+    "autoload": {
+        "psr-4": {
+            "bigbrush\\big\\": "src"
+        }
+    },
+    "extra": {
+        "bootstrap": "bigbrush\\big\\core\\Big"
+    }
+}
