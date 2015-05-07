@@ -35,14 +35,18 @@ $this->registerJs('
     </div>
 </div>
 
+<?php
+$chunks = array_chunk($blocks, 4);
+foreach ($chunks as $blocks) : ?>
 <div class="row">
-    <div class="col-md-12">
-	<?php foreach ($blocks as $block) : ?>
+    <?php foreach ($blocks as $block) : ?>
+    <div class="col-md-3" style="margin-bottom:30px;">
         <div class="square">
-	        <div class="content green">
-	        	<p><?= Html::a($block['title'], ['edit', 'id' => $block['id']]) ?></p>
+	        <div class="content">
+	        	<?= Html::a($block['title'], ['edit', 'id' => $block['id']]) ?>
 	        </div>
         </div>
-    <?php endforeach; ?>
     </div>
+    <?php endforeach; ?>
 </div>
+<?php endforeach; ?>

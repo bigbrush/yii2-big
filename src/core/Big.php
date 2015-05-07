@@ -47,9 +47,18 @@ class Big extends Object implements BootstrapInterface
     /**
      * @var string path for the frontend theme layout file. Is needed when identifing
      * the available positions in the frontend theme. This property MUST be set when
-     * configuring Big.
+     * using [[bigbrush\big\widgets\templateeditor\TemplateEditor]].
      */
     public $webTheme;
+    /**
+     * @var boolean defines whether to use dynamic content. When this is enabled the [[parser]]
+     * will parse the application response.
+     *
+     * Set this to false when include statements are not used in the layout file. If content
+     * created with [[bigbrush\big\widgets\editor\Editor]] is being displayed this property
+     * should be true.
+     */
+    public $enableDynamicContent = true;
     /**
      * @var BlockManager the block manager.
      * Defaults to bigbrush\big\core\BlockManager
@@ -146,11 +155,6 @@ class Big extends Object implements BootstrapInterface
      */
     public function initialize()
     {
-        if ($this->webTheme === null) {
-            throw new InvalidConfigException("The property 'webTheme' must be set in class bigbrush\big\core\Big. Please update the application config file.");
-        } elseif (!is_file(Yii::getAlias($this->webTheme))) {
-            throw new InvalidConfigException("The property 'webTheme' is not a file. Please update the application config file.");
-        }
         // application scope 
         if ($this->_scope === null) {
             $this->setScope(self::SCOPE_FRONTEND);
@@ -177,15 +181,17 @@ class Big extends Object implements BootstrapInterface
         // register the menu manager when searching for content in Big.
         $app->on(SearchEvent::EVENT_SEARCH, [$this->menuManager, 'onSearch']);
 
-        // register event handler to render blocks right before asset bundles are registered by the view.
-        $app->getView()->on(View::EVENT_END_BODY, [$this, 'renderBlocks']);
+        if ($this->enableDynamicContent) {
+            // register event handler to render blocks right before asset bundles are registered by the view.
+            $app->getView()->on(View::EVENT_END_BODY, [$this, 'renderBlocks']);
         
-        // register event handler that parses the application response
-        $app->on(Application::EVENT_AFTER_REQUEST, [$this, 'parseResponse']);
+            // register event handler that parses the application response
+            $app->on(Application::EVENT_AFTER_REQUEST, [$this, 'parseResponse']);
+        }
     }
 
     /**
-     * Renders blocks assigned to positions in the active layout.
+     * Renders blocks assigned to positions in the active template.
      * This handler is triggered by [[View::endBody()]] right before asset bundles are
      * registered. Blocks needs to be rendered here so any assets used in the blocks
      * will be included by the active application view.
@@ -201,7 +207,7 @@ class Big extends Object implements BootstrapInterface
             $positions = $this->getLayoutFilePositions($layoutFile);
             // make sure a template is loaded
             $this->template->load();
-            // get blocks for positions used in the layout
+            // get blocks for positions used in the template
             $positions = $this->template->getPositions(array_keys($positions));
             $this->blockManager->registerPositions($positions);
         }
@@ -362,6 +368,11 @@ class Big extends Object implements BootstrapInterface
      */
     public function getFrontendLayoutFilePositions()
     {
+        if ($this->webTheme === null) {
+            throw new InvalidConfigException("The property 'webTheme' must be set in class bigbrush\big\core\Big. Please update the application config file.");
+        } elseif (!is_file(Yii::getAlias($this->webTheme))) {
+            throw new InvalidConfigException("The property 'webTheme' is not a file. Please update the application config file.");
+        }
         // disable asset bundles
         $bundles = $this->disableAssetBundles();
         // create a separate view from the application view to avoid

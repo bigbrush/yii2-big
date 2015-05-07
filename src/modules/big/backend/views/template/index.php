@@ -12,8 +12,6 @@ use yii\grid\GridView;
 /* @var $this yii\web\View */
 /* @var $form yii\bootstrap\ActiveForm */
 ?>
-<?= Yii::$app->session->getFlash('success'); ?>
-
 <div class="row">
     <div class="col-md-12">
         <p>
@@ -32,7 +30,7 @@ use yii\grid\GridView;
                     'header' => 'Title',
                     'format' => 'raw',
                     'value' => function($data) {
-                        return Html::a($data->title, ['/app/template/edit', 'id' => $data->id]);
+                        return Html::a($data->title, ['edit', 'id' => $data->id]);
                     },
                 ],
             ],

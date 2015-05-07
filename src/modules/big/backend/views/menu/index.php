@@ -45,9 +45,8 @@ $this->registerJs('
 ?>
 <div class="row">
     <div class="col-md-12">
-        <h1>Menu items</h1>
-    	<div id="alert">
-    	</div>
+        <div id="alert">
+        </div>
         <?= Html::a('New menu item', ['edit'], ['class' => 'btn btn-primary']); ?>
         <?= ButtonDropDown::widget([
             'label' => 'Select menu',
@@ -57,6 +56,7 @@ $this->registerJs('
             ],
         ]) ?>
         <?= Html::a('Edit menus', ['menus'], ['class' => 'btn btn-default']); ?>
+        <h1>Menu items</h1>
     </div>
 </div>
 <div class="row">

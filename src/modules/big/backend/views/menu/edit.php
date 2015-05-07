@@ -16,12 +16,12 @@ $this->registerJs('$("#btn-select-content").click(function(e){
 ?>
 <div class="row">
     <div class="col-md-12">
-        <h1>Edit menu item</h1>
         <?php $form = ActiveForm::begin(); ?>
             <p>
                 <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
                 <?= Html::a('Back', ['index'], ['class' => 'btn btn-danger']); ?>
             </p>
+            <h1>Edit menu item</h1>
             <?= $form->field($model, 'title') ?>
             <?= $form->field($model, 'alias') ?>
             <?= $form->field($model, 'route', [

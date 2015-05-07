@@ -42,7 +42,7 @@ class TemplateController extends Controller
         $model = TemplateEditor::getModel($id);
         if (TemplateEditor::save($model)) {
             Yii::$app->getSession()->setFlash('success', 'Template saved');
-            $this->redirect(['index']);
+            return $this->redirect(['index']);
         }
         return $this->render('edit', [
             'model' => $model,

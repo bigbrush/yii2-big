@@ -29,7 +29,7 @@ class MenuController extends Controller
     public function actionIndex($id = 0)
     {
     	$manager = Yii::$app->big->menuManager;
-        $dataProvider = $this->getDataProvider();
+        $dataProvider = $this->getDataProvider($id);
         $dropdown = [];
         foreach ($manager->getMenus() as $menu) {
             $dropdown[] = ['label' => $menu->title, 'url' => Url::to(['index', 'id' => $menu->id])];
@@ -103,7 +103,7 @@ class MenuController extends Controller
             }
             return $result;
         } else {
-            $this->redirect(['index']);
+            return $this->redirect(['index']);
         }
     }
 

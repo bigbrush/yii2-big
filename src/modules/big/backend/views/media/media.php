@@ -9,6 +9,7 @@ use bigbrush\big\widgets\filemanager\FileManager;
 ?>
 <div class="row">
     <div class="col-md-12">
+    	<h1>Media manager</h1>
         <?= FileManager::widget() ?>
     </div>
 </div>

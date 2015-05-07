@@ -10,9 +10,11 @@ use yii\grid\GridView;
 ?>
 <div class="row">
     <div class="col-md-12">
+        <p>
+            <?= Html::a('New menu', ['edit-menu'], ['class' => 'btn btn-primary']); ?>
+            <?= Html::a('Menu items', ['index'], ['class' => 'btn btn-default']); ?>
+        </p>
         <h1>Menus</h1>
-        <?= Html::a('New menu', ['edit-menu'], ['class' => 'btn btn-primary']); ?>
-        <?= Html::a('Menu items', ['index'], ['class' => 'btn btn-default']); ?>
     </div>
 </div>
 <div class="row">
