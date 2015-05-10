@@ -52,6 +52,7 @@ class BlockController extends Controller
         $post = Yii::$app->getRequest()->post();
         if ($model->load($post)) {
             if ($model->save()) {
+                Yii::$app->getSession()->setFlash('success', 'Block saved');
                 return $this->redirect(['index']);
             }
         } elseif (!empty($post)) {
