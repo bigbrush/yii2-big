@@ -148,7 +148,7 @@ class FileManager extends Widget
                     'uploadAllow' => array('image'),
                     'attributes' => [
                         [
-                            'pattern' => '/.tmb|.quarantine/',
+                            'pattern' => '/.tmb|.quarantine|.gitignore/',
                             'hidden'  => true,
                         ],
                     ],

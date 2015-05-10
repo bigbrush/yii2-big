@@ -22,6 +22,7 @@ Why is Big so small?
 The concept behind Big is to provide a toolset for common web applications that can be integrated into any application. Big provides its features without restrictions or rules for extending certain classes. Big provides the following features: 
 
 **Big Module**
+
 Big module handles the following functionality in Big:
   - Menu system
   - Templates
