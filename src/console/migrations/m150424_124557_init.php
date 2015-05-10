@@ -34,6 +34,9 @@ class m150424_124557_init extends Migration
             'rgt' => Schema::TYPE_INTEGER . ' NOT NULL',
             'depth' => Schema::TYPE_INTEGER . ' NOT NULL',
             'is_default' => Schema::TYPE_SMALLINT . ' NOT NULL',
+            'meta_title' => Schema::TYPE_STRING . ' NOT NULL',
+            'meta_description' => Schema::TYPE_STRING . ' NOT NULL',
+            'meta_keywords' => Schema::TYPE_STRING . ' NOT NULL',
         ], $tableOptions);
         // page table
         $this->createTable('{{%page}}', [

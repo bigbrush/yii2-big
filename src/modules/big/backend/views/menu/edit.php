@@ -23,7 +23,6 @@ $this->registerJs('$("#btn-select-content").click(function(e){
             </p>
             <h1>Edit menu item</h1>
             <?= $form->field($model, 'title') ?>
-            <?= $form->field($model, 'alias') ?>
             <?= $form->field($model, 'route', [
                 'template' => '
                     {label}
@@ -56,6 +55,22 @@ $this->registerJs('$("#btn-select-content").click(function(e){
                 </div>
                 <div class="col-md-6">
                     <?= $form->field($model, 'is_default')->dropDownList($model->getIsDefaultOptions()) ?>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <?= $form->field($model, 'meta_title') ?>
+                </div>
+                <div class="col-md-6">
+                    <?= $form->field($model, 'alias') ?>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <?= $form->field($model, 'meta_description')->textArea() ?>
+                </div>
+                <div class="col-md-6">
+                    <?= $form->field($model, 'meta_keywords') ?>
                 </div>
             </div>
         <?php ActiveForm::end(); ?>

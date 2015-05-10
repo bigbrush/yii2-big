@@ -25,6 +25,9 @@ use creocoder\nestedsets\NestedSetsBehavior;
  * @property int $rgt
  * @property int $depth
  * @property int $is_default
+ * @property string $meta_title
+ * @property string $meta_description
+ * @property string $meta_keywords
  */
 class Menu extends ActiveRecord
 {
@@ -51,7 +54,7 @@ class Menu extends ActiveRecord
     public function scenarios()
     {
         return [
-            static::SCENARIO_DEFAULT  => ['title', 'menu_id', 'state', 'parent_id', 'route', 'is_default'],
+            static::SCENARIO_DEFAULT  => ['title', 'menu_id', 'state', 'parent_id', 'route', 'is_default', 'meta_title', 'meta_description', 'meta_keywords'],
             static::SCENARIO_MENU => ['title'],
         ];
     }
@@ -67,6 +70,7 @@ class Menu extends ActiveRecord
             ['state', 'in', 'range' => array_keys($this->getStateOptions())],
             ['menu_id', 'integer', 'min' => 1, 'tooSmall' => 'Choose a menu for this item'],
             [['parent_id', 'is_default'], 'integer'],
+            [['meta_title', 'meta_description', 'meta_keywords'], 'string', 'max' => 255],
         ];
     }
 
