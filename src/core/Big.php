@@ -25,10 +25,11 @@ use bigbrush\big\widgets\recorder\Recorder;
  *
  * Big can be used as a stand alone Yii 2 extension but is actually created to provide an
  * application with split frontend and backend ready for shared hosts. Big is also
- * designed to be easy to integrate into any Yii 2 application with minimal effort.
+ * designed to be easy to integrate into any Yii 2 application.
  *
- * Functionality provided by Big does not change or extend any Yii core classes but reacts
- * during runtime by implementing the [[BootstrapInterface]] to plug into a Yii application.
+ * Big does not require inheritance from any specific classes (other than Yii classes obviously).
+ * Big reacts during runtime by implementing the [[BootstrapInterface]] to plug into
+ * a running Yii application.
  *
  * @author Michael Bech <mj@bigbrush-agency.com>
  */
@@ -37,7 +38,7 @@ class Big extends Object implements BootstrapInterface
     /**
      * version
      */
-    const BIG_VERSION = '0.0.4';
+    const BIG_VERSION = '0.0.6';
     /**
      * scopes
      */
@@ -70,15 +71,20 @@ class Big extends Object implements BootstrapInterface
      */
     public $menuManager;
     /**
-     * @var Template the current template.
-     * Defaults to bigbrush\big\core\Template
+     * @var CategoryManager the category manager.
+     * Defaults to bigbrush\big\core\CategoryManager
      */
-    public $template;
+    public $categoryManager;
     /**
      * @var UrlManager the url manager.
      * Defaults to bigbrush\big\core\UrlManager
      */
     public $urlManager;
+    /**
+     * @var Template the current template.
+     * Defaults to bigbrush\big\core\Template
+     */
+    public $template;
     /**
      * @var Parser the layout parser.
      * Defaults to bigbrush\big\core\Parser
@@ -100,7 +106,6 @@ class Big extends Object implements BootstrapInterface
      * This methods runs after the application is configured.
      *
      * @param yii\base\Application $app the application currently running
-     * @throws InvalidConfigException in [[initialize()]]
      * @see http://www.yiiframework.com/doc-2.0/guide-structure-extensions.html#bootstrapping-classes
      */
     public function bootstrap($app)
@@ -150,8 +155,6 @@ class Big extends Object implements BootstrapInterface
     /**
      * Initializes Big by setting important properties
      * This method is called at the beginning of the boostrapping process
-     *
-     * @throws InvalidConfigException if [[webTheme]] is not set or [[webTheme]] is not a file.
      */
     public function initialize()
     {
@@ -279,7 +282,7 @@ class Big extends Object implements BootstrapInterface
      *         'route' => 'Route for the item',
      *         'text' => 'Intro text for the item',
      *         'date' => 'Date for the item',
-     *         'section' => 'the section this item belongs to',
+     *         'section' => 'The section this item belongs to',
      *     ],
      *     ...
      * ]
@@ -365,6 +368,7 @@ class Big extends Object implements BootstrapInterface
      * into the main application.
      *
      * @return array list of all positions found
+     * @throws InvalidConfigException if [[webTheme]] is not set or [[webTheme]] is not a file.
      */
     public function getFrontendLayoutFilePositions()
     {
@@ -479,9 +483,10 @@ class Big extends Object implements BootstrapInterface
         return [
             'menuManager' => 'bigbrush\big\core\MenuManager',
             'blockManager' => 'bigbrush\big\core\BlockManager',
+            'categoryManager' => 'bigbrush\big\core\CategoryManager',
+            'urlManager' => 'bigbrush\big\core\UrlManager',
             'template' => 'bigbrush\big\core\Template',
             'parser' => 'bigbrush\big\core\Parser',
-            'urlManager' => 'bigbrush\big\core\UrlManager',
         ];
     }
 }

@@ -17,7 +17,7 @@ use yii\db\Query;
 trait NestedSetManagerTrait
 {
     /**
-     * @var string name of a database table to load menus from.
+     * @var string name of a database table to load trees from.
      */
     public $tableName;
     /**
@@ -59,12 +59,14 @@ trait NestedSetManagerTrait
      * Returns all created root items. The whole tree is loaded from the database
      * if this is the first method called in this trait.
      *
+     * @param boolean $reload indicates whether the whole tree should be reloaded regardless
+     * if any trees has been loaded before.
      * @return array list of roots
      */
-    public function getRoots()
+    public function getRoots($reload = false)
     {
-        if ($this->_roots === null) {
-            $this->_roots = []; // flag menus as loaded.
+        if ($this->_roots === null || $reload) {
+            $this->_roots = []; // flag tree as loaded.
             $this->createTree($this->find()->orderBy($this->tableAlias.'.tree, '.$this->tableAlias.'.lft')->all());
         }
         return $this->_roots;
@@ -84,7 +86,7 @@ trait NestedSetManagerTrait
         } elseif ($this->loadTree($id)) {
             return $this->_roots[$id];
         } else {
-            throw new InvalidParamException("Menu with ID: '$id' has not been created in table: '$this->tableName'.");
+            throw new InvalidParamException("Root with ID: '$id' has not been created in table: '$this->tableName'.");
         }
     }
 
@@ -102,7 +104,7 @@ trait NestedSetManagerTrait
         } elseif ($this->loadTree($id)) {
             return $this->_items[$id];
         } else {
-            throw new InvalidParamException("Menu with ID: '$id' has not been created in table: '$this->tableName'.");
+            throw new InvalidParamException("Item with ID: '$id' has not been created in table: '$this->tableName'.");
         }
     }
 
@@ -120,7 +122,7 @@ trait NestedSetManagerTrait
         } elseif ($this->loadTree($id)) {
             return $this->searchItems($id);
         } else {
-            throw new InvalidParamException("Menu with ID: '$id' has not been created in table: '$this->tableName'.");
+            throw new InvalidParamException("Item with ID: '$id' has not been created in table: '$this->tableName'.");
         }
     }
 
@@ -142,11 +144,36 @@ trait NestedSetManagerTrait
     }
 
     /**
+     * Returns the direct parent of the provided object.
+     * If a root object or a new ActiveRecord is provided false is returned.
+     *
+     * @param ManagerObject|yii\db\ActiveRecord $object either an ActiveRecord or a manager object.
+     * @return ManagerObject|false a manager object if the provided object has a parent. False if not.
+     */
+    public function getParent($object)
+    {
+        if ($object->lft == 1 || $object->id == 0) {
+            return false;
+        }
+        foreach ($this->_items as $items) {
+            foreach ($items as $item) {
+                if ($item->tree == $object->tree
+                && $item->lft < $object->lft
+                && $item->rgt > $object->rgt
+                && $item->depth == $object->depth -1) {
+                    return $item;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Loads and creates a tree based on the provided id.
      * The id can be of a root or an item.
      *
      * @param int $id the id of a root/item
-     * @return boolean true if item was loaded, false if not
+     * @return boolean true if tree was loaded, false if not
      */
     public function loadTree($id)
     {
@@ -166,20 +193,22 @@ trait NestedSetManagerTrait
      * If a root is created it is registered in [[_roots]] and if an item
      * is created it is registered in [[_items]].
      *
-     * @param array $items list of items to create
+     * @param array $items list of items to create a from
+     * @throws InvalidParamException if a root node is not the first element of the provided array.
      */
     public function createTree($items)
     {
-        $menuId = null;
+        $rootId = null;
         foreach ($items as $item) {
-            $menu = $this->createObject($item);
-            if ($menu->lft == 1) {
-                $menuId = $menu->id;
-                $this->_roots[$menuId] = $menu;
-            } elseif ($menuId) {
-                $this->_items[$menuId][$menu->id] = $menu;
+            $item = $this->createObject($item);
+            if ($item->lft == 1) {
+                $rootId = $item->id;
+                $this->_roots[$rootId] = $item;
+                $this->_items[$rootId] = [];
+            } elseif ($rootId) {
+                $this->_items[$rootId][$item->id] = $item;
             } else {
-                throw new InvalidParamException("A menu must be provided as the first element in the provided items.");
+                throw new InvalidParamException("The first element of the provided array must be a root node.");
             }
         }
     }

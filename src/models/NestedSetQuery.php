@@ -11,9 +11,9 @@ use yii\db\ActiveQuery;
 use creocoder\nestedsets\NestedSetsQueryBehavior;
 
 /**
- * MenuQuery
+ * NestedSetQuery
  */
-class MenuQuery extends ActiveQuery
+class NestedSetQuery extends ActiveQuery
 {
     /**
      * @inheritdoc

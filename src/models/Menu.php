@@ -48,6 +48,7 @@ class Menu extends ActiveRecord
 
     private $_cachedAttributes;
 
+
     /**
      * @inheritdoc
      */
@@ -147,7 +148,7 @@ class Menu extends ActiveRecord
      */
     public static function find()
     {
-        return new MenuQuery(get_called_class());
+        return new NestedSetQuery(get_called_class());
     }
 
     /**

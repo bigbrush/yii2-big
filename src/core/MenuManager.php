@@ -22,7 +22,7 @@ class MenuManager extends Object
      */
     public $autoLoad = false;
     /**
-     * @var int defines an id for the menu that has the has default menu item reigstered.
+     * @var int defines an id for the menu that has the has default menu item registered.
      * If this property is not set it will be autoloaded in [[getDefaultMenu()]].
      */
     private $defaultMenuId = 0;
@@ -122,28 +122,6 @@ class MenuManager extends Object
         } else {
             throw new InvalidParamException("No default menu item has been set.");
         }
-    }
-
-    /**
-     * Returns the direct parent of the provided menu item.
-     * If a menu is provided false is returned.
-     *
-     * @param MenuManagerObject|bigbrush\big\models\Menu Either a model or a manager object.
-     * @return MenuManagerObject|false a menu if the provided menu has a parent. False if not.
-     */
-    public function getParent($menu)
-    {
-        if ($menu->lft == 1) {
-            return false;
-        }
-        foreach ($this->_items as $items) {
-            foreach ($items as $item) {
-                if ($item->tree == $menu->tree && $item->lft < $menu->lft && $item->rgt > $menu->rgt && $menu->depth -1 == $item->depth) {
-                    return $item;
-                }
-            }
-        }
-        return false;
     }
 
     /**

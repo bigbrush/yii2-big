@@ -26,18 +26,19 @@ $this->registerJs('
         $("#alert").empty().html(alert);
     }
     
-    $(".changeDirectionBtn").click(function(e){
+    var wrapper = $("#grid");
+    $("#grid").on("click", ".changeDirectionBtn", function(e){
         var self = $(this),
             direction = self.data("direction"),
             menuId = self.data("pid");
 
-        $.post("'.Url::to(['move']).'", {selected: menuId, direction: direction}, function(data){
+        $.post("'.Url::to(['move']).'", {node_id: menuId, direction: direction}, function(data){
             if (data.status === "success") {
-                $("#grid").empty().html(data.grid);
+                wrapper.empty().html(data.grid);
             }
             var type = data.status == "error" ? "danger" : data.status;
             alert(data.message, type);
-        });
+        }, "json");
 
         e.preventDefault();
     });
@@ -61,12 +62,8 @@ $this->registerJs('
 </div>
 <div class="row">
     <div class="col-md-12">
-        <?php $form = ActiveForm::begin(['action' => ['move'], 'id' => 'gridForm']); ?>
         <div id="grid">
             <?= $this->render('_grid', ['dataProvider' => $dataProvider]); ?>
         </div>
-        <?= Html::hiddenInput('selected', '', ['id' => 'fieldSelected']) ?>
-        <?= Html::hiddenInput('direction', '', ['id' => 'fieldDirection']) ?>
-        <?php ActiveForm::end(); ?>
     </div>
 </div>

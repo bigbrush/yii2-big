@@ -20,6 +20,27 @@ use bigbrush\big\models\Menu;
 class MenuController extends Controller
 {
     /**
+     * Returns a list of predefined actions for this controller.
+     *
+     * It specifically adds a move action which moves an item in a nested
+     * set model up or down in the hierarchy.
+     *
+     * @return array a list of actions
+     */
+    public function actions()
+    {
+        return [
+            'move' => [
+                'class' => 'bigbrush\big\core\NestedSetAction',
+                'model' => Yii::$app->big->menuManager->getModel(),
+                'updateContent' => function() {
+                    return $this->renderPartial('_grid', ['dataProvider' => $this->getDataProvider()]);
+                },
+            ],
+        ];
+    }
+
+    /**
      * Show a list of all menu items
      *
      * @param int an id of menu to load items from. If not provided or 0 (zero)
@@ -68,90 +89,6 @@ class MenuController extends Controller
             'allModels' => $manager->getMenuItems($id),
         ]);
         return $dataProvider;
-    }
-
-    /**
-     * Moves an item up or down
-     */
-    public function actionMove()
-    {
-        $request = Yii::$app->getRequest();
-        if ($request->getIsAjax()) {
-            $selected = $request->post('selected');
-            $direction = $request->post('direction');
-            Yii::$app->getResponse()->format = yii\web\Response::FORMAT_JSON;
-            if (empty($selected) || empty($direction)) {
-                return [
-                    'status' => 'error',
-                    'message' => 'No "ID" selected or no "direction" set',
-                ];
-            }
-            $result = [];
-            $model = Yii::$app->big->menuManager->getModel()->findOne($selected);
-            if ($model) {
-                $result = $this->moveNode($model, $direction);
-            } else {
-                $result = [
-                    'status' => 'error',
-                    'message' => 'Model with id: "'.$selected.'" not found',
-                ];
-            }
-            if ($result['status'] === 'success') {
-                $result['grid'] = $this->renderPartial('_grid', ['dataProvider' => $this->getDataProvider()]);
-            } else {
-                $result['grid'] = '';
-            }
-            return $result;
-        } else {
-            return $this->redirect(['index']);
-        }
-    }
-
-    /**
-     * Moves a menu item up or down
-     *
-     * @param ActiveRecord $model a model to move in the menu tree
-     * @param string $direction the direction to move the model. Can be "up" or "down".
-     * @return array a status array with the keys "status" and "message".
-     */
-    public function moveNode($model, $direction)
-    {
-        $message = '';
-        $status = 'success';
-
-        if ($direction === 'up') {
-            if (($prev = $model->prev()->one()) !== null) {
-                if ($model->insertBefore($prev)) {
-                    $message = 'Menu item moved successfully';
-                } else {
-                    $status = 'error';
-                    $message = 'An error occured. Please try again';
-                }
-            } else {
-                $status = 'info';
-                $message = 'Menu item not moved. It is the first item';
-            }
-        } elseif ($direction === 'down') {
-            if (($next = $model->next()->one()) !== null) {
-                if ($model->insertAfter($next)) {
-                    $message = 'Menu item moved successfully';
-                } else {
-                    $status = 'error';
-                    $message = 'An error occured. Please try again';
-                }
-            } else {
-                $status = 'info';
-                $message = 'Menu item not moved. It is the last item';
-            }
-        } else {
-            $message = 'Direction can only be "up" or "down"';
-            $status = 'error';
-        }
-
-        return [
-            'status' => $status,
-            'message' => $message,
-        ];
     }
 
     /**
