@@ -52,6 +52,14 @@ class Menu extends ActiveRecord
     /**
      * @inheritdoc
      */
+    public static function tableName()
+    {
+        return '{{%menu}}';
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function scenarios()
     {
         return [

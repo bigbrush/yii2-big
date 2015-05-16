@@ -24,6 +24,15 @@ class Template extends ActiveRecord
 
     private $_cachedAttributes;
 
+
+    /**
+     * @inheritdoc
+     */
+    public static function tableName()
+    {
+        return '{{%template}}';
+    }
+
     /**
      * @inheritdoc
      */

@@ -22,6 +22,14 @@ use bigbrush\big\models\BlockQuery;
 class Block extends ActiveRecord
 {
     /**
+     * @inheritdoc
+     */
+    public static function tableName()
+    {
+        return '{{%block}}';
+    }
+
+    /**
      * Returns the list of all attribute names of the model.
      * Method overridden to avoid a database call by parent implementation.
      * Block models are populated with data in [[bigbrush\big\core\BlockManager::registerPositions()]] to

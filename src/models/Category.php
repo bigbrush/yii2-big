@@ -40,6 +40,14 @@ class Category extends ActiveRecord
 
 
     /**
+     * @inheritdoc
+     */
+    public static function tableName()
+    {
+        return '{{%category}}';
+    }
+
+    /**
      * Returns an array used in dropdown lists for field [[state]]
      *
      * @return array
