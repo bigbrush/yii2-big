@@ -42,15 +42,33 @@ class m150424_124557_init extends Migration
         $this->createTable('{{%page}}', [
             'id' => Schema::TYPE_PK,
             'title' => Schema::TYPE_STRING . ' NOT NULL',
-            'alias' => Schema::TYPE_STRING . ' NOT NULL',
             'content' => Schema::TYPE_TEXT . ' NOT NULL',
             'state' => Schema::TYPE_SMALLINT . ' NOT NULL DEFAULT 1',
             'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
             'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'alias' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_title' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_description' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_keywords' => Schema::TYPE_STRING . ' NOT NULL',
             'template_id' => Schema::TYPE_INTEGER . ' NOT NULL',
+        ], $tableOptions);
+        // category table
+        $this->createTable('{{%category}}', [
+            'id' => Schema::TYPE_PK,
+            'module' => Schema::TYPE_STRING . ' NOT NULL',
+            'title' => Schema::TYPE_STRING . ' NOT NULL',
+            'content' => Schema::TYPE_TEXT . ' NOT NULL',
+            'state' => Schema::TYPE_SMALLINT . ' NOT NULL DEFAULT 1',
+            'tree' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'lft' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'rgt' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'depth' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'alias' => Schema::TYPE_STRING . ' NOT NULL',
+            'meta_title' => Schema::TYPE_STRING . ' NOT NULL',
+            'meta_description' => Schema::TYPE_STRING . ' NOT NULL',
+            'meta_keywords' => Schema::TYPE_STRING . ' NOT NULL',
         ], $tableOptions);
         // template table
         $this->createTable('{{%template}}', [
@@ -80,6 +98,7 @@ class m150424_124557_init extends Migration
         $this->dropTable('{{%block}}');
         $this->dropTable('{{%menu}}');
         $this->dropTable('{{%page}}');
+        $this->dropTable('{{%category}}');
         $this->dropTable('{{%template}}');
         $this->dropTable('{{%user}}');
     }
