@@ -198,8 +198,7 @@ class UrlManager extends Object implements UrlRuleInterface
     /**
      * Parses an internal url.
      * This method in called by [[bigbrush\big\core\Parser::replaceRoute()]] when changing
-     * urls inserted in the editor. The "index.php?" part should be removed from the provided
-     * path info before calling this method.
+     * urls inserted in the editor.
      *
      * @param string $pathInfo the path info to parse.
      * @return array an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
@@ -207,6 +206,10 @@ class UrlManager extends Object implements UrlRuleInterface
     public function parseInternalUrl($pathInfo)
     {
         $pathInfo = str_replace('&amp;', '&', $pathInfo);
+        if (strpos($pathInfo, 'index.php?') === 0) {
+            // remove "index.php?"
+            $pathInfo = substr($pathInfo, 10);
+        }
         parse_str($pathInfo, $params);
         $manager = Yii::$app->getUrlManager();
         $params[0] = $params[$manager->routeParam];
