@@ -42,9 +42,13 @@ foreach ($chunks as $blocks) : ?>
     <?php foreach ($blocks as $block) : ?>
     <div class="col-md-3" style="margin-bottom:30px;">
         <div class="square">
-	        <div class="content">
-	        	<?= Html::a($block['title'], ['edit', 'id' => $block['id']]) ?>
-	        </div>
+            <div class="content">
+                <?= Html::beginForm(['delete', 'id' => $block['id']]) ?>
+                <?= Html::hiddenInput('block_id', $block['id']) ?>
+                <?= Html::submitButton('<i class="fa fa-trash"></i>') ?>
+                <?= Html::endForm() ?>
+                <?= Html::a($block['title'], ['edit', 'id' => $block['id']]) ?>
+            </div>
         </div>
     </div>
     <?php endforeach; ?>

@@ -10,6 +10,7 @@ namespace bigbrush\big\modules\big\backend\controllers;
 use Yii;
 use yii\base\InvalidParamException;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 use yii\web\MethodNotAllowedHttpException;
 
 /**
@@ -18,9 +19,9 @@ use yii\web\MethodNotAllowedHttpException;
 class BlockController extends Controller
 {
     /**
-     * Show a page with all created blocks
+     * Show a page with all created blocks.
      *
-     * @return string
+     * @return string the rendering result.
      */
     public function actionIndex()
     {
@@ -56,10 +57,30 @@ class BlockController extends Controller
                 return $this->redirect(['index']);
             }
         } elseif (!empty($post)) {
-            throw new MethodNotAllowedHttpException("Form not saved because 'Block' was not set in $_POST");
+            throw new MethodNotAllowedHttpException('Form not saved because "Block" was not set in $_POST');
         }
         return $this->render('edit', [
             'block' => $block,
         ]);
+    }
+
+    /**
+     * Deletes a block.
+     *
+     * @return int $id an id of a block to delete.
+     * @throws NotFoundHttpException if block_id in $_POST does not match the provided id. 
+     */
+    public function actionDelete($id)
+    {
+        $model = Yii::$app->big->blockManager->getModel()->findOne($id);
+        $blockId = $_POST['block_id'];
+        if (!$model || $model->id != $blockId) {
+            Yii::$app->getSession()->setFlash('error', "Model with id '$id' not found.");
+        } elseif ($model->delete()) {
+            Yii::$app->getSession()->setFlash('success', 'Block deleted.');
+        } else {
+            Yii::$app->getSession()->setFlash('error', 'Block could not be deleted.');
+        }
+        return $this->redirect(['index']);
     }
 }
