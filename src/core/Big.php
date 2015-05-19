@@ -19,6 +19,9 @@ use yii\web\View;
 use yii\web\Response;
 use bigbrush\big\widgets\recorder\Recorder;
 
+use yii\web\Controller;
+use yii\base\Event;
+
 /**
  * Big is the core class of the Big framework. It provides an interface for
  * common functionalities and access to the different managers.
@@ -112,9 +115,6 @@ class Big extends Object implements BootstrapInterface
     {
         // initialize Big
         $this->initialize();
-
-        // register the Big url manager as an url rule in the running application url manager. 
-        $app->getUrlManager()->addRules([$this->urlManager]);
         
         $scope = $this->getScope();        
         if ($scope === self::SCOPE_BACKEND) {
@@ -135,7 +135,9 @@ class Big extends Object implements BootstrapInterface
 
         // set the application default route when scope is "frontend"
         if ($scope === self::SCOPE_FRONTEND) {
-            $route = $this->menuManager->getDefault()->route;
+            $menu = $this->menuManager->getDefault();
+            $this->menuManager->setActive($menu);
+            $route = $menu->route;
             if (strpos($route, '&') !== false) {
                 list($route, $params) = explode('&', $route, 2);
                 parse_str($params, $params);
@@ -164,10 +166,10 @@ class Big extends Object implements BootstrapInterface
         }
         // core classes 
         foreach ($this->getCoreClasses() as $property => $class) {
-            if ($this->$property === null) {
-                $this->$property = Yii::createObject(['class' => $class]);
-            } else {
+            if (is_array($this->$property)) {
                 $this->$property = Yii::createObject(array_merge(['class' => $class], $this->$property));
+            } else {
+                $this->$property = Yii::createObject(['class' => $class]);
             }
         }
     }
@@ -181,12 +183,22 @@ class Big extends Object implements BootstrapInterface
      */
     public function registerEventHandlers($app)
     {
+        $view = $app->getView();
+        
         // register the menu manager when searching for content in Big.
         $app->on(SearchEvent::EVENT_SEARCH, [$this->menuManager, 'onSearch']);
 
+        // set the page title (if not set) when a layout starts to render.
+        $view->on(View::EVENT_BEGIN_PAGE, function($event) use ($view) {
+            $menu = $this->menuManager->getActive();
+            if (empty($view->title) && $menu) {
+                $view->title = (empty($menu->meta_title)) ? $menu->title : $menu->meta_title;
+            }
+        });
+
         if ($this->enableDynamicContent) {
             // register event handler to render blocks right before asset bundles are registered by the view.
-            $app->getView()->on(View::EVENT_END_BODY, [$this, 'renderBlocks']);
+            $view->on(View::EVENT_END_BODY, [$this, 'renderBlocks']);
         
             // register event handler that parses the application response
             $app->on(Application::EVENT_AFTER_REQUEST, [$this, 'parseResponse']);

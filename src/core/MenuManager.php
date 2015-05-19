@@ -20,41 +20,58 @@ class MenuManager extends Object
      * @var boolean whether to load all menus automatically when the manager initializes.
      * If true the [[urlManager]] will not make any additional database calls - see [[urlManager::findMenu()]].
      */
-    public $autoLoad = false;
+    public $autoLoad = true;
     /**
      * @var int defines an id for the menu that has the has default menu item registered.
      * If this property is not set it will be autoloaded in [[getDefaultMenu()]].
      */
-    private $defaultMenuId = 0;
+    private $_default;
+    /**
+     * @var int an id of the active menu.
+     */
+    public $_active;
 
 
     /**
      * Initializes the manager by autoloading all menus if [[autoLoad]] is enabled.
      * Also sets up trait properties.
+     *
+     * This method is called when [[Big]] bootstraps.
      */
     public function init()
     {
-        // set properties defined in trait
-        $this->tableName = 'menu';
+        // set properties defined in trait if not set by application configuration.
         $this->itemClass = 'bigbrush\big\core\MenuManagerObject';
-        $this->modelClass = 'bigbrush\big\models\Menu';
+        if ($this->tableName === null) {
+            $this->tableName = '{{%menu}}';
+        }
+        if ($this->modelClass === null) {
+            $this->modelClass = 'bigbrush\big\models\Menu';
+        }
 
         if ($this->autoLoad) {
-            $this->getMenus();
+            $this->getMenus(true);
         }
     }
 
     /**
-     * Searches all loaded menu items for an item where the provided
-     * property matches the provided value. False is returned if no
-     * matching menu item is found.
+     * Searches menu items for an item where the provided property
+     * matches the provided value.
+     *
+     * If [[autoLoad]] is enabled a database call will not be made. If
+     * [[autoLoad]] is not enabled a database call will be made if a menu is not found
+     * in the currently loaded menu items.
+     * False is returned if no matching menu item is found.
      *
      * @param string $property the property to compare against.
      * @param string $value the value to compare against.
+     * @param boolean $extended whether to only search in loaded items. If true
+     * a database call will be made to determine if the menu item exists.
      * @return MenuManagerObject|false
      */
-    public function search($property, $value)
+    public function search($property, $value, $extended = false)
     {
+        // search in loaded menu items
         foreach ($this->_items as $items) {
             foreach ($items as $item) {
                 if ($item->$property === $value) {
@@ -62,18 +79,29 @@ class MenuManager extends Object
                 }
             }
         }
+
+        // query the database on extended searches
+        if (!$this->autoLoad && $extended) {
+            $menu = $this->find()->andWhere([$property => $value])->one();
+            if ($menu) {
+                return $this->createObject($menu);
+            }
+        }
         return false;
     }
 
     /**
      * Returns a list of all menus.
-     * This method loads all menus and menu items.
+     * This method loads all menus and menu items if it is the first method called in the manager
+     * or when reload is true.
      *
+     * @param boolean $reload indicates whether the whole tree should be reloaded regardless
+     * if any trees has been loaded before.
      * @return array list of all menus
      */
-    public function getMenus()
+    public function getMenus($reload = false)
     {
-        return $this->getRoots();
+        return $this->getRoots($reload);
     }
 
     /**
@@ -131,23 +159,46 @@ class MenuManager extends Object
      */
     public function getDefaultMenu()
     {
-        if ($this->defaultMenuId) {
-            return $this->getItems($this->defaultMenuId);
-        } else {
-            $tree = $this->find()
-                ->select('m1.*')
-                ->where([$this->tableAlias.'.is_default' => 1])
-                ->leftJoin($this->tableName . ' m1', 'm1.tree = '.$this->tableAlias.'.tree')
-                ->orderBy('lft')
-                ->all();
-            if (empty($tree)) {
-                return $this->_roots = []; // flags menus as loaded.
-            } else {
-                $this->defaultMenuId = $tree[0]['id'];
-                $this->createTree($tree);
-                return $this->getItems($this->defaultMenuId);
-            }
+        if ($this->_default) {
+            return $this->getItems($this->_default);
         }
+        
+        $tree = $this->find()
+            ->select('m1.*')
+            ->where([$this->tableAlias.'.is_default' => 1])
+            ->leftJoin($this->tableName . ' m1', 'm1.tree = '.$this->tableAlias.'.tree')
+            ->orderBy('lft')
+            ->all();
+        if (empty($tree)) {
+            return $this->_roots = []; // flags menus as loaded.
+        } else {
+            $this->_default = $tree[0]['id'];
+            $this->createTree($tree);
+            return $this->getItems($this->_default);
+        }
+    }
+
+    /**
+     * Sets the active menu item.
+     *
+     * @param MenuManagerObject|bigbrush\big\models\Menu $menu a menu object to register as active.
+     */
+    public function setActive($menu)
+    {
+        $this->_active = $menu->id;
+    }
+
+    /**
+     * Returns the active menu item.
+     *
+     * @return MenuManagerObject|false the active menu if set and false if not.
+     */
+    public function getActive()
+    {
+        if ($this->_active) {
+            return $this->getMenuItem($this->_active);
+        }
+        return false;
     }
 
     /**

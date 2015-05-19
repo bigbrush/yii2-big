@@ -18,6 +18,17 @@ use yii\web\UrlRuleInterface;
 class UrlManager extends Object implements UrlRuleInterface
 {
     /**
+     * @var boolean defines if this url manager should be used as a url rule in the application
+     * url manager. Defaults to true.
+     */
+    public $enableUrlRule = true;
+    /**
+     * @var string the URL suffix used for this rule.
+     * For example, ".html" can be used so that the URL looks like pointing to a static HTML page.
+     * If not, the value of [[yii\web\UrlManager::suffix]] will be used.
+     */
+    public $suffix;
+    /**
      * @var string defines the class name to use when loading url rules. All url
      * rules must be within the same namespace as the main module file (i.e. Module.php)
      */
@@ -27,13 +38,20 @@ class UrlManager extends Object implements UrlRuleInterface
      * it is apart of. False will be registered if a module id has no url rule created.
      */
     private $_rules = [];
-    /**
-     * @var string the URL suffix used for this rule.
-     * For example, ".html" can be used so that the URL looks like pointing to a static HTML page.
-     * If not, the value of [[yii\web\UrlManager::suffix]] will be used.
-     */
-    public $suffix;
 
+
+    /**
+     * Initializes the url manager by registering it as an url rule in the application
+     * url manager. If will only register it self if [[enableUrlRule]] is true.
+     *
+     * This method is called when [[Big]] bootstraps.
+     */
+    public function init()
+    {
+        if ($this->enableUrlRule) {
+            Yii::$app->getUrlManager()->addRules([$this]);
+        }
+    }
 
     /**
      * Creates a URL according to the given route and parameters.
@@ -54,9 +72,9 @@ class UrlManager extends Object implements UrlRuleInterface
     public function createUrl($manager, $route, $params)
     {
         // search for a menu that matches
-        $search = $params;
-        $search[0] = $route;
-        $menu = $this->findMenu($this->createInternalUrl($search, false), 'route');
+        $menuManager = Yii::$app->big->menuManager;
+        $search = [$route] + $params;
+        $menu = $menuManager->search('route', $this->createInternalUrl($search, false), true);
         $url = false;
         if ($menu) {
             if ($menu->getIsDefault()) {
@@ -71,7 +89,7 @@ class UrlManager extends Object implements UrlRuleInterface
                 $url = $prepend.$url;
             }
         } else {
-        // search for an url rule that matches
+            // search for an url rule that matches
             foreach (Yii::$app->getModules() as $id => $module) {
                 if (($rule = $this->findModuleUrlRule($id, $module)) !== false) {
                     if (($url = $rule->createUrl($manager, $route, $params)) !== false) {
@@ -111,17 +129,17 @@ class UrlManager extends Object implements UrlRuleInterface
             }
         }
 
-        // if pathInfo has a "/" it could mean a nested menu
+        // search for a menu that matches the request.
         if (strpos($pathInfo, '/') !== false) {
-            // check if the last segment matches a menu item.
             $segments = explode('/', $pathInfo);
-            $menu = $this->findMenu(array_pop($segments), 'alias');
         } else {
-            // otherwise find a menu from the full pathInfo
-            $menu = $this->findMenu($pathInfo, 'alias');
+            $segments = [$pathInfo];
         }
-        // if a menu was found use it to parse the request
+        $menuManager = Yii::$app->big->menuManager;
+        $menu = $menuManager->search('alias', array_pop($segments), true);
+        // if a menu was found set it as active and use it to parse the request.
         if ($menu) {
+            $menuManager->setActive($menu);
             $parts = explode('&', $menu->route);
             $route = $parts[0];
             $params = [];
@@ -129,8 +147,18 @@ class UrlManager extends Object implements UrlRuleInterface
                 parse_str($parts[1], $params);
             }
             return [$route, $params];
+        } elseif (!empty($segments)) {
+            // no menu was found by the first segment. Search remaining segments for
+            // a matching menu.
+            while (!$menu && !empty($segments)) {
+                $menu = $menuManager->search('alias', array_pop($segments), true);
+            }
+            // if a menu was found register it as active
+            if ($menu) {
+                $menuManager->setActive($menu);
+            }
         }
-        // no menu found. Search url rules in modules to find a match.
+        // no menu found. Search module url rules to find a match.
         $result = false;
         foreach (Yii::$app->getModules() as $id => $module) {
             if (($rule = $this->findModuleUrlRule($id, $module)) !== false) {
@@ -140,32 +168,6 @@ class UrlManager extends Object implements UrlRuleInterface
             }
         }
         return $result;
-    }
-
-    /**
-     * Searches the menu system for a menu that matches the provided value.
-     * If auto load is enabled in the menu manager a database call will not be made. If
-     * auto load is not enabled a database call will be made if a menu is not found
-     * in the currently loaded menu items.
-     *
-     * @param string $value the value to search for.
-     * @param string $column the column to search for the value in.
-     * @return MenuManagerObject|null a menu manager object if menu is found, null if not.
-     */
-    public function findMenu($value, $column)
-    {
-        $manager = Yii::$app->big->menuManager;
-        $menu = $manager->search($column, $value);
-        if ($menu || $manager->autoLoad) {
-            return $menu;
-        }
-
-        $menu = $manager->find()->andWhere([$column => $value])->one();
-        if ($menu) {
-            return $manager->createObject($menu);
-        } else {
-            return null;
-        }
     }
 
     /**
@@ -188,7 +190,7 @@ class UrlManager extends Object implements UrlRuleInterface
         if (is_array($route)) {
             $url .= $route[0];
             unset($route[0]);
-            $url .= empty($route) ? '' : '&'.http_build_query($route);
+            $url .= empty($route) ? '' : '&' . http_build_query($route);
         } else {
             $url .= $route;
         }
@@ -232,7 +234,7 @@ class UrlManager extends Object implements UrlRuleInterface
             return $this->_rules[$id];
         }
         if (is_object($module)) {
-            $class = get_class($module);
+            $class = $module::className();
         } else {
             $class = $module['class'];
         }
