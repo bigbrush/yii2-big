@@ -25,6 +25,15 @@ use yii\bootstrap\ButtonGroup;
             },
         ],
         [
+            'header' => 'Default',
+            'format' => 'raw',
+            'options' => ['width' => '1%'],
+            'contentOptions' => ['style' => 'text-align:center; vertical-align:middle;'],
+            'value' => function($data) {
+                return ($data->is_default) ? '<span class="glyphicon glyphicon-star" aria-hidden="true"></span>' : '';
+            },
+        ],
+        [
             'header' => 'Ordering',
             'headerOptions' => ['style' => 'text-align:center; vertical-align:middle;'],
             'format' => 'raw',
@@ -47,6 +56,18 @@ use yii\bootstrap\ButtonGroup;
                         ]),
                     ]
                 ]);
+            },
+        ],
+        [
+            'header' => 'Delete',
+            'format' => 'raw',
+            'options' => ['width' => '1%'],
+            'contentOptions' => ['style' => 'text-align:center; vertical-align:middle;'],
+            'value' => function($data) {
+                return Html::beginForm(['delete', 'id' => $data->id])
+                    . Html::submitButton('<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>', ['class' => 'btn btn-default btn-xs'])
+                    . Html::hiddenInput('id', $data->id)
+                    . Html::endForm();
             },
         ],
     ],
