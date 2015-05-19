@@ -19,9 +19,6 @@ use yii\web\View;
 use yii\web\Response;
 use bigbrush\big\widgets\recorder\Recorder;
 
-use yii\web\Controller;
-use yii\base\Event;
-
 /**
  * Big is the core class of the Big framework. It provides an interface for
  * common functionalities and access to the different managers.
