@@ -8,6 +8,7 @@
 namespace bigbrush\big\modules\big\backend\controllers;
 
 use Yii;
+use yii\base\InvalidCallException;
 use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
@@ -143,6 +144,7 @@ class MenuController extends Controller
         } else {
             $parents = [];
             $model->parent_id = 0;
+            $model->menu_id = Yii::$app->getSession()->get('__big_menu_id');
         }
         $menus = ['Choose menu'] + ArrayHelper::map($menus, 'id', 'title');
         return $this->render('edit', [
@@ -153,26 +155,29 @@ class MenuController extends Controller
     }
 
     /**
-     * Deletes a menu or menu item.
+     * Deletes a menu item.
      *
-     * @param int $id an id of a menu or menu item.
+     * @param int $id an id of a menu item.
      */
     public function actionDelete($id)
     {
         $menuId = Yii::$app->getRequest()->post('id');
         if ($menuId != $id) {
-            throw new InvalidCallException("Invalid form submitted. Menu with id: '$id' not deleted.");
+            throw new InvalidCallException("Invalid form submitted. Menu item with id: '$id' not deleted.");
         }
         $model = Yii::$app->big->menuManager->getModel($id);
         if ($model) {
             if ($model->is_default) {
                 Yii::$app->getSession()->setFlash('info', 'Cannot delete the default menu item.');
             } else {
-                $model->delete();
-                Yii::$app->getSession()->setFlash('success', 'Menu item deleted.');
+                if ($model->delete()) {
+                    Yii::$app->getSession()->setFlash('success', 'Menu item deleted.');
+                } else {
+                    Yii::$app->getSession()->setFlash('error', 'Menu item could not be deleted.');
+                }
             }
         } else {
-            Yii::$app->getSession()->setFlash('error', 'Menu item not deleted.');
+            Yii::$app->getSession()->setFlash('error', 'Menu item with id "' . $id . '" not found.');
         }
         return $this->redirect(['index']);
     }
@@ -215,5 +220,30 @@ class MenuController extends Controller
         return $this->render('edit_menu', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * Deletes a menu.
+     * TAKE CARE - All menu items will be deleted as well.
+     *
+     * @param int $id an id of a menu.
+     */
+    public function actionDeleteMenu($id)
+    {
+        $menuId = Yii::$app->getRequest()->post('id');
+        if ($menuId != $id) {
+            throw new InvalidCallException("Invalid form submitted. Menu with id: '$id' not deleted.");
+        }
+        $model = Yii::$app->big->menuManager->getModel($id);
+        if ($model) {
+            if ($model->deleteWithChildren()) {
+                Yii::$app->getSession()->setFlash('success', 'Menu deleted.');
+            } else {
+                Yii::$app->getSession()->setFlash('error', 'Menu could not be deleted.');
+            }
+        } else {
+            Yii::$app->getSession()->setFlash('error', 'Menu with id "' . $id . '" not found.');
+        }
+        return $this->redirect(['menus']);
     }
 }
