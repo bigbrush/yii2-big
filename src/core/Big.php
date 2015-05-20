@@ -97,10 +97,19 @@ class Big extends Object implements BootstrapInterface
      * Defaults to [[SCOPE_FRONTEND]].
      */
     private $_scope;
+    /**
+     * @var boolean defines that a layout file should be fully rendered regardless of any position checks.
+     * Used when layout files are being parsed for available positions.
+     * This property is used internally.
+     * @see [[getFrontendLayoutFilePositions()]].
+     * @see [[getLayoutFilePositions()]].
+     * @see [[isPositionActive()]].
+     */
+    private $_renderFullLayoutFile = false;
 
 
     /**
-     * Bootstraps Big by initializing important properties. Under certain scopes
+     * Bootstraps Big by initializing important properties. Under "backend" scope
      * the big core module will be registered in the main application. This method also hooks
      * into the main application via the event system to parse layout files.
      * This methods runs after the application is configured.
@@ -311,6 +320,33 @@ class Big extends Object implements BootstrapInterface
     }
 
     /**
+     * Determines whether a position is active in the current template.
+     * 
+     * This method can be used in the main layout file to check if a position
+     * is active in the current template.
+     *
+     * Use like the following in a layout file:
+     * ~~~php
+     * <?php if (Yii::$app->big->isPositionActive('sidebar')) : ?>
+     * <div id="sidebar-wrapper">
+     *     <big:include position="sidebar" />
+     * </div>
+     * <?php endif; ?>
+     * ~~~
+     *
+     * @param string $position a position to determine whether is active in the current template.
+     * @return boolean true if the position is active, false if not.
+     */
+    public function isPositionActive($position)
+    {
+        if ($this->_renderFullLayoutFile) {
+            return true;
+        } else {
+            return empty($this->getTemplate()->getPosition($position)) === false;
+        }
+    }
+
+    /**
      * Begins recording a block and automatically assigns it to the provided position.
      * A matching [[endBlock()]] call should be called later.
      *
@@ -386,6 +422,8 @@ class Big extends Object implements BootstrapInterface
         } elseif (!is_file(Yii::getAlias($this->webTheme))) {
             throw new InvalidConfigException("The property 'webTheme' is not a file. Please update the application config file.");
         }
+        // flag layout file to be fully parsed
+        $this->_renderFullLayoutFile = true;
         // disable asset bundles
         $bundles = $this->disableAssetBundles();
         // create a separate view from the application view to avoid
@@ -394,6 +432,8 @@ class Big extends Object implements BootstrapInterface
         $content = $view->renderPhpFile(Yii::getAlias($this->webTheme), ['content' => '']);
         // reassign asset bundles
         $this->reassignAssetBundles($bundles);
+        // reset flag for layout file
+        $this->_renderFullLayoutFile = false;
         // parse positions
         return $this->parser->findPositions($content);
     }
@@ -407,6 +447,8 @@ class Big extends Object implements BootstrapInterface
      */
     public function getLayoutFilePositions($viewFile)
     {
+        // flag layout file to be fully parsed
+        $this->_renderFullLayoutFile = true;
         // disable asset bundles
         $bundles = $this->disableAssetBundles();
         // create a separate view from the application view to avoid
@@ -417,6 +459,9 @@ class Big extends Object implements BootstrapInterface
         $content = $view->renderFile($viewFile, ['content' => '']);
         // reassign asset bundles
         $this->reassignAssetBundles($bundles);
+        // reset flag for layout file
+        $this->_renderFullLayoutFile = false;
+        // parse positions
         return $this->parser->findPositions($content);
     }
 
