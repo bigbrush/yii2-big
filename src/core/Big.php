@@ -124,11 +124,6 @@ class Big extends Object implements BootstrapInterface
         
         $scope = $this->getScope();        
         if ($scope === self::SCOPE_BACKEND) {
-            // register big module in "backend" scope
-            $app->setModules([
-                'big' => ['class' => 'bigbrush\big\modules\big\backend\Module'],
-            ]);
-            
             // set base url of editor and file manager if scope is "backend"
             $baseUrl = Url::to('@web/../');
             Yii::$container->set('bigbrush\big\widgets\editor\Editor', [
