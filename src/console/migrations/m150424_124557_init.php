@@ -46,6 +46,8 @@ class m150424_124557_init extends Migration
             'state' => Schema::TYPE_SMALLINT . ' NOT NULL DEFAULT 1',
             'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
             'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'created_by' => Schema::TYPE_INTEGER . ' NOT NULL',
+            'updated_by' => Schema::TYPE_INTEGER . ' NOT NULL',
             'alias' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_title' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_description' => Schema::TYPE_STRING . ' NOT NULL',
