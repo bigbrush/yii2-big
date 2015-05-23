@@ -10,6 +10,7 @@ namespace bigbrush\big\widgets\templateeditor;
 use Yii;
 use yii\base\Widget;
 use yii\web\View;
+use bigbrush\big\models\Template;
 use bigbrush\big\widgets\templateeditor\assets\TemplateEditorAsset;
 
 /**
@@ -33,7 +34,8 @@ class TemplateEditor extends Widget
      */
     public $wrapperClass = 'col-md-3';
     /**
-     * @var array list of all blocks available to assign to positions
+     * @var array list of all blocks available to assign to positions. The keys are block ids
+     * and the value are Blocks.
      */
     public $blocks;
 
@@ -93,7 +95,7 @@ class TemplateEditor extends Widget
      */
     public function run()
     {
-        $positions = Yii::$app->big->getFrontendLayoutFilePositions();
+        $positions = Yii::$app->big->getFrontendThemePositions();
         $blocks = []; // formatted like: ['POSITION' => [BLOCK MODEL, ...], ...]
         $template = $this->template;
         foreach ($positions as $id => $name) {
@@ -146,7 +148,6 @@ class TemplateEditor extends Widget
         $view = $this->getView();
         TemplateEditorAsset::register($view);
         $view->registerJs('
-            $(function() {
             $(".connected").sortable({connectWith: ".connected"}).bind("sortupdate", function(e, ui) {
                 var item = $(ui.item);
                 var input = item.find("input");
@@ -154,9 +155,8 @@ class TemplateEditor extends Widget
                 if (parent.length) {
                     input.attr("name", "Template[positions]["+parent.data("position")+"][]");
                 } else {
-                    input.attr("name", "Template[positions][UNREGISTERED][]");
+                    input.attr("name", "Template[positions][' . Template::UNREGISTERED . '][]");
                 }
-            });
             });
         ', View::POS_END);
     }
