@@ -51,15 +51,6 @@ class Big extends Object implements BootstrapInterface
      */
     public $frontendTheme;
     /**
-     * @var boolean defines whether to use dynamic content. When this is enabled the [[parser]]
-     * will parse the application response.
-     *
-     * Set this to false when include statements are not used in the layout file. If content
-     * created with [[bigbrush\big\widgets\editor\Editor]] is being displayed this property
-     * should be true.
-     */
-    public $enableDynamicContent = true;
-    /**
      * @var BlockManager the block manager.
      * Defaults to bigbrush\big\core\BlockManager
      */
@@ -85,10 +76,17 @@ class Big extends Object implements BootstrapInterface
      */
     public $template;
     /**
-     * @var Parser the layout parser.
+     * @var Parser|false the application response parser. If this property is false the parser
+     * is disabled.
      * Defaults to bigbrush\big\core\Parser
      */
     public $parser;
+    /**
+     * @var array list of event handlers used when searching.
+     * Can be used when in the application configuration file.
+     * @see http://www.yiiframework.com/doc-2.0/guide-concept-events.html#attaching-event-handlers
+     */
+    public $searchHandlers = [];
     /**
      * @var string the application scope.
      * This is used to add modules automatically.
@@ -142,7 +140,7 @@ class Big extends Object implements BootstrapInterface
         }
 
         // hook into the Yii application
-        $this->registerEventHandlers($app);
+        $this->registerApplicationHooks($app);
     }
 
     /**
@@ -163,6 +161,15 @@ class Big extends Object implements BootstrapInterface
                 $this->$property = Yii::createObject(['class' => $class]);
             }
         }
+        // parser
+        if ($this->parser !== false) {
+            $config = ['class' => 'bigbrush\big\core\Parser'];
+            if (is_array($this->parser)) {
+                $this->parser = Yii::createObject(array_merge($config, $this->parser));
+            } else {
+                $this->parser = Yii::createObject($config);
+            }
+        }
     }
 
     /**
@@ -172,12 +179,16 @@ class Big extends Object implements BootstrapInterface
      *
      * @param yii\web\Application $app the application currently running
      */
-    public function registerEventHandlers($app)
+    public function registerApplicationHooks($app)
     {
         $view = $app->getView();
         
         // register the menu manager when searching for content in Big.
         $app->on(SearchEvent::EVENT_SEARCH, [$this->menuManager, 'onSearch']);
+        // register custom search event handlers
+        foreach ($this->searchHandlers as $handler) {
+            $app->on(SearchEvent::EVENT_SEARCH, $handler);
+        }
 
         // set the page title (if not set) when a layout starts to render.
         $view->on(View::EVENT_BEGIN_PAGE, function($event) use ($view) {
@@ -187,10 +198,15 @@ class Big extends Object implements BootstrapInterface
             }
         });
 
-        if ($this->enableDynamicContent) {
-            // register event handler to render blocks right before asset bundles are registered by the view.
-            $view->on(View::EVENT_END_BODY, [$this, 'renderBlocks']);
-        
+        // register event handler to render blocks right before asset bundles are registered by the view.
+        $positions = $this->getActiveThemePositions();
+        if (!empty($positions)) {
+            $view->on(View::EVENT_END_BODY, function($event) use ($positions) {
+                $this->renderBlocks($positions);
+            });
+        }
+
+        if ($this->parser !== false) {
             // register event handler that parses the application response
             $app->on(Application::EVENT_AFTER_REQUEST, [$this, 'parseResponse']);
         }
@@ -198,27 +214,19 @@ class Big extends Object implements BootstrapInterface
 
     /**
      * Renders blocks assigned to positions in the active template.
+     * This method loads a [[Template]] if one has not been loaded yet.
      *
-     * @param yii\base\Event $event the event being triggered.
+     * @param array $positions list of positions used in the active theme. See [[getThemePositions()]]
+     * for information about the format of the array.
      */
-    public function renderBlocks($event)
+    public function renderBlocks($positions)
     {
-        // get the current view. If a controller exists use the controller view otherwise
-        // use the application view.
-        $controller = Yii::$app->controller;
-        $view = $controller ? $controller->getView() : Yii::$app->getView();
-        if ($view->theme && $view->theme instanceof yii\base\Theme) {
-            // find positions available for the current theme
-            $positions = $this->getThemePositions($view->theme->basePath);
-            if (!empty($positions)) {
-                // make sure a template is loaded
-                $this->template->load();
-                // get active positions in the template
-                $positions = $this->template->getPositions(array_keys($positions));
-                // register positions in the block manager
-                $this->blockManager->registerPositions($positions);
-            }
-        }
+        // make sure a template is loaded
+        $this->template->load();
+        // get active positions in the template
+        $positions = $this->template->getPositions(array_keys($positions));
+        // register positions in the block manager
+        $this->blockManager->registerPositions($positions);
 
     }
 
@@ -260,7 +268,7 @@ class Big extends Object implements BootstrapInterface
      * ~~~
      *
      * To plug into the search event system in Big add the following to the application configuration file.
-     * ~~~
+     * ~~~php
      * return [
      *     'id' => 'APPLICATION ID',
      *     ...
@@ -272,6 +280,23 @@ class Big extends Object implements BootstrapInterface
      *         ]);
      *     },
      *     'components' => [...],
+     * ];
+     * ~~~
+     *
+     * Another way to plug into the searches in Big is to add the following to the application configuration file.
+     * ~~~php
+     * return [
+     *     'id' => 'APPLICATION ID',
+     *     ...
+     *     'components' => [
+     *         'big' => [
+     *             'searchHandlers' => [
+     *                 ['app\components\Bar', 'methodName'],
+     *                 [$object, 'methodName'],
+     *             ],
+     *         ],
+     *         ...
+     *     ],
      * ];
      * ~~~
      *
@@ -421,6 +446,25 @@ class Big extends Object implements BootstrapInterface
     }
 
     /**
+     * Returns positions used in the active theme.
+     *
+     * @return array list of positions used in the active theme.
+     */
+    public function getActiveThemePositions()
+    {
+         // get the current view. If a controller exists use the controller view otherwise
+        // use the application view.
+        $controller = Yii::$app->controller;
+        $view = $controller ? $controller->getView() : Yii::$app->getView();
+        if ($view->theme && $view->theme instanceof yii\base\Theme) {
+            // find positions available for the current theme
+            return $this->getThemePositions($view->theme->basePath);
+        } else {
+            return [];
+        }
+    }
+
+    /**
      * Returns positions used in the frontend theme.
      *
      * @return array list of positions used in the frontend theme.
@@ -478,7 +522,6 @@ class Big extends Object implements BootstrapInterface
             'categoryManager' => 'bigbrush\big\core\CategoryManager',
             'urlManager' => 'bigbrush\big\core\UrlManager',
             'template' => 'bigbrush\big\core\Template',
-            'parser' => 'bigbrush\big\core\Parser',
         ];
     }
 }
