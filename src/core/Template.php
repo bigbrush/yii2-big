@@ -20,7 +20,7 @@ class Template extends Object
     /**
      * @var string name of a database table to load templates from.
      */
-    public $tableName = 'template';
+    public $tableName = '{{%template}}';
     /**
      * @var string represents the model class when creating/editing a template.
      * The table is aliased by the letter "t".
@@ -53,9 +53,9 @@ class Template extends Object
 
 
     /**
-     * Sets the id of the active template. If the provided id is null or 0 (zero)
-     * this template will be cleared. It will then load the default template in
-     * [[Big::parseResponse()]].
+     * Sets the id of the active template. If the provided id is null or 0 (zero) and
+     * the current template is not the default template, this template will be cleared.
+     * It will then load the default template in [[Big::parseResponse()]].
      *
      * @param int $id id of a template.
      */
@@ -97,6 +97,7 @@ class Template extends Object
      * Configures this template according to the provided data.
      *
      * @param array $data the data to assign to this template.
+     * @return Template this object as an updated instance.
      */
     public function configure($data)
     {
@@ -107,6 +108,7 @@ class Template extends Object
         if (is_string($this->_positions)) {
             $this->_positions = Json::decode($this->_positions);
         }
+        return $this;
     }
 
     /**

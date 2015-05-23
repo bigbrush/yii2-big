@@ -46,11 +46,10 @@ class Big extends Object implements BootstrapInterface
     const SCOPE_BACKEND = 'backend';
 
     /**
-     * @var string path for the frontend theme layout file. Is needed when identifing
-     * the available positions in the frontend theme. This property MUST be set when
-     * using [[bigbrush\big\widgets\templateeditor\TemplateEditor]].
+     * @var string path for the frontend theme. Is needed when identifing
+     * the available positions in the frontend theme.
      */
-    public $webTheme;
+    public $frontendTheme;
     /**
      * @var boolean defines whether to use dynamic content. When this is enabled the [[parser]]
      * will parse the application response.
@@ -97,15 +96,6 @@ class Big extends Object implements BootstrapInterface
      * Defaults to [[SCOPE_FRONTEND]].
      */
     private $_scope;
-    /**
-     * @var boolean defines that a layout file should be fully rendered regardless of any position checks.
-     * Used when layout files are being parsed for available positions.
-     * This property is used internally.
-     * @see [[getFrontendLayoutFilePositions()]].
-     * @see [[getLayoutFilePositions()]].
-     * @see [[isPositionActive()]].
-     */
-    private $_renderFullLayoutFile = false;
 
 
     /**
@@ -208,25 +198,28 @@ class Big extends Object implements BootstrapInterface
 
     /**
      * Renders blocks assigned to positions in the active template.
-     * This handler is triggered by [[View::endBody()]] right before asset bundles are
-     * registered. Blocks needs to be rendered here so any assets used in the blocks
-     * will be included by the active application view.
      *
-     * @param yii\base\Event $event the event being triggered
+     * @param yii\base\Event $event the event being triggered.
      */
     public function renderBlocks($event)
     {
-        // if the current request can not be handled no controller exists
+        // get the current view. If a controller exists use the controller view otherwise
+        // use the application view.
         $controller = Yii::$app->controller;
-        if ($controller) {
-            $layoutFile = $controller->findLayoutFile($controller->getView());
-            $positions = $this->getLayoutFilePositions($layoutFile);
-            // make sure a template is loaded
-            $this->template->load();
-            // get blocks for positions used in the template
-            $positions = $this->template->getPositions(array_keys($positions));
-            $this->blockManager->registerPositions($positions);
+        $view = $controller ? $controller->getView() : Yii::$app->getView();
+        if ($view->theme && $view->theme instanceof yii\base\Theme) {
+            // find positions available for the current theme
+            $positions = $this->getThemePositions($view->theme->basePath);
+            if (!empty($positions)) {
+                // make sure a template is loaded
+                $this->template->load();
+                // get active positions in the template
+                $positions = $this->template->getPositions(array_keys($positions));
+                // register positions in the block manager
+                $this->blockManager->registerPositions($positions);
+            }
         }
+
     }
 
     /**
@@ -317,10 +310,9 @@ class Big extends Object implements BootstrapInterface
     /**
      * Determines whether a position is active in the current template.
      * 
-     * This method can be used in the main layout file to check if a position
-     * is active in the current template.
+     * Use this method to check if a position is active in the current theme.
      *
-     * Use like the following in a layout file:
+     * Use like the following:
      * ~~~php
      * <?php if (Yii::$app->big->isPositionActive('sidebar')) : ?>
      * <div id="sidebar-wrapper">
@@ -334,11 +326,7 @@ class Big extends Object implements BootstrapInterface
      */
     public function isPositionActive($position)
     {
-        if ($this->_renderFullLayoutFile) {
-            return true;
-        } else {
-            return empty($this->getTemplate()->getPosition($position)) === false;
-        }
+        return !empty($this->getTemplate()->getPosition($position));
     }
 
     /**
@@ -402,89 +390,44 @@ class Big extends Object implements BootstrapInterface
     }
 
     /**
-     * Returns all positions used in the frontend layout file.
-     * All asset bundles will be temporarily disabled while the layout
-     * file is rendered. By doing this no js/css files will be injected
-     * into the main application.
+     * Returns positions used in the provided [theme](yii\base\Theme). If the file "positions.php" does not exist in the
+     * root directory of the provided theme an empty array is returned.
+     * 
+     * A file named "positions.php" can be placed in the root directory of the specified theme. The file must return
+     * an array where the keys are position ids and the values are position names.
+     * The position ids (the keys) are similar to the ones used in layout files. The names (the values) are used when displaying the
+     * positions in the user interface.
      *
-     * @return array list of all positions found
-     * @throws InvalidConfigException if [[webTheme]] is not set or [[webTheme]] is not a file.
+     * Example of file content: 
+     * ~~~php
+     * return [
+     *     'position-id' => 'Displayed title',
+     *     'mainmenu' => 'Main menu',
+     *     'gallery-frontpage' => 'Frontpage gallery',
+     * ];
+     * ~~~
+     *
+     * @param string $theme path or alias for a theme.
+     * @return array list of positions used in the specified theme.
      */
-    public function getFrontendLayoutFilePositions()
+    public function getThemePositions($theme)
     {
-        if ($this->webTheme === null) {
-            throw new InvalidConfigException("The property 'webTheme' must be set in class bigbrush\big\core\Big. Please update the application config file.");
-        } elseif (!is_file(Yii::getAlias($this->webTheme))) {
-            throw new InvalidConfigException("The property 'webTheme' is not a file. Please update the application config file.");
+        $file = Yii::getAlias($theme . '/positions.php');   
+        if (is_file($file)) {
+            return require($file);
+        } else {
+            return [];
         }
-        // flag layout file to be fully parsed
-        $this->_renderFullLayoutFile = true;
-        // disable asset bundles
-        $bundles = $this->disableAssetBundles();
-        // create a separate view from the application view to avoid
-        // assets being registered by the layout
-        $view = new View();
-        $content = $view->renderPhpFile(Yii::getAlias($this->webTheme), ['content' => '']);
-        // reassign asset bundles
-        $this->reassignAssetBundles($bundles);
-        // reset flag for layout file
-        $this->_renderFullLayoutFile = false;
-        // parse positions
-        return $this->parser->findPositions($content);
     }
 
     /**
-     * Returns all positions in the provided view file.
+     * Returns positions used in the frontend theme.
      *
-     * @param string $viewFile the view file. This can be either an absolute file path or an alias of it.
-     * @return array list of positions found in the layout.
-     * @throws InvalidParamException in [[View::renderFile()]] if the view file does not exist.
+     * @return array list of positions used in the frontend theme.
      */
-    public function getLayoutFilePositions($viewFile)
+    public function getFrontendThemePositions()
     {
-        // flag layout file to be fully parsed
-        $this->_renderFullLayoutFile = true;
-        // disable asset bundles
-        $bundles = $this->disableAssetBundles();
-        // create a separate view from the application view to avoid
-        // assets being registered by the layout
-        $view = new View();
-        // set the current theme is the temporary view to find the proper layout file
-        $view->theme = Yii::$app->controller->getView()->theme;
-        $content = $view->renderFile($viewFile, ['content' => '']);
-        // reassign asset bundles
-        $this->reassignAssetBundles($bundles);
-        // reset flag for layout file
-        $this->_renderFullLayoutFile = false;
-        // parse positions
-        return $this->parser->findPositions($content);
-    }
-
-    /**
-     * Disables asset bundles in the Yii application asset manager.
-     * This method is used to temporarily disable asset bundles when
-     * finding positions in a application layout file.
-     *
-     * @return array|false list of registered asset bundles or false if asset bundles
-     * is disabled in the Yii application asset manager.
-     */
-    public function disableAssetBundles()
-    {
-        $manager = Yii::$app->getAssetManager();
-        $bundles = $manager->bundles;
-        $manager->bundles = false;
-        return $bundles;
-    }
-
-    /**
-     * Reassigns the provided asset bundles in the Yii application asset manager.
-     *
-     * @param array|false $bundles list of bundles to reassign. False if asset bundles is disabled.
-     * @see [[disableAssetBundles]]
-     */
-    public function reassignAssetBundles($bundles)
-    {
-        Yii::$app->getAssetManager()->bundles = $bundles;
+        return $this->getThemePositions($this->frontendTheme);
     }
 
     /**
