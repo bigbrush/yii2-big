@@ -11,12 +11,14 @@ use yii\web\AssetBundle;
 
 /**
  * TemplateEditorAsset
+ *
+ * @version html5sortable v0.2.8
  */
 class TemplateEditorAsset extends AssetBundle
 {
     public $sourcePath = '@bigbrush/big/widgets/templateeditor';
     public $js = [
-        'js/html.sortable.js',
+        'js/html.sortable.min.js',
     ];
     public $depends = [
         'yii\web\JqueryAsset',

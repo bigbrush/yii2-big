@@ -8,6 +8,7 @@
 namespace bigbrush\big\widgets\templateeditor;
 
 use Yii;
+use yii\base\InvalidConfigException;
 use yii\base\Widget;
 use yii\web\View;
 use bigbrush\big\models\Template;
@@ -16,28 +17,30 @@ use bigbrush\big\widgets\templateeditor\assets\TemplateEditorAsset;
 /**
  * TemplateEditor
  * 
- * Use this widget to include the block UI in your module
+ * Use this widget to include the template UI in your module.
  * This widget must be used within a form.
  */
 class TemplateEditor extends Widget
 {
     /**
-     * @var int|bigbrush\big\core\Template|bigbrush\big\models\Template the active template, a template model or a template ID.
-     * The default template will be used if this property is not set.
-     * See [[init()]] for initialization of this property.
+     * @var bigbrush\big\models\Template the template model. Use [[getModel()]] to load a model.
      */
-    public $template;
-    /**
-     * @var string will be used as class for a wrapper <div> when calling
-     * the end method of the widget. Note that this property needs to be
-     * setup in the begin method.
-     */
-    public $wrapperClass = 'col-md-3';
+    public $model;
     /**
      * @var array list of all blocks available to assign to positions. The keys are block ids
      * and the value are Blocks.
      */
     public $blocks;
+    /**
+     * @var int the number of columns in a row for available positions. Used with the Bootstrap grid system.
+     * Must equal a whole number when divided by 12.
+     */
+    public $columns = 3;
+    /**
+     * @var bigbrush\big\core\Template a template used to parse theme positions with blocks assigned to the template.
+     * Is configured in [[init()]].
+     */
+    private $_template;
 
 
     /**
@@ -73,18 +76,15 @@ class TemplateEditor extends Widget
      */
     public function init()
     {
-        if ($this->template === null || is_numeric($this->template)) {
-            $this->template = Yii::$app->big->getTemplate()->load($this->template);
-        } elseif ($this->template instanceof yii\db\ActiveRecord) {
-            Yii::$app->big->getTemplate()->configure($this->template->getAttributes(['id', 'title', 'positions', 'is_default']));
+        if ($this->model === null) {
+            throw new InvalidConfigException("The property 'model' must be set as an instance of bigbrush\big\models\Template.");
         }
+
         if ($this->blocks === null) {
             $this->blocks = Yii::$app->big->blockManager->find()->indexBy('id')->all();
         }
-        $blocks = $this->removeAssignedBlocks($this->blocks);
-        echo $this->render('available_blocks', [
-            'blocks' => $blocks,
-        ]);
+
+        $this->_template = Yii::$app->big->getTemplate()->configure($this->model->getAttributes(['id', 'title', 'positions', 'is_default']));
     }
 
     /**
@@ -95,42 +95,57 @@ class TemplateEditor extends Widget
      */
     public function run()
     {
-        $positions = Yii::$app->big->getFrontendThemePositions();
-        $blocks = []; // formatted like: ['POSITION' => [BLOCK MODEL, ...], ...]
-        $template = $this->template;
-        foreach ($positions as $id => $name) {
-            $blocks[$id] = [];
-            if (isset($template->positions[$id])) {
-                foreach ($template->positions[$id] as $blockId) {
-                    if (isset($this->blocks[$blockId])) {
-                        $blocks[$id][] = $this->blocks[$blockId];
-                    }
-                }
-            }
+        $availableBlocks = $this->removeAssignedBlocks($this->blocks);
+        $assignedBlocks = []; // formatted like: ['POSITION' => [BLOCK MODEL, ...], ...]
+        foreach (Yii::$app->big->getFrontendThemePositions() as $name => $title) {
+            $ids = $this->_template->getPosition($name);
+            $assignedBlocks[$name] = $this->getBlocks($ids);
         }
+
         $this->registerScripts();
 
-        return $this->render('assigned_blocks', [
-            'blocks' => $blocks,
-            'class' => $this->wrapperClass,
+        return $this->render('index', [
+            'availableBlocks' => $availableBlocks,
+            'assignedBlocks' => $assignedBlocks,
+            'columns' => $this->columns,
         ]);
     }
 
     /**
-     * Returns a list of blocks that is not used by the current template
+     * Returns blocks by the provided ids that are assigned to [[blocks]].
+     *
+     * @param array $ids list of block ids to blocks by.
+     * @return array list of blocks found by the provided ids.
+     */
+    public function getBlocks($ids)
+    {
+        $blocks = [];
+        foreach ($ids as $id) {
+            if (isset($this->blocks[$id])) {
+                $blocks[] = $this->blocks[$id];
+            }
+        }
+        return $blocks;
+    }
+
+    /**
+     * Returns a list of blocks that is not used by the current template.
      * 
-     * @param array $blocks list of blocks to filter
+     * @param array $blocks list of blocks to filter. The keys must be block ids.
      * @return array list of blocks that is not assigned to the current template 
      */
     public function removeAssignedBlocks($blocks)
     {
-        if (empty($this->template->positions)) {
+        $positions = $this->_template->getPositions();
+        if (empty($positions)) {
             return $blocks;
         }
+
         $ids = [];
-        foreach ($this->template->positions as $position => $blocksIds) {
+        foreach ($positions as $position => $blocksIds) {
             $ids = array_merge($ids, $blocksIds);
         }
+
         $unused = [];
         foreach ($blocks as $block) {
             if (in_array($block['id'], $ids) === false) {
@@ -157,6 +172,8 @@ class TemplateEditor extends Widget
                 } else {
                     input.attr("name", "Template[positions][' . Template::UNREGISTERED . '][]");
                 }
+            }).click(function(e){
+                e.preventDefault();
             });
         ', View::POS_END);
     }
