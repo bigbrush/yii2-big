@@ -43,14 +43,28 @@ class Template extends ActiveRecord
             ['positions', 'validatePositions'],
             ['is_default', 'default', 'value' => 0],
             ['is_default', 'integer', 'min' => 0, 'max' => 1],
+            ['is_default', 'validateDefault'],
         ];
     }
 
     /**
-     * Validates positions assigned to this template
+     * Validates that [[is_default]] is not changed on a default template.
      *
      * @param string $attribute the attribute to validate
      * @param array $params parameters for the validation rule
+     */
+    public function validateDefault($attribute, $params)
+    {
+        if ($this->_cachedAttributes['is_default'] && !$this->is_default) {
+            $this->addError($attribute, 'Cannot reset a default template.');
+        }
+    }
+
+    /**
+     * Validates positions assigned to this template.
+     *
+     * @param string $attribute the attribute to validate.
+     * @param array $params parameters for the validation rule.
      */
     public function validatePositions($attribute, $params)
     {
