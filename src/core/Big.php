@@ -38,7 +38,7 @@ class Big extends Object implements BootstrapInterface
     /**
      * version
      */
-    const BIG_VERSION = '0.0.6';
+    const BIG_VERSION = '0.0.7';
     /**
      * scopes
      */

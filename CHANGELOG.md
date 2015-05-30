@@ -7,6 +7,12 @@ Big Framework Change log
 - TBD
 
 
+0.0.7 May 31, 2015
+-------------------------
+- New: Added template manager
+- Enh: updated migrations
+
+
 0.0.6 May 14, 2015
 -------------------------
 
