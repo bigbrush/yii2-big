@@ -75,7 +75,7 @@ class FileManager extends Widget
      */
     public $getFileCallback;
     /**
-     * @var string base path of the file manager
+     * @var int the current state of the widget.
      */
     public $state = self::STATE_RENDER;
 
