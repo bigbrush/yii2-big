@@ -184,7 +184,7 @@ class Big extends Object implements BootstrapInterface
         $view = $app->getView();
         
         // register the menu manager when searching for content in Big.
-        $app->on(SearchEvent::EVENT_SEARCH, [$this->menuManager, 'onSearch']);
+        $this->searchHandlers[] = [$this->menuManager, 'onSearch'];
         // register custom search event handlers
         foreach ($this->searchHandlers as $handler) {
             $app->on(SearchEvent::EVENT_SEARCH, $handler);
