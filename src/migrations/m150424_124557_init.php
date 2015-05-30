@@ -38,22 +38,6 @@ class m150424_124557_init extends Migration
             'meta_description' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_keywords' => Schema::TYPE_STRING . ' NOT NULL',
         ], $tableOptions);
-        // page table
-        $this->createTable('{{%page}}', [
-            'id' => Schema::TYPE_PK,
-            'title' => Schema::TYPE_STRING . ' NOT NULL',
-            'content' => Schema::TYPE_TEXT . ' NOT NULL',
-            'state' => Schema::TYPE_SMALLINT . ' NOT NULL DEFAULT 1',
-            'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
-            'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
-            'created_by' => Schema::TYPE_INTEGER . ' NOT NULL',
-            'updated_by' => Schema::TYPE_INTEGER . ' NOT NULL',
-            'alias' => Schema::TYPE_STRING . ' NOT NULL',
-            'meta_title' => Schema::TYPE_STRING . ' NOT NULL',
-            'meta_description' => Schema::TYPE_STRING . ' NOT NULL',
-            'meta_keywords' => Schema::TYPE_STRING . ' NOT NULL',
-            'template_id' => Schema::TYPE_INTEGER . ' NOT NULL',
-        ], $tableOptions);
         // category table
         $this->createTable('{{%category}}', [
             'id' => Schema::TYPE_PK,
@@ -79,29 +63,13 @@ class m150424_124557_init extends Migration
             'positions' => Schema::TYPE_STRING . ' NOT NULL',
             'is_default' => Schema::TYPE_SMALLINT . ' NOT NULL',
         ], $tableOptions);
-        // user table
-        $this->createTable('{{%user}}', [
-            'id' => Schema::TYPE_PK,
-            'name' => Schema::TYPE_STRING . ' NOT NULL',
-            'username' => Schema::TYPE_STRING . ' NOT NULL',
-            'email' => Schema::TYPE_STRING . ' NOT NULL',
-            'phone' => Schema::TYPE_STRING . ' NOT NULL',
-            'auth_key' => Schema::TYPE_STRING . '(32) NOT NULL',
-            'password_hash' => Schema::TYPE_STRING . ' NOT NULL',
-            'password_reset_token' => Schema::TYPE_STRING,
-            'state' => Schema::TYPE_SMALLINT . ' NOT NULL DEFAULT 1',
-            'created_at' => Schema::TYPE_INTEGER . ' NOT NULL',
-            'updated_at' => Schema::TYPE_INTEGER . ' NOT NULL',
-        ], $tableOptions);
     }
 
     public function down()
     {
         $this->dropTable('{{%block}}');
         $this->dropTable('{{%menu}}');
-        $this->dropTable('{{%page}}');
         $this->dropTable('{{%category}}');
         $this->dropTable('{{%template}}');
-        $this->dropTable('{{%user}}');
     }
 }
