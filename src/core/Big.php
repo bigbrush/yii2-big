@@ -71,10 +71,10 @@ class Big extends Object implements BootstrapInterface
      */
     public $urlManager;
     /**
-     * @var Template the current template.
-     * Defaults to bigbrush\big\core\Template
+     * @var Template the template manager.
+     * Defaults to bigbrush\big\core\TemplateManager
      */
-    public $template;
+    public $templateManager;
     /**
      * @var Parser|false the application response parser. If this property is false the parser
      * is disabled.
@@ -222,9 +222,9 @@ class Big extends Object implements BootstrapInterface
     public function renderBlocks($positions)
     {
         // make sure a template is loaded
-        $this->template->load();
+        $template = $this->templateManager->load();
         // get active positions in the template
-        $positions = $this->template->getPositions(array_keys($positions));
+        $positions = $template->getPositions(array_keys($positions));
         // register positions in the block manager
         $this->blockManager->registerPositions($positions);
 
@@ -335,7 +335,7 @@ class Big extends Object implements BootstrapInterface
     /**
      * Determines whether a position is active in the current template.
      * 
-     * Use this method to check if a position is active in the current theme.
+     * Use this method to check if a position is active in the current template.
      *
      * Use like the following:
      * ~~~php
@@ -400,7 +400,7 @@ class Big extends Object implements BootstrapInterface
      */
     public function getTemplate($id = 0)
     {
-        return $this->template->load($id);
+        return $this->templateManager->load($id);
     }
 
     /**
@@ -411,7 +411,7 @@ class Big extends Object implements BootstrapInterface
      */
     public function setTemplate($id)
     {
-        $this->template->setActive($id);
+        $this->templateManager->setActive($id);
     }
 
     /**
@@ -521,7 +521,7 @@ class Big extends Object implements BootstrapInterface
             'blockManager' => 'bigbrush\big\core\BlockManager',
             'categoryManager' => 'bigbrush\big\core\CategoryManager',
             'urlManager' => 'bigbrush\big\core\UrlManager',
-            'template' => 'bigbrush\big\core\Template',
+            'templateManager' => 'bigbrush\big\core\TemplateManager',
         ];
     }
 }

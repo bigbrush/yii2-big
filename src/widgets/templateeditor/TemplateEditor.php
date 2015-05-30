@@ -65,9 +65,9 @@ class TemplateEditor extends Widget
      * @param int $id optional id of a template record
      * @return bigbrush\big\models\Template
      */
-    public static function getModel($id = null)
+    public static function getModel($id = 0)
     {
-        return Yii::$app->big->getTemplate()->getModel($id);
+        return Yii::$app->big->templateManager->getModel($id);
     }
 
     /**
@@ -84,7 +84,7 @@ class TemplateEditor extends Widget
             $this->blocks = Yii::$app->big->blockManager->find()->indexBy('id')->all();
         }
 
-        $this->_template = Yii::$app->big->getTemplate()->configure($this->model->getAttributes(['id', 'title', 'positions', 'is_default']));
+        $this->_template = Yii::$app->big->templateManager->configure($this->model->getAttributes());
     }
 
     /**

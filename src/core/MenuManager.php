@@ -7,6 +7,7 @@
 
 namespace bigbrush\big\core;
 
+use yii\base\InvalidParamException;
 use yii\base\Object;
 
 /**

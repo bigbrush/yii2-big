@@ -63,6 +63,14 @@ class m150424_124557_init extends Migration
             'positions' => Schema::TYPE_STRING . ' NOT NULL',
             'is_default' => Schema::TYPE_SMALLINT . ' NOT NULL',
         ], $tableOptions);
+
+        // insert a default template into template table
+        $this->insert('{{%template}}', [
+            'id' => 1,
+            'title' => 'Default',
+            'positions' => '',
+            'is_default' => 1,
+        ]);
     }
 
     public function down()
