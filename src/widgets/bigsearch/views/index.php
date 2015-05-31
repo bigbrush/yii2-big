@@ -44,7 +44,12 @@ use yii\bootstrap\ButtonDropDown;
                                 return Html::a($data['title'], '#', ['data-route' => $data['route'], 'class' => 'insert-on-click']);
                             },
                         ],
-                        'section',
+                        [
+                            'header' => Yii::t('big', 'Section'),
+                            'value' => function($data){
+                                return $data['section'];
+                            },
+                        ],
                     ],
             ]); ?>
             </div>

@@ -48,7 +48,6 @@ class TemplateManager extends Object
      */
     public function init()
     {
-        $this->defaultText = Yii::t('big', $this->defaultText);
         $this->reset();
     }
 
@@ -77,9 +76,9 @@ class TemplateManager extends Object
     {
         $templates = ArrayHelper::map($this->find()->all(), 'id', 'title');
         if ($enableDefault) {
-    	    return [$this->defaultText] + $templates;
+            return [Yii::t('big', $this->defaultText)] + $templates;
         } else {
-    	    return $templates;
+            return $templates;
         }
     }
 
@@ -224,7 +223,7 @@ class TemplateManager extends Object
         if (!$id) {
             return $model;
         } elseif ($model = $model->findOne($id)) {
-        	return $model;
+            return $model;
         } else {
             throw new InvalidParamException("Model with id: '$id' not found.");
         }
