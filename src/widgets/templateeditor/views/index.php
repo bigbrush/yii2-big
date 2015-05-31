@@ -13,7 +13,7 @@ use bigbrush\big\models\Template;
 
     <div class="col-md-3">
         <div id="available-blocks">
-            <h3 class="section-title">Available blocks</h3>
+            <h3 class="section-title"><?= Yii::t('big', 'Available blocks') ?></h3>
             <ul class="connected">
                 <?php
                 foreach ($availableBlocks as $block) {

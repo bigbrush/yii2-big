@@ -13,7 +13,7 @@ use yii\bootstrap\ButtonDropDown;
 <div class="row">
     <div class="col-md-12">
         <?= ButtonDropDown::widget([
-            'label' => 'Select section',
+            'label' => Yii::t('big', 'Select section'),
             'options' => ['class' => 'btn btn-info'],
             'dropdown' => [
                 'options' => ['id' => 'sections-dropdown'],
@@ -37,7 +37,7 @@ use yii\bootstrap\ButtonDropDown;
                     'dataProvider' => new ArrayDataProvider(['allModels' => $items]),
                     'columns' => [
                         [
-                            'header' => 'Title',
+                            'header' => Yii::t('big', 'Title'),
                             'format' => 'raw',
                             'options' => ['width' => '75%'],
                             'value' => function($data){

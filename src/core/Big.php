@@ -110,9 +110,10 @@ class Big extends Object implements BootstrapInterface
         // initialize Big
         $this->initialize();
         
-        $scope = $this->getScope();        
+        $scope = $this->getScope();
+
+        // set base url of editor and file manager if scope is "backend"
         if ($scope === self::SCOPE_BACKEND) {
-            // set base url of editor and file manager if scope is "backend"
             $baseUrl = Url::to('@web/../');
             Yii::$container->set('bigbrush\big\widgets\editor\Editor', [
                 'baseUrl' => $baseUrl,
@@ -138,6 +139,11 @@ class Big extends Object implements BootstrapInterface
                 Yii::$app->defaultRoute = $route;
             }
         }
+
+        // enable internationalization
+        $this->registerTranslations([
+            'class' => 'yii\i18n\PhpMessageSource',
+        ]);
 
         // hook into the Yii application
         $this->registerApplicationHooks($app);
@@ -210,6 +216,16 @@ class Big extends Object implements BootstrapInterface
             // register event handler that parses the application response
             $app->on(Application::EVENT_AFTER_REQUEST, [$this, 'parseResponse']);
         }
+    }
+
+    /**
+     * Registers translations.
+     *
+     * @param array $config a configuration array used to add a translation source to the [[yii\i18n\I18N]] application component.
+     */
+    public function registerTranslations($config)
+    {
+        Yii::$app->i18n->translations['big'] = $config;
     }
 
     /**
