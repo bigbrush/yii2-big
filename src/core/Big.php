@@ -187,13 +187,6 @@ class Big extends Object implements BootstrapInterface
     public function registerApplicationHooks($app)
     {
         $view = $app->getView();
-        
-        // register the menu manager when searching for content in Big.
-        $this->searchHandlers[] = [$this->menuManager, 'onSearch'];
-        // register custom search event handlers
-        foreach ($this->searchHandlers as $handler) {
-            $app->on(SearchEvent::EVENT_SEARCH, $handler);
-        }
 
         // set the page title (if not set) when a layout starts to render.
         $view->on(View::EVENT_BEGIN_PAGE, function($event) use ($view) {
@@ -335,8 +328,18 @@ class Big extends Object implements BootstrapInterface
      */
     public function search($event, $name, $dynamicUrls = false)
     {
+        $app = Yii::$app;
+        
+        // register search event handlers
+        if (!empty($this->searchHandlers)) {
+            foreach ($this->searchHandlers as $handler) {
+                $app->on(SearchEvent::EVENT_SEARCH, $handler);
+            }
+            $this->searchHandlers = [];
+        }
+
         $event->sender = $this;
-        Yii::$app->trigger($name, $event);
+        $app->trigger($name, $event);
         $items = $event->items;
         if (!empty($items)) {
             $manager = $this->urlManager;
@@ -349,8 +352,6 @@ class Big extends Object implements BootstrapInterface
 
     /**
      * Determines whether a position is active in the current template.
-     * 
-     * Use this method to check if a position is active in the current template.
      *
      * Use like the following:
      * ~~~php
