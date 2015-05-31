@@ -55,5 +55,16 @@ use yii\bootstrap\ButtonDropDown;
             </div>
         </div>
     </div>
-<?php endforeach; ?>
+    <?php endforeach; ?>
+
+    <?php if ($fileManager !== null) : ?>
+    <div id="section-<?= $counter++ ?>" class="section-wrapper" style="display:none;">
+        <div class="row">
+            <div class="col-md-12">
+                <?= $fileManager ?>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
 </div>

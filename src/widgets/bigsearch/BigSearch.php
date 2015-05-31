@@ -13,6 +13,7 @@ use yii\base\InvalidConfigException;
 use yii\helpers\Json;
 use yii\web\JsExpression;
 use bigbrush\big\core\SearchEvent;
+use bigbrush\big\widgets\filemanager\FileManager;
 
 /**
  * BigSearch
@@ -33,6 +34,11 @@ class BigSearch extends Widget
      * @var string javascript function acting as an event handler when a link gets clicked
      */
     public $linkClickCallback;
+    /**
+     * @var array configuration array used to configure bigbrush\widgets\filemanager\FileManager. If not set the file manager
+     * is not included in the search results.
+     */
+    public $fileManager;
 
 
     /**
@@ -65,9 +71,15 @@ class BigSearch extends Widget
         }
 
         $sections = $this->triggerSearch();
+        $buttons = array_keys($sections);
+        if ($this->fileManager !== null) {
+            $buttons[] = Yii::t('big', 'Media');
+            $this->fileManager = FileManager::widget($this->fileManager);
+        }
         return $this->render('index', [
             'sections' => $sections,
-            'buttons' => $this->createDropDownButtons(array_keys($sections)),
+            'buttons' => $this->createDropDownButtons($buttons),
+            'fileManager' => $this->fileManager,
         ]);
     }
 
