@@ -140,11 +140,6 @@ class Big extends Object implements BootstrapInterface
             }
         }
 
-        // enable internationalization
-        $this->registerTranslations([
-            'class' => 'yii\i18n\PhpMessageSource',
-        ]);
-
         // hook into the Yii application
         $this->registerApplicationHooks($app);
     }
@@ -159,6 +154,10 @@ class Big extends Object implements BootstrapInterface
         if ($this->_scope === null) {
             $this->setScope(self::SCOPE_FRONTEND);
         }
+        // enable internationalization
+        $this->registerTranslations([
+            'class' => 'yii\i18n\PhpMessageSource',
+        ]);
         // core classes 
         foreach ($this->getCoreClasses() as $property => $class) {
             if (is_array($this->$property)) {
