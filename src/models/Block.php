@@ -7,6 +7,7 @@
 
 namespace bigbrush\big\models;
 
+use Yii;
 use yii\db\ActiveRecord;
 use bigbrush\big\models\BlockQuery;
 
@@ -27,6 +28,19 @@ class Block extends ActiveRecord
     public static function tableName()
     {
         return '{{%block}}';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return [
+            'title' => Yii::t('big', 'Title'),
+            'content' => Yii::t('big', 'Content'),
+            'name' => Yii::t('big', 'Name'),
+            'show_title' => Yii::t('big', 'Show title'),
+        ];
     }
 
     /**

@@ -60,6 +60,23 @@ class Menu extends ActiveRecord
     /**
      * @inheritdoc
      */
+    public function attributeLabels()
+    {
+        return [
+            'title' => Yii::t('big', 'Title'),
+            'alias' => Yii::t('big', 'Alias'),
+            'route' => Yii::t('big', 'Route'),
+            'state' => Yii::t('big', 'State'),
+            'is_default' => Yii::t('big', 'Is default'),
+            'meta_title' => Yii::t('big', 'Meta title'),
+            'meta_description' => Yii::t('big', 'Meta description'),
+            'meta_keywords' => Yii::t('big', 'Meta keywords'),
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function scenarios()
     {
         return [

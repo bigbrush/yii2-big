@@ -7,6 +7,7 @@
 
 namespace bigbrush\big\models;
 
+use Yii;
 use yii\db\ActiveRecord;
 use yii\behaviors\SluggableBehavior;
 use creocoder\nestedsets\NestedSetsBehavior;
@@ -45,6 +46,23 @@ class Category extends ActiveRecord
     public static function tableName()
     {
         return '{{%category}}';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return [
+            'title' => Yii::t('big', 'Title'),
+            'content' => Yii::t('big', 'Content'),
+            'name' => Yii::t('big', 'Name'),
+            'state' => Yii::t('big', 'State'),
+            'alias' => Yii::t('big', 'Alias'),
+            'meta_title' => Yii::t('big', 'Meta title'),
+            'meta_description' => Yii::t('big', 'Meta description'),
+            'meta_keywords' => Yii::t('big', 'Meta keywords'),
+        ];
     }
 
     /**

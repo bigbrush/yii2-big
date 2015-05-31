@@ -36,6 +36,18 @@ class Template extends ActiveRecord
     /**
      * @inheritdoc
      */
+    public function attributeLabels()
+    {
+        return [
+            'title' => Yii::t('big', 'Title'),
+            'positions' => Yii::t('big', 'Positions'),
+            'is_default' => Yii::t('big', 'Is default'),
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function rules()
     {
         return [
