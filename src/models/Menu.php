@@ -71,6 +71,8 @@ class Menu extends ActiveRecord
             'meta_title' => Yii::t('big', 'Meta title'),
             'meta_description' => Yii::t('big', 'Meta description'),
             'meta_keywords' => Yii::t('big', 'Meta keywords'),
+            'menu_id' => Yii::t('big', 'Menu'),
+            'parent_id' => Yii::t('big', 'Parent'),
         ];
     }
 
@@ -115,17 +117,6 @@ class Menu extends ActiveRecord
                 'attribute' => 'title',
                 'slugAttribute' => 'alias',
             ],
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels()
-    {
-        return [
-            'menu_id' => 'Menu',
-            'parent_id' => 'Parent',
         ];
     }
 
