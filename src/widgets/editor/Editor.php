@@ -134,10 +134,10 @@ class Editor extends InputWidget
         return new JsExpression('function(field_name, url, type, win){
             if (type === "file") {
                 var url = "'.Yii::$app->getUrlManager()->createUrl('/big/editor/get-links').'";
-                var title = "Select a link";
+                var title = "' . Yii::t('big', 'Select a link') . '";
             } else {
                 var url = "'.Yii::$app->getUrlManager()->createUrl('/big/editor/get-media').'";
-                var title = "Select media";
+                var title = "' . Yii::t('big', 'Select media') . '";
             }
             tinymce.activeEditor.windowManager.open({
                 file: url,

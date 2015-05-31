@@ -7,6 +7,7 @@
 
 namespace bigbrush\big\core;
 
+use Yii;
 use yii\base\InvalidParamException;
 use yii\base\Object;
 
@@ -53,6 +54,8 @@ class MenuManager extends Object
         if ($this->autoLoad) {
             $this->getMenus(true);
         }
+        // register this manager when Big performs a search
+        Yii::$app->big->searchHandlers[] = [$this, 'onSearch'];
     }
 
     /**
@@ -218,7 +221,7 @@ class MenuManager extends Object
                     'route' => $menu['route'],
                     'text' => '',
                     'date' => '',
-                    'section' => 'Menus',
+                    'section' => Yii::t('big', 'Menus'),
                 ]);
             }
         }
