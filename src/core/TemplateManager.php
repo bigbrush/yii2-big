@@ -20,7 +20,8 @@ use yii\helpers\Json;
 class TemplateManager extends Object
 {
     /**
-     * @var string the text used for selecting the default template in drop down lists.
+     * @var string the text used for selecting the default template in drop down lists. The value is being translated 
+     * in [[init()]].
      */
     public $defaultText = '- Use default template -';
     /**
@@ -47,6 +48,7 @@ class TemplateManager extends Object
      */
     public function init()
     {
+        $this->defaultText = Yii::t('big', $this->defaultText);
         $this->reset();
     }
 
