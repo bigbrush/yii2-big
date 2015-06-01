@@ -121,7 +121,7 @@ class TemplateManager extends Object
     {
         $id = (int)$id;
         $active = $this->getActive();
-        if ($active->id && !$id || $active->id === $id) {
+        if (($id && $active->id === $id) || $active->getIsDefault()) {
             return $active;
         }
 

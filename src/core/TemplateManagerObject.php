@@ -14,6 +14,11 @@ use yii\helpers\Json;
 
 /**
  * TemplateManagerObject
+ *
+ * @property integer $id
+ * @property string $title
+ * @property array $positions
+ * @property integer $is_default
  */
 class TemplateManagerObject extends ManagerObject
 {
