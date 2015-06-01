@@ -30,20 +30,22 @@ class FileManager extends Widget
     const STATE_RENDER = 1;
     const STATE_UPDATE = 2;
 
+    const SESSION_VAR_ICON_URL = '_filemanagaer_icon_url';
+
     /**
-     * @var array client options to provide for elFinder
+     * @var array client options to provide for elFinder.
      * @see https://github.com/Studio-42/elFinder/wiki/Client-configuration-options#contents
      */
     public $clientOptions = [];
     /**
-     * @var array options to provide for the elFinder connector
+     * @var array options to provide for the elFinder connector.
      * @see https://github.com/Studio-42/elFinder/wiki/Connector-configuration-options
      */
     public $connectorConfig = [];
     /**
      * @var string url to the controller handling elFinder UI updates.
      * In a controller action run the widget like this:
-     * ~~~
+     * ~~~php
      * FileManager::widget([
      *     'state' => FileManager::STATE_UPDATE 
      * ]); 
@@ -85,6 +87,9 @@ class FileManager extends Widget
      */
     public function update()
     {
+        // used in elFinderVolumeLocalFileSystem::__construct() to render the volume_icon file by elfinder
+        define('ELFINDER_IMG_PARENT_URL', Yii::$app->getSession()->get(self::SESSION_VAR_ICON_URL));
+
         Yii::$app->response->format = Response::FORMAT_JSON;
         $config = ArrayHelper::merge($this->getDefaultConnectorConfig(), $this->connectorConfig);
         $connector = new \elFinderConnector(new \elFinder($config));
@@ -103,7 +108,9 @@ class FileManager extends Widget
         }
 
         $view = $this->getView();
-        FileManagerAsset::register($view);
+        $bundle = FileManagerAsset::register($view);
+        // save assets bundle url so the volume driver file icon is displayed in elFinder
+        Yii::$app->getSession()->set(self::SESSION_VAR_ICON_URL, Url::to($bundle->baseUrl . '/'));
         
         $options = [];
         $options['url'] = Yii::$app->getUrlManager()->createUrl($this->url);
@@ -111,8 +118,7 @@ class FileManager extends Widget
         $language = substr(Yii::$app->language, 0, 2);
         if ($language !== 'en') {
             $options['lang'] = $language;
-            $langAssetBundle = FileManagerLangAsset::register($view);
-            $langAssetBundle->js[] = 'elfinder.'.$language.'.js';
+            $bundle->js[] = 'js/i18n/elfinder.'.$language.'.js';
         }
         if ($this->enableCsrfToken) {
             $request = Yii::$app->getRequest();
