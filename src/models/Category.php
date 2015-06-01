@@ -10,6 +10,7 @@ namespace bigbrush\big\models;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\behaviors\SluggableBehavior;
+use yii\behaviors\TimestampBehavior;
 use creocoder\nestedsets\NestedSetsBehavior;
 
 /**
@@ -24,6 +25,8 @@ use creocoder\nestedsets\NestedSetsBehavior;
  * @property int $lft
  * @property int $rgt
  * @property int $depth
+ * @property integer $created_at
+ * @property integer $updated_at
  * @property string $alias
  * @property string $meta_title
  * @property string $meta_description
@@ -97,6 +100,7 @@ class Category extends ActiveRecord
     public function behaviors()
     {
         return [
+            TimestampBehavior::className(),
             'tree' => [
                 'class' => NestedSetsBehavior::className(),
                 'treeAttribute' => 'tree',
