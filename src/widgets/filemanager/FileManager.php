@@ -73,7 +73,7 @@ class FileManager extends Widget
     /**
      * @var string|JsExpression a custom javascript callback triggered when an image is clicked.
      */
-    public $getFileCallback;
+    public $onClickCallback;
     /**
      * @var int the current state of the widget.
      */
@@ -118,11 +118,11 @@ class FileManager extends Widget
             $request = Yii::$app->getRequest();
             $options['customData'] = [$request->csrfParam => $request->getCsrfToken()];
         }
-        if ($this->getFileCallback !== null) {
-            if (is_string($this->getFileCallback)) {
-                $options['getFileCallback'] = new JsExpression($this->getFileCallback);
+        if ($this->onClickCallback !== null) {
+            if (is_string($this->onClickCallback)) {
+                $options['getFileCallback'] = new JsExpression($this->onClickCallback);
             } else {
-                $options['getFileCallback'] = $this->getFileCallback;
+                $options['getFileCallback'] = $this->onClickCallback;
             }
         }
         $options = ArrayHelper::merge($options, $this->clientOptions);

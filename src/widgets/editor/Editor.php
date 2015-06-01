@@ -152,10 +152,6 @@ class Editor extends InputWidget
                 setUrl: function(url){
                     win.document.getElementById(field_name).value = url;
                     top.tinymce.activeEditor.windowManager.close();
-                },
-                setMedia: function(url) {
-                    win.document.getElementById(field_name).value = url;
-                    top.tinymce.activeEditor.windowManager.close();  
                 }
             });
             return false;

@@ -31,9 +31,9 @@ class BigSearch extends Widget
      */
     public $dynamicUrls = false;
     /**
-     * @var string javascript function acting as an event handler when a link gets clicked
+     * @var string|JsExpression a custom javascript callback triggered when a link gets clicked
      */
-    public $linkClickCallback;
+    public $onClickCallback;
     /**
      * @var array configuration array used to configure bigbrush\widgets\filemanager\FileManager. If not set the file manager
      * is not included in the search results.
@@ -63,16 +63,16 @@ class BigSearch extends Widget
             });
         ');
         // register script that handles when a user clicks on a search result
-        if ($this->linkClickCallback !== null) {
-            if (is_string($this->linkClickCallback)) {
-                $this->linkClickCallback = new JsExpression($this->linkClickCallback);
+        if ($this->onClickCallback !== null) {
+            if (is_string($this->onClickCallback)) {
+                $this->onClickCallback = new JsExpression($this->onClickCallback);
             }
-            $view->registerJs('$("#all-sections-wrap").on("click", ".insert-on-click", '.Json::encode($this->linkClickCallback).');');
+            $view->registerJs('$("#all-sections-wrap").on("click", ".insert-on-click", '.Json::encode($this->onClickCallback).');');
         }
 
         $sections = $this->triggerSearch();
         $buttons = array_keys($sections);
-        if ($this->fileManager !== null) {
+        if (is_array($this->fileManager)) {
             $buttons[] = Yii::t('big', 'Media');
             $this->fileManager = FileManager::widget($this->fileManager);
         }
