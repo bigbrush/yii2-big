@@ -129,9 +129,9 @@ class Menu extends ActiveRecord
     public function getStateOptions()
     {
         return [
-            static::STATE_THRASHED => 'Thrashed',
-            static::STATE_ACTIVE => 'Active',
-            static::STATE_INACTIVE => 'Inactive',
+            static::STATE_THRASHED => Yii::t('big', 'Thrashed'),
+            static::STATE_ACTIVE => Yii::t('big', 'Active'),
+            static::STATE_INACTIVE => Yii::t('big', 'Inactive'),
         ];
     }
 
@@ -144,8 +144,8 @@ class Menu extends ActiveRecord
     public function getIsDefaultOptions()
     {
         return [
-            'No',
-            'Yes',
+            Yii::t('big', 'No'),
+            Yii::t('big', 'Yes'),
         ];
     }
 
