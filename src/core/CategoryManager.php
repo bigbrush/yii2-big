@@ -10,6 +10,7 @@ namespace bigbrush\big\core;
 use Yii;
 use yii\base\Object;
 use yii\base\ErrorException;
+use yii\helpers\ArrayHelper;
 
 /**
  * CategoryManager
@@ -25,7 +26,7 @@ class CategoryManager extends Object
      */
     private $_categories = [];
     /**
-     * @var string defines an id for the currently select root node. This is only set when
+     * @var string defines an id for the currently selected root node. This is only set when
      * a full tree is loaded.
      */
     private $_id;
@@ -42,6 +43,30 @@ class CategoryManager extends Object
     }
 
     /**
+     * Returns an array ready for drop down lists.
+     *
+     * @var string $module optional module id to load categories for.
+     * @param string $indenter a string that nested elements will be indented by.
+     * @return array categories ready for a drop down list.
+     */
+    public function getDropDownList($module = null, $indenter = '- ')
+    {
+        if ($module === null) {
+            $module = $this->getActiveModuleId();
+        }
+
+        if ($indenter === false) {
+            return ArrayHelper::map($this->getCategories($module), 'id', 'title');
+        }
+        
+        $categories = [];
+        foreach ($this->getCategories($module) as $category) {
+            $categories[$category->id] = str_repeat($indenter, $category->depth - 1) . $category->title;
+        }
+        return $categories;
+    }
+
+    /**
      * Returns a category tree for the provided module id. If no module id is provided
      * a category tree for the current module is returned.
      *
@@ -55,7 +80,7 @@ class CategoryManager extends Object
     public function getCategories($module = null)
     {
         if ($module === null) {
-            $module = Yii::$app->controller->module->id;
+            $module = $this->getActiveModuleId();
         }
 
         if (isset($this->_categories[$module]) || $this->loadCategoryTree($module)) {
@@ -92,7 +117,7 @@ class CategoryManager extends Object
      *
      * @param bigbrush\big\models\Category a category model to save. Use [[getModel()]]
      * to create or load a model.
-     * @return boolean true if save is successfull, false if not.
+     * @return boolean true if save is successful, false if not.
      */
     public function saveModel(&$model)
     {
@@ -126,6 +151,16 @@ class CategoryManager extends Object
         // loads categories for the current module and registers the root id.
         $this->getCategories();
         return $this->_id;
+    }
+
+    /**
+     * Returns an id of the module in the active controller.
+     * 
+     * @return string an id of a module.
+     */
+    public function getActiveModuleId()
+    {
+        return Yii::$app->controller->module->id;
     }
 
     /**
