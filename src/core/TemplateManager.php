@@ -26,11 +26,11 @@ class TemplateManager extends Object
     public $defaultText = '- Use default template -';
     /**
      * @var string name of a database table to load templates from.
+     * The table is aliased by the letter "t".
      */
     public $tableName = '{{%template}}';
     /**
      * @var string represents the model class when creating/editing a template.
-     * The table is aliased by the letter "t".
      */
     public $modelClass = 'bigbrush\big\models\Template';
     /**
@@ -103,7 +103,7 @@ class TemplateManager extends Object
     /**
      * Returns the active template.
      *
-     * @return null|TemplateManagerObject
+     * @return TemplateManagerObject
      */
     public function getActive()
     {
@@ -112,24 +112,23 @@ class TemplateManager extends Object
 
     /**
      * Loads a template from the database.
-     * If no id is provided the default template will be loaded.
+     * If no id is provided, and no template has been loaded previously, the default template will be loaded.
      *
      * @param int $id optional id of a template.
-     * @return TemplateManagerObject a template manager object possibly as an updated instance.
+     * @return TemplateManagerObject a template manager object.
      */
     public function load($id = 0)
     {
         $id = (int)$id;
         $active = $this->getActive();
-        if (($id && $active->id === $id) || $active->getIsDefault()) {
+        if ($active->id && (!$id || $id === $active->id)) {
             return $active;
         }
 
-        $query = $this->find();
         if ($id) {
-            $data = $query->where(['t.id' => $id])->one();
+            $data = $this->find()->where(['t.id' => $id])->one();
         } else {
-            $data = $query->where(['t.is_default' => 1])->one();
+            $data = $this->find()->where(['t.is_default' => 1])->one();
         }
         if ($data) {
             $active = $this->configure($data);
@@ -152,6 +151,7 @@ class TemplateManager extends Object
      *             BLOCK ID,
      *             ...
      *         ],
+     *         ...
      *     ],
      *     'is_default' => 0 OR 1,
      * ]
@@ -189,7 +189,6 @@ class TemplateManager extends Object
      *
      * @param array $data configuration array for the object.
      * @return TemplateManagerObject a template manager object.
-     * @see [[createTree()]]
      */
     public function createObject(array $data)
     {
@@ -211,10 +210,11 @@ class TemplateManager extends Object
     }
 
     /**
-     * Returns a template model. If id is provided the model will be loaded from the database.
+     * Returns a template model. If id is provided the model will be loaded from the database. Otheriwse
+     * a new model is created.
      *
      * @param int $id optional id of a database record to load.
-     * @return bigbrush\big\models\Template 
+     * @return bigbrush\big\models\Template a template model.
      * @throws InvalidParamException if model was not found in the database.
      */
     public function getModel($id = 0)

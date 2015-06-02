@@ -229,8 +229,8 @@ class Big extends Object implements BootstrapInterface
      */
     public function renderBlocks($positions)
     {
-        // make sure a template is loaded
-        $template = $this->templateManager->load();
+        // get the active template (is loaded when no template is set)
+        $template = $this->getTemplate();
         // get active positions in the template
         $positions = $template->getPositions(array_keys($positions));
         // register positions in the block manager
@@ -412,7 +412,7 @@ class Big extends Object implements BootstrapInterface
      * If no id is provided the default template will be loaded.
      *
      * @param int $id optional id of a template.
-     * @return Template
+     * @return TemplateManagerObject
      */
     public function getTemplate($id = 0)
     {
@@ -423,7 +423,7 @@ class Big extends Object implements BootstrapInterface
      * Sets the id of the active template. If the provided id is null or 0 (zero)
      * the default template will be registered (but not loaded immediately).
      *
-     * @param int $id id of a template.
+     * @param int|TemplateManagerObject $id an id of a template or a template manager object.
      */
     public function setTemplate($id)
     {
