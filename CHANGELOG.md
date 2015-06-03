@@ -7,6 +7,15 @@ Big Framework Change log
 - TBD
 
 
+0.1.0 June 03, 2015
+-------------------------
+- New: Added extension manager
+- New: removed "scope" from Big
+- Enh: Block manager rewritten to use the extension manager
+- Enh: Block refactored to be more flexible
+- Enh: Further encapsulation of Big Framework
+
+
 0.0.7 May 31, 2015
 -------------------------
 - New: Added template manager
