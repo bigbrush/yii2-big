@@ -17,16 +17,16 @@ use yii\base\InvalidParamException;
 class Parser extends Object
 {
     /**
-     * @var string the data currently being parsed
+     * @var string the data currently being parsed.
      */
     private $_data;
 
 
     /**
-     * Registers data to be parsed
+     * Registers data to be parsed.
      *
-     * @param string $data the data to be parsed
-     * @throws InvalidParamException
+     * @param string $data the data to be parsed.
+     * @throws InvalidParamException if the provided data is not a string.
      */
     public function setData($data)
     {
@@ -47,7 +47,7 @@ class Parser extends Object
     }
 
     /**
-     * Clears up the registered data
+     * Clears up the registered data.
      */
     public function clear()
     {
@@ -55,36 +55,17 @@ class Parser extends Object
     }
 
     /**
-     * Returns all positions in the provided data
+     * Runs the entire process of parsing.
      *
-     * @param string $data the data to search for positions in
-     * @return array list of all positions found
-     * @throws InvalidParamException in [[setData()]]
-     */
-    public function findPositions($data)
-    {
-        $this->setData($data);
-        $matches = $this->parseIncludeStatements();
-        $positions = [];
-        foreach ($matches[1] as $position) {
-            $positions[$position] = ucfirst($position);
-        }
-        $this->clear();
-        return $positions;
-    }
-
-    /**
-     * Runs the entire process of parsing
-     *
-     * @param string $data the data to be parsed
-     * @return string the data after it has been processed
-     * @throws InvalidParamException in [[setData()]]
+     * @param string $data the data to be parsed.
+     * @return string the data after it has been processed.
+     * @throws InvalidParamException in [[setData()]].
      */
     public function run($data, $blocks = [])
     {
         $this->setData($data);
         $config = $this->extractAttributes($this->parseIncludeStatements());
-        $this->renderIncludeStatements($config, $blocks);
+        $this->parseData($config, $blocks);
         $this->parseUrls();
         $data = $this->getData();
         $this->clear();
@@ -92,7 +73,7 @@ class Parser extends Object
     }
 
     /**
-     * Identifies all "<big:include position="POSITION" ... />" and returns an array with all matches
+     * Identifies all "<big:include position="POSITION" ... />" and returns an array with all matches.
      * 
      * Include statements MUST include the position attribute, see below where "position" is "sidebar"
      *     <big:include position="sidebar" />
@@ -130,8 +111,8 @@ class Parser extends Object
      *         ...
      *     ]
      *
-     * @param array $matches an associative array created from [[parseIncludeStatements()]]
-     * @return array list of configuration arrays for include statements
+     * @param array $matches an associative array created from [[parseIncludeStatements()]].
+     * @return array list of configuration arrays for include statements.
      */
     public function extractAttributes($matches)
     {
@@ -153,14 +134,13 @@ class Parser extends Object
     }
 
     /**
-     * Renders all include statements by replacing them with blocks.
+     * Parses the provided [[_data]] by replacing all include statements with content from blocks.
      *
      * @param array $config configuration for the render process. Use [[extractAttributes()]]
      * for the correct format.
      */
-    public function renderIncludeStatements($config, $blocks = [])
+    public function parseData($config, $blocks = [])
     {
-        // $manager = Yii::$app->big->blockManager;
         $replace = [];
         $with = [];
         foreach($config as $includeStatement => $params) {
@@ -201,8 +181,8 @@ class Parser extends Object
      * Callback for a preg_replace_callback() - see [[parseUrls()]] for information.
      * Tries to construct a seo friendly url from a dynamic url.
      * 
-     * @param array $matches array of matches 
-     * @return string the constructed url
+     * @param array $matches array of matches .
+     * @return string the constructed url.
      */
     public function replaceUrl($matches)
     {

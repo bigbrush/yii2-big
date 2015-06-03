@@ -22,20 +22,13 @@ use bigbrush\big\models\Block;
 class BlockManager extends Object
 {
     /**
-     * @var array a list of output blocks. The keys are the block positions and the values
+     * @var array a list of output blocks. The keys are positions the blocks are assigned to and the values
      * are arrays with block content.
-     * You can call Yii::$app->big->beginBlock() and Yii::$app->big->endBlock() to capture small fragments of a view.
-     * They can be later accessed with [[getBlocks()]].
+     * @see [[Big::beginBlock()]]
+     * @see [[addBlock()]]
+     * Blocks added here can later be accessed with [[getRegisteredBlocks()]].
      */
     public $blocks = [];
-    /**
-     * @var string Defines the class path to use when loading a block.
-     */
-    public $classPath = 'bigbrush\big\blocks';
-    /**
-     * @var string Defines the filename to use when loading a block.
-     */
-    public $blockClass = 'Block';
     /**
      * @var boolean defines whether to search in the current view for blocks.
      * If true then blocks set with Yii::$app->getView()->beginBlock() and Yii::$app->getView()->endBlock()
@@ -46,15 +39,95 @@ class BlockManager extends Object
 
 
     /**
-     * Returns all blocks in the provided position
+     * Adds a block to the provided position.
+     *
+     * @param string $position the position to add the block to.
+     * @param string $content the block content.
+     */
+    public function addBlock($position, $content)
+    {
+        if(isset($this->blocks[$position])) {
+            $this->blocks[$position][] = $content;
+        } else {
+            $this->blocks[$position] = [$content];
+        }
+    }
+
+    /**
+     * Returns a [[Block]] based on the provided id.
+     *
+     * @param int an id of a block.
+     * @return Block a block instance.
+     */
+    public function getBlock($id)
+    {
+        $model = $this->getModel($id);
+        return $this->createBlock($model->namespace, $model);
+    }
+
+    /**
+     * Returns all created blocks.
+     *
+     * @return array an array of [[Blocks]].
+     */
+    public function getBlocks()
+    {
+        $blocks = [];
+        foreach ($this->find()->all() as $data) {
+            $blocks[] = $this->createBlockFromData($data);
+        }
+        return $blocks;
+    }
+
+    /**
+     * Creates a new block based on the provided extension id.
+     *
+     * @param int $id an id of an [[bigbrush\big\models\Extension]] model.
+     */
+    public function createNewBlock($id)
+    {
+        $extension = Yii::$app->big->extensionManager->getExtension($id);
+        $block = $this->createBlock($extension->namespace, $this->getModel());
+        $block->model->registerExtension($extension);
+        $block->model->show_title = 1;
+        $block->model->state = 1;
+        return $block;
+    }
+
+    /**
+     * Registers blocks in this manager from the provided configuration array. Only active blocks are registered.
+     * All blocks are rendered when being assigned to each position.
+     *
+     * @param array $positions list of positions. The keys are position names and the values are
+     * arrays of block ids registered to each position.
+     */
+    public function registerPositions(array $positions)
+    {
+        $ids = [];
+        foreach ($positions as $position => $blockIds) {
+            $ids = array_merge($ids, $blockIds);
+        }
+        $blocks = $this->find()->where(['or', ['id' => $ids]])->andWhere(['state' => Block::STATE_ACTIVE])->indexBy('id')->all();
+        foreach ($positions as $position => $blockIds) {
+            foreach ($blockIds as $id) {
+                if (isset($blocks[$id])) {
+                    $block = $this->createBlockFromData($blocks[$id]);
+                    $this->addBlock($position, $block->run());
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns all blocks in the provided position.
      * If [[useViewBlocks]] is true the current application view will
      * searched for blocks.
      *
      * @param string $position optional position to grab blocks by. If not provided
      * all blocks is returned.
-     * @return array list of all registered blocks
+     * @return array list of all registered blocks.
      */
-    public function getBlocks($position = null)
+    public function getRegisteredBlocks($position = null)
     {
         if ($position === null) {
             return $this->blocks;
@@ -71,67 +144,56 @@ class BlockManager extends Object
     }
 
     /**
-     * Adds a block to the provided position
+     * Creates a block of the provided class with the provided model assigned.
      *
-     * @param string $position the position to add the block to
-     * @param string $content the block content
+     * @param string $class a fully qualified class name without the leading backslash.
+     * @param ActiveRecord a block model.
+     * @return Block the created block.
      */
-    public function addBlock($position, $content)
+    public function createBlock($class, $model)
     {
-        if(isset($this->blocks[$position])) {
-            $this->blocks[$position][] = $content;
-        } else {
-            $this->blocks[$position] = [$content];
-        }
+        $block = Yii::createObject([
+            'class' => $class,
+            'model' => $model,
+        ]);
+        Event::on(Block::className(), ActiveRecord::EVENT_BEFORE_INSERT, [$block, 'onBeforeSave']);
+        Event::on(Block::className(), ActiveRecord::EVENT_BEFORE_UPDATE, [$block, 'onBeforeSave']);
+        return $block;
     }
 
     /**
-     * Registers blocks in this manager from the provided configuration array.
-     * All blocks are rendered when being assigned to each position.
+     * Configures a  [[bigbrush\big\models\Block]] model with the provided data.
      *
-     * @param array $positions list of positions. The keys are position names and the values are
-     * arrays of block ids registered to each position.
+     * @param array $data an array of block data.
      */
-    public function registerPositions(array $positions)
+    public function createBlockFromData($data)
     {
-        $ids = [];
-        foreach ($positions as $position => $blockIds) {
-            $ids = array_merge($ids, $blockIds);
-        }
-        $blocks = $this->find()->where(['or', ['id' => $ids]])->indexBy('id')->all();
-        foreach ($positions as $position => $blockIds) {
-            foreach ($blockIds as $id) {
-                if (isset($blocks[$id])) {
-                    $block = $blocks[$id];
-                    $model = $this->getModel();
-                    // id needs to be assigned specifically
-                    $model->id = $block['id'];
-                    $model->setAttributes($block);
-                    $block = $this->createBlock($id, $model);
-                    $this->addBlock($position, $block->run());
-                }
-            }
-        }
+        $model = $this->getModel();
+        // id needs to be assigned specifically
+        $model->id = $data['id'];
+        $model->setAttributes($data);
+        return $this->createBlock($model->namespace, $model);
     }
 
     /**
-     * Returns all installed blocks
+     * Returns all installed blocks. If true is provided only active blocks are returned. If false is provided only
+     * inactive blocks are returned. If null is provided all blocks are returned.
      *
-     * @return array
+     * @param boolean $state indicates whether installed blocks should be loaded by a particular state.
+     * @return array list of installed blocks. The keys are extension ids and the values are extension names.
      */
-    public function getInstalledBlocks()
+    public function getInstalledBlocks($state = null)
     {
-        $pattern = Yii::getAlias('@'.str_replace('\\', '/', $this->classPath)).'/*';
         $installed = [];
-        foreach (glob($pattern, GLOB_ONLYDIR) as $dir) {
-            $dir = basename($dir);
-            $installed[$dir] = ucfirst($dir);
+        $extensions = Yii::$app->big->extensionManager->getBlocks($state);
+        foreach ($extensions as $extension) {
+            $installed[$extension->id] = $extension->name;
         }
         return $installed;
     }
 
     /**
-     * Returns a BlockQuery
+     * Returns a BlockQuery.
      *
      * @return BlockQuery
      */
@@ -140,61 +202,6 @@ class BlockManager extends Object
         $query = new Query();
         $query->from($this->getModel()->tableName());
     	return $query;
-    }
-
-    /**
-     * Creates a block from the provided block id
-     * The created block is setup to react to the save process of [[big\models\Block]].
-     * 
-     * @param string|int $id the id of a block to create. If an integer is provided the
-     * block will be loaded from the database. If a string is provided the block is considered
-     * as a new block. In this case id defines the folder in which the block is located.
-     * @param Block|null $model an optional Block model to assign to the block. If a model
-     * is provided the first parameter has no effect.
-     * @return bigbrush\big\core\Block
-     * @throws InvalidParamException
-     * @throws InvalidConfigException in [[loadBlock()]]
-     */
-    public function createBlock($id, $model = null)
-    {
-        if ($model === null) {
-            $model = $this->getModel();
-            if (is_numeric($id)) {
-                $model = $model->findOne($id);
-                if ($model === null) {
-                    throw new InvalidParamException("Block with id: $id was not found");
-                }
-            }
-        }
-        if ($model->id) {
-            $id = $model->name;
-        }
-        $block = $this->loadBlock($id, $model);
-        Event::on(Block::className(), ActiveRecord::EVENT_BEFORE_INSERT, [$block, 'onBeforeSave']);
-        Event::on(Block::className(), ActiveRecord::EVENT_BEFORE_UPDATE, [$block, 'onBeforeSave']);
-        return $block;
-    }
-
-    /**
-     * Loads a block extension
-     * This method can be customized by setting [[classPath]] and [[blockClass]]
-     *
-     * @param string $folder the folder of the block. This folder must exist in [[classPath]]
-     * @param big\models\Block $model the model to assign to the block
-     * @return bigbrush\big\core\Block or one of its subclasses.
-     * @throws InvalidConfigException
-     */
-    public function loadBlock($folder, $model)
-    {
-        $class = $this->classPath.'\\'.$folder.'\\'.$this->blockClass;
-        if (class_exists($class)) {
-            return Yii::createObject([
-                'class' => $class,
-                'model' => $model,
-            ]);
-        } else {
-            throw new InvalidConfigException("The class does not exist: $class. Are classPath and blockClass correct in ".get_class($this)."?");
-        }
     }
 
     /**

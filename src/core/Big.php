@@ -39,11 +39,7 @@ class Big extends Object implements BootstrapInterface
      * version
      */
     const BIG_VERSION = '0.0.7';
-    /**
-     * scopes
-     */
-    const SCOPE_FRONTEND = 'frontend';
-    const SCOPE_BACKEND = 'backend';
+
 
     /**
      * @var string path for the frontend theme. Is needed when identifing
@@ -51,56 +47,53 @@ class Big extends Object implements BootstrapInterface
      */
     public $frontendTheme;
     /**
+     * @var array list of event handlers used when searching.
+     * This property can be used to add search event handlers dynamically or configured in the application configuration file.
+     * @see http://www.yiiframework.com/doc-2.0/guide-concept-events.html#attaching-event-handlers.
+     */
+    public $searchHandlers = [];
+    /**
      * @var BlockManager the block manager.
-     * Defaults to bigbrush\big\core\BlockManager
+     * Defaults to bigbrush\big\core\BlockManager.
      */
     public $blockManager;
     /**
      * @var MenuManager the menu manager.
-     * Defaults to bigbrush\big\core\MenuManager
+     * Defaults to bigbrush\big\core\MenuManager.
      */
     public $menuManager;
     /**
      * @var CategoryManager the category manager.
-     * Defaults to bigbrush\big\core\CategoryManager
+     * Defaults to bigbrush\big\core\CategoryManager.
      */
     public $categoryManager;
     /**
      * @var UrlManager the url manager.
-     * Defaults to bigbrush\big\core\UrlManager
+     * Defaults to bigbrush\big\core\UrlManager.
      */
     public $urlManager;
     /**
      * @var Template the template manager.
-     * Defaults to bigbrush\big\core\TemplateManager
+     * Defaults to bigbrush\big\core\TemplateManager.
      */
     public $templateManager;
     /**
+     * @var ExtensionManager the extension manager.
+     * Defaults to bigbrush\big\core\ExtensionManager.
+     */
+    public $extensionManager;
+    /**
      * @var Parser|false the application response parser. If this property is false the parser
      * is disabled.
-     * Defaults to bigbrush\big\core\Parser
+     * Defaults to bigbrush\big\core\Parser.
      */
     public $parser;
-    /**
-     * @var array list of event handlers used when searching.
-     * Can be used when in the application configuration file.
-     * @see http://www.yiiframework.com/doc-2.0/guide-concept-events.html#attaching-event-handlers
-     */
-    public $searchHandlers = [];
-    /**
-     * @var string the application scope.
-     * This is used to add modules automatically.
-     * Also used to set correct base url for the editor and file manager in [[bootstrap()]] method.
-     * Defaults to [[SCOPE_FRONTEND]].
-     */
-    private $_scope;
 
 
     /**
-     * Bootstraps Big by initializing important properties. Under "backend" scope
-     * the big core module will be registered in the main application. This method also hooks
-     * into the main application via the event system to parse layout files.
-     * This methods runs after the application is configured.
+     * Bootstraps Big by initializing all managers and the parser. Also hooks into the main application
+     * via the event system to parse layout files.
+     * Is called after the application, and Big, has been configured.
      *
      * @param yii\base\Application $app the application currently running
      * @see http://www.yiiframework.com/doc-2.0/guide-structure-extensions.html#bootstrapping-classes
@@ -109,55 +102,22 @@ class Big extends Object implements BootstrapInterface
     {
         // initialize Big
         $this->initialize();
-        
-        $scope = $this->getScope();
-
-        // set base url of editor and file manager if scope is "backend"
-        if ($scope === self::SCOPE_BACKEND) {
-            $baseUrl = Url::to('@web/../');
-            Yii::$container->set('bigbrush\big\widgets\editor\Editor', [
-                'baseUrl' => $baseUrl,
-            ]);
-            Yii::$container->set('bigbrush\big\widgets\filemanager\FileManager', [
-                'baseUrl' => $baseUrl,
-            ]);
-        }
-
-        // set the application default route when scope is "frontend"
-        if ($scope === self::SCOPE_FRONTEND) {
-            $menu = $this->menuManager->getDefault();
-            $this->menuManager->setActive($menu);
-            $route = $menu->route;
-            if (strpos($route, '&') !== false) {
-                list($route, $params) = explode('&', $route, 2);
-                parse_str($params, $params);
-                Yii::$app->defaultRoute = $route;
-                foreach ($params as $key => $value) {
-                    $_GET[$key] = $value;
-                }
-            } else {
-                Yii::$app->defaultRoute = $route;
-            }
-        }
 
         // hook into the Yii application
         $this->registerApplicationHooks($app);
     }
 
     /**
-     * Initializes Big by setting important properties
-     * This method is called at the beginning of the boostrapping process
+     * Initializes Big by creating all managers.
+     * This method is called at the beginning of the boostrapping process.
      */
     public function initialize()
     {
-        // application scope 
-        if ($this->_scope === null) {
-            $this->setScope(self::SCOPE_FRONTEND);
-        }
-        // enable internationalization
+        // enable internationalization first so core classes can use it
         $this->registerTranslations([
             'class' => 'yii\i18n\PhpMessageSource',
         ]);
+
         // core classes 
         foreach ($this->getCoreClasses() as $property => $class) {
             if (is_array($this->$property)) {
@@ -166,6 +126,7 @@ class Big extends Object implements BootstrapInterface
                 $this->$property = Yii::createObject(['class' => $class]);
             }
         }
+
         // parser
         if ($this->parser !== false) {
             $config = ['class' => 'bigbrush\big\core\Parser'];
@@ -179,45 +140,32 @@ class Big extends Object implements BootstrapInterface
 
     /**
      * Hooks into the running Yii application by registering various event handlers.
-     * Event handlers for searches in Big are registered here.
-     * This method is called at the very end of the boostrapping process
+     * Registers event handlers for searches in Big.
+     * Is called at the end of the boostrapping process.
      *
-     * @param yii\web\Application $app the application currently running
+     * @param yii\web\Application $app the application currently running.
      */
     public function registerApplicationHooks($app)
     {
-        $view = $app->getView();
+        $app->getView()->on(View::EVENT_BEGIN_PAGE, function($event) {
+            // render blocks if the active theme has positions enabled
+            $positions = $this->getActiveThemePositions();
+            if (!empty($positions)) {
+                $this->renderBlocks($positions);
+            }
 
-        // set the page title (if not set) when a layout starts to render.
-        $view->on(View::EVENT_BEGIN_PAGE, function($event) use ($view) {
+            // set the page title (if not set by a Block) when a layout starts to render.
+            $view = $event->sender;
             $menu = $this->menuManager->getActive();
             if (empty($view->title) && $menu) {
                 $view->title = (empty($menu->meta_title)) ? $menu->title : $menu->meta_title;
             }
         });
 
-        // register event handler to render blocks right before asset bundles are registered by the view.
-        $positions = $this->getActiveThemePositions();
-        if (!empty($positions)) {
-            $view->on(View::EVENT_END_BODY, function($event) use ($positions) {
-                $this->renderBlocks($positions);
-            });
-        }
-
         if ($this->parser !== false) {
             // register event handler that parses the application response
             $app->on(Application::EVENT_AFTER_REQUEST, [$this, 'parseResponse']);
         }
-    }
-
-    /**
-     * Registers translations.
-     *
-     * @param array $config a configuration array used to add a translation source to the [[yii\i18n\I18N]] application component.
-     */
-    public function registerTranslations($config)
-    {
-        Yii::$app->i18n->translations['big'] = $config;
     }
 
     /**
@@ -229,7 +177,7 @@ class Big extends Object implements BootstrapInterface
      */
     public function renderBlocks($positions)
     {
-        // get the active template (is loaded when no template is set)
+        // get the active template (is being loaded when no template has been assigned)
         $template = $this->getTemplate();
         // get active positions in the template
         $positions = $template->getPositions(array_keys($positions));
@@ -254,8 +202,18 @@ class Big extends Object implements BootstrapInterface
         }
         $response = Yii::$app->getResponse();
         if ($response->format === Response::FORMAT_HTML && !empty($response->data)) {
-            $response->data = $this->parser->run($response->data, $this->blockManager->getBlocks());
+            $response->data = $this->parser->run($response->data, $this->blockManager->getRegisteredBlocks());
         }
+    }
+
+    /**
+     * Registers translations.
+     *
+     * @param array $config a configuration array used to add a translation source to the [[yii\i18n\I18N]] application component.
+     */
+    public function registerTranslations($config)
+    {
+        Yii::$app->i18n->translations['big'] = $config;
     }
 
     /**
@@ -491,30 +449,6 @@ class Big extends Object implements BootstrapInterface
     }
 
     /**
-     * Sets the application scope.
-     *
-     * @return mixed the application scope.
-     * @throws InvalidCallException if scope is set after application has been configured.
-     */
-    public function setScope($scope)
-    {
-        if ($this->_scope !== null) {
-            throw new InvalidCallException("Scope can only be set through application configuration.");
-        }
-        $this->_scope = $scope;
-    }
-
-    /**
-     * Returns the application scope.
-     *
-     * @return mixed the application scope.
-     */
-    public function getScope()
-    {
-        return $this->_scope;
-    }
-
-    /**
      * Returns a string representing the current version of Big
      *
      * @return string the version of Big
@@ -538,6 +472,7 @@ class Big extends Object implements BootstrapInterface
             'categoryManager' => 'bigbrush\big\core\CategoryManager',
             'urlManager' => 'bigbrush\big\core\UrlManager',
             'templateManager' => 'bigbrush\big\core\TemplateManager',
+            'extensionManager' => 'bigbrush\big\core\ExtensionManager',
         ];
     }
 }

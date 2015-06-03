@@ -24,6 +24,12 @@ class MenuManager extends Object
      */
     public $autoLoad = true;
     /**
+     * @var boolean indicates whether the menu manager should set a default route in the running application.
+     * If true the default menu item will determine the default route.
+     * @see [[yii\web\Application::defaultRoute]].
+     */
+    public $setApplicationDefaultRoute = false;
+    /**
      * @var int defines an id for the menu that has the has default menu item registered.
      * If this property is not set it will be autoloaded in [[getDefaultMenu()]].
      */
@@ -51,9 +57,28 @@ class MenuManager extends Object
             $this->modelClass = 'bigbrush\big\models\Menu';
         }
 
+        // set the application default route when enabled
+        if ($this->setApplicationDefaultRoute) {
+            $menu = $this->getDefault();
+            $this->setActive($menu);
+            $route = $menu->route;
+            if (strpos($route, '&') !== false) {
+                list($route, $params) = explode('&', $route, 2);
+                parse_str($params, $params);
+                Yii::$app->defaultRoute = $route;
+                foreach ($params as $key => $value) {
+                    $_GET[$key] = $value;
+                }
+            } else {
+                Yii::$app->defaultRoute = $route;
+            }
+        }
+
+        // load all menu trees when auto load is enabled
         if ($this->autoLoad) {
             $this->getMenus(true);
         }
+        
         // register this manager when Big performs a search
         Yii::$app->big->searchHandlers[] = [$this, 'onSearch'];
     }
