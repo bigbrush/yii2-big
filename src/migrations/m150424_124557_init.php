@@ -16,11 +16,13 @@ class m150424_124557_init extends Migration
         // block table
         $this->createTable('{{%block}}', [
             'id' => Schema::TYPE_PK,
+            'extension_id' => Schema::TYPE_INTEGER . ' NOT NULL',
             'title' => Schema::TYPE_STRING . ' NOT NULL',
             'content' => Schema::TYPE_TEXT . ' NOT NULL',
-            'name' => Schema::TYPE_STRING . ' NOT NULL',
+            'namespace' => Schema::TYPE_STRING . ' NOT NULL',
             'show_title' => Schema::TYPE_SMALLINT . ' NOT NULL',
             'state' => Schema::TYPE_SMALLINT . ' NOT NULL DEFAULT 1',
+            'scope' => Schema::TYPE_STRING . ' NOT NULL',
         ], $tableOptions);
         // menu table
         $this->createTable('{{%menu}}', [
@@ -62,6 +64,15 @@ class m150424_124557_init extends Migration
             'title' => Schema::TYPE_STRING . ' NOT NULL',
             'positions' => Schema::TYPE_STRING . ' NOT NULL',
             'is_default' => Schema::TYPE_SMALLINT . ' NOT NULL',
+        ], $tableOptions);
+        // extension table
+        $this->createTable('{{%extension}}', [
+            'id' => Schema::TYPE_PK,
+            'name' => Schema::TYPE_STRING . ' NOT NULL',
+            'type' => Schema::TYPE_STRING . ' NOT NULL',
+            'namespace' => Schema::TYPE_STRING . ' NOT NULL',
+            'description' => Schema::TYPE_TEXT . ' NOT NULL',
+            'state' => Schema::TYPE_SMALLINT . ' NOT NULL DEFAULT 1',
         ], $tableOptions);
 
         // insert a default template into template table
