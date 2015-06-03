@@ -113,19 +113,6 @@ class Block extends ActiveRecord
     }
 
     /**
-     *
-     * REMOVE THIS METHOD - MOVED TO BIGBRUSH\BIG\CORE\BLOCK
-     *
-     * Helper to determine whether to show the title
-     *
-     * @return boolean whether to show the title
-     */
-    public function getShowTitle()
-    {
-        return (bool)$this->show_title;
-    }
-
-    /**
      * Returns an array of available states.
      * Can be used with form dropdown lists.
      *
