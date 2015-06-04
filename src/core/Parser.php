@@ -73,14 +73,15 @@ class Parser extends Object
     }
 
     /**
-     * Identifies all "<big:include position="POSITION" ... />" and returns an array with all matches.
+     * Identifies all "<big:block position="POSITION" ... />" and returns an array with all matches.
      * 
      * Include statements MUST include the position attribute, see below where "position" is "sidebar"
-     *     <big:include position="sidebar" />
+     *     <big:block position="sidebar" />
      * 
+     * THE FOLLOWING IS NOT IMPLEMENTED ANYWHERE BUT HERE.
      * You can add additional attributes to the include statement, like below (order of the attributes
      * is not important, as long as position is the first attribute)
-     *     <big:include position="sidebar" type="widget" autostart="false" color="green" />
+     *     <big:block position="sidebar" type="widget" autostart="false" color="green" />
      * 
      * @return array all matches as an associative array
      * The structure of the $array:
@@ -90,7 +91,7 @@ class Parser extends Object
      */
     public function parseIncludeStatements()
     {
-        preg_match_all('#<big:include\ position="([^"]+)" (.*)\/>#iU', $this->_data, $matches);
+        preg_match_all('#<big:block\ position="([^"]+)" (.*)\/>#iU', $this->_data, $matches);
         return $matches;
     }
 
