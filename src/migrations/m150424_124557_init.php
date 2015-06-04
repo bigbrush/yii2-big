@@ -90,5 +90,6 @@ class m150424_124557_init extends Migration
         $this->dropTable('{{%menu}}');
         $this->dropTable('{{%category}}');
         $this->dropTable('{{%template}}');
+        $this->dropTable('{{%extension}}');
     }
 }
