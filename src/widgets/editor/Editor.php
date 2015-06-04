@@ -81,13 +81,11 @@ class Editor extends InputWidget
         $id = $this->options['id'];
         $this->clientOptions['selector'] = "#$id";
         
-        if (!isset($this->clientOptions['language_url'])) {
-            // tinymce (mostly) uses short language codes
-            $language = substr(Yii::$app->language, 0, 2);
-            $langFile = "langs/{$language}.js";
-            $langAssetBundle = EditorLangAsset::register($view);
-            $langAssetBundle->js[] = $langFile;
-            $this->clientOptions['language_url'] = $langAssetBundle->baseUrl . "/{$langFile}";
+        // tinymce (mostly) uses short language codes
+        $language = substr(Yii::$app->language, 0, 2);
+        // no language file needed when application language is english
+        if ($language !== 'en' && !isset($this->clientOptions['language_url'])) {
+            $this->registerLanguageFile($language);
         }
 
         $options = Json::encode($this->clientOptions);
@@ -98,6 +96,23 @@ class Editor extends InputWidget
         }
 
         $view->registerJs(implode("\n", $js));
+    }
+
+    /**
+     * Registers a language file if it has been installed.
+     *
+     * @param string $language the language to load a file for.
+     */
+    public function registerLanguageFile($language)
+    {
+        $assetBundle = new EditorLangAsset();
+        $langFile = "langs/{$language}.js";
+        $file = Yii::getAlias($assetBundle->sourcePath) . "/{$langFile}";
+        if (is_file($file)) {
+            $assetBundle = EditorLangAsset::register($this->getView());
+            $assetBundle->js[] = $langFile;
+            $this->clientOptions['language_url'] = $assetBundle->baseUrl . "/{$langFile}";
+        }
     }
 
     /**
