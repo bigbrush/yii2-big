@@ -38,7 +38,7 @@ class CategoryManager extends Object
     public function init()
     {
         // set properties defined in trait
-        $this->tableName = 'category';
+        $this->tableName = '{{%category}}';
         $this->modelClass = 'bigbrush\big\models\Category';
     }
 
