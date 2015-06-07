@@ -83,6 +83,16 @@ class FileManager extends Widget
 
     
     /**
+     * Initializes this widget.
+     */
+    public function init()
+    {
+        if ($this->baseUrl === null) {
+            $this->baseUrl = Url::home();
+        }
+    }
+    
+    /**
      * Updates the elFinder UI
      */
     public function update()
@@ -118,23 +128,48 @@ class FileManager extends Widget
         $language = substr(Yii::$app->language, 0, 2);
         if ($language !== 'en') {
             $options['lang'] = $language;
-            $bundle->js[] = 'js/i18n/elfinder.'.$language.'.js';
+            $file = "js/i18n/elfinder.{$language}.js";
+            if (file_exists(Yii::getAlias($bundle->sourcePath . '/' . $file))) {
+                $bundle->js[] = $file;
+            }
         }
         if ($this->enableCsrfToken) {
             $request = Yii::$app->getRequest();
             $options['customData'] = [$request->csrfParam => $request->getCsrfToken()];
         }
         if ($this->onClickCallback !== null) {
-            if (is_string($this->onClickCallback)) {
-                $options['getFileCallback'] = new JsExpression($this->onClickCallback);
-            } else {
-                $options['getFileCallback'] = $this->onClickCallback;
-            }
+            $options['getFileCallback'] = $this->getClickCallback();
         }
         $options = ArrayHelper::merge($options, $this->clientOptions);
         $options = Json::encode($options);
         $view->registerJs("$('#elfinder').elfinder($options);");
         return $this->render('index');
+    }
+
+    /**
+     * Returns a javascript callback function used with elFinder.
+     *
+     * @return string a javascript callback.
+     */
+    public function getClickCallback()
+    {
+        if (is_string($this->onClickCallback)) {
+            $callback = new JsExpression($this->onClickCallback);
+        } else {
+            $callback = $this->onClickCallback;
+        }
+        // file.tmb is only set when selecting images (not when selecting .pdf for example)
+        return new JsExpression('
+            function(file) {
+                var callback = ' . $callback . ';
+                file.url = file.url.slice("' . strlen($this->baseUrl) . '");
+                file.baseUrl = "' . $this->baseUrl . '";
+                if (file.tmb !== undefined) {
+                    file.tmb = file.tmb.slice("' . strlen($this->baseUrl) . '");
+                }
+                callback(file);
+            }
+        ');
     }
 
     /**
@@ -150,8 +185,8 @@ class FileManager extends Widget
                 [
                     'driver' => 'LocalFileSystem',
                     'path' => Yii::getAlias($this->basePath . $this->folder),
-                    'URL' => ($this->baseUrl !== null ? $this->baseUrl : Url::home()) . $this->folder,
-                    'uploadAllow' => array('image'),
+                    'URL' => $this->baseUrl . $this->folder,
+                    'uploadAllow' => ['image'],
                     'attributes' => [
                         [
                             'pattern' => '/.tmb|.quarantine|.gitignore/',
