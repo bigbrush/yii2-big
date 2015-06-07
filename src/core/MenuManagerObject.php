@@ -11,6 +11,20 @@ use Yii;
 
 /**
  * MenuManagerObject
+ *
+ * @property integer $id
+ * @property string $title
+ * @property string $alias
+ * @property string $route
+ * @property int $state
+ * @property int $tree
+ * @property int $lft
+ * @property int $rgt
+ * @property int $depth
+ * @property int $is_default
+ * @property string $meta_title
+ * @property string $meta_description
+ * @property string $meta_keywords
  */
 class MenuManagerObject extends ManagerObject
 {
@@ -49,6 +63,16 @@ class MenuManagerObject extends ManagerObject
      */
     public function getIsDefault()
     {
-        return (bool) $this->is_default;
+        return $this->is_default === '1';
+    }
+
+    /**
+     * Returns a boolean indicating whether this menu is enabled.
+     *
+     * @return boolean true if this menu is enabled and false if not.
+     */
+    public function getIsEnabled()
+    {
+        return $this->state === '1';
     }
 }
