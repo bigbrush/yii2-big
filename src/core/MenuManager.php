@@ -37,7 +37,7 @@ class MenuManager extends Object
     /**
      * @var int an id of the active menu.
      */
-    public $_active;
+    private $_active;
 
 
     /**
@@ -49,7 +49,9 @@ class MenuManager extends Object
     public function init()
     {
         // set properties defined in trait if not set by application configuration.
-        $this->itemClass = 'bigbrush\big\core\MenuManagerObject';
+        if ($this->itemClass === 'bigbrush\big\core\ManagerObject') {
+            $this->itemClass = 'bigbrush\big\core\MenuManagerObject';
+        }
         if ($this->tableName === null) {
             $this->tableName = '{{%menu}}';
         }
