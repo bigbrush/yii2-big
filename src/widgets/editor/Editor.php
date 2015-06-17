@@ -50,7 +50,18 @@ class Editor extends InputWidget
 
 
     /**
-     * Runs the widget 
+     * Initializes the widget. 
+     */
+    public function init()
+    {
+        parent::init();
+        if ($this->baseUrl === null) {
+            $this->baseUrl = Url::home();
+        }
+    }
+
+    /**
+     * Runs the widget.
      */
     public function run()
     {
@@ -63,7 +74,7 @@ class Editor extends InputWidget
     }
 
     /**
-     * Adds TinyMCE clientscript 
+     * Adds TinyMCE clientscript.
      */
     protected function registerClientScript()
     {
@@ -116,7 +127,7 @@ class Editor extends InputWidget
     }
 
     /**
-     * Returns the default configuration for the editor
+     * Returns the default configuration for the editor.
      *
      * @return array
      */
@@ -126,13 +137,13 @@ class Editor extends InputWidget
             'height' => 300,
             'plugins' => ['link', 'image'],
             'relative_urls' => true,
-            'document_base_url' => $this->baseUrl !== null ? $this->baseUrl : Url::home(),
+            'document_base_url' => $this->baseUrl,
             'file_browser_callback' => $this->getFileBrowserCallback(),
         ];
     }
 
     /**
-     * Returns a [[JsExpression]] containing a callback for the TinyMCE file/media browser
+     * Returns a [[JsExpression]] containing a callback for the TinyMCE file/media browser.
      *
      * @return JsExpression
      */
