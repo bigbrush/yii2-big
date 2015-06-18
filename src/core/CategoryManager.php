@@ -123,15 +123,20 @@ class CategoryManager extends Object
     {
         if ($model->load(Yii::$app->getRequest()->post()) && $model->validate()) {
             $parent = $model->parents(1)->one();
-            if ($model->getIsNewRecord() || $parent->id != $model->parent_id) {
-                if ($model->parent_id) {
-                    $parent = $this->getModel($model->parent_id);
-                } else {
+            if (!$model->parent_id) {
+                if ($model->getIsNewRecord() || !$parent->isRoot()) {
                     $parent = $this->getModel($this->getRootId());
+                    return $model->appendTo($parent, false);
+                } else {
+                    return $model->save(false);
                 }
-                return $model->appendTo($parent, false);
             } else {
-                return $model->save(false);
+                if ($model->getIsNewRecord() || $parent->id != $model->parent_id) {
+                    $parent = $this->getModel($model->parent_id);
+                    return $model->appendTo($parent, false);
+                } else {
+                    return $model->save(false);
+                }
             }
         } else {
             return false;
