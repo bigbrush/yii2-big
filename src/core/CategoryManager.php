@@ -10,26 +10,25 @@ namespace bigbrush\big\core;
 use Yii;
 use yii\base\Object;
 use yii\base\ErrorException;
+use yii\base\InvalidParamException;
 use yii\helpers\ArrayHelper;
 
 /**
  * CategoryManager
  */
-class CategoryManager extends Object
+class CategoryManager extends Object implements ManagerInterface
 {
-    use NestedSetManagerTrait;
+    use NestedSetManagerTrait {
+        getItems as _getItems;
+        getItem as _getItem;
+    }
 
     /**
      * @var array maps module ids to root node ids. The keys are module ids and the values are
      * ids of a tree root node. Root nodes acts as identifier for each tree of categories. Root
      * nodes are the only records which has the property "module" set.
      */
-    private $_categories = [];
-    /**
-     * @var string defines an id for the currently selected root node. This is only set when
-     * a full tree is loaded.
-     */
-    private $_id;
+    private $_mapper = [];
 
 
     /**
@@ -37,55 +36,52 @@ class CategoryManager extends Object
      */
     public function init()
     {
-        // set properties defined in trait
-        $this->tableName = '{{%category}}';
-        $this->modelClass = 'bigbrush\big\models\Category';
+        // set properties defined in trait if not set by application configuration.
+        if ($this->tableName === null) {
+            $this->tableName = '{{%category}}';
+        }
+        if ($this->modelClass === null) {
+            $this->modelClass = 'bigbrush\big\models\Category';
+        }
     }
 
     /**
-     * Returns an array ready for drop down lists.
+     * Returns an array ready for drop down lists for the provided module.
      *
-     * @var string $module optional module id to load categories for.
+     * @param string $module a module id to load categories for.
+     * @param string $unselected optional text to use as a state of "unselected".
      * @param string $indenter a string that nested elements will be indented by.
      * @return array categories ready for a drop down list.
      */
-    public function getDropDownList($module = null, $indenter = '- ')
+    public function getDropDownList($module, $unselected = null, $indenter = '- ')
     {
-        if ($module === null) {
-            $module = $this->getActiveModuleId();
+        $categories = $unselected ? [$unselected] : [];
+        if (!$indenter) {
+            return $categories + ArrayHelper::map($this->getItems($module), 'id', 'title');
         }
-
-        if ($indenter === false) {
-            return ArrayHelper::map($this->getCategories($module), 'id', 'title');
-        }
-        
-        $categories = [];
-        foreach ($this->getCategories($module) as $category) {
+        foreach ($this->getItems($module) as $category) {
             $categories[$category->id] = str_repeat($indenter, $category->depth - 1) . $category->title;
         }
         return $categories;
     }
 
     /**
-     * Returns a category tree for the provided module id. If no module id is provided
-     * a category tree for the current module is returned.
+     * Returns a category tree for the provided module id.
      *
      * If no category has been created for the module id a new category tree
      * will be automatically created.
      * 
-     * @var string $module optional module id to load categories for.
+     * @param string $id a module id to load categories for.
      * @return array a category tree. Empty array if a category tree is automatically created.
      * @throws ErrorException if a category tree for a module could not be created.
      */
-    public function getCategories($module = null)
+    public function getItems($id = null)
     {
-        if ($module === null) {
-            $module = $this->getActiveModuleId();
-        }
-
-        if (isset($this->_categories[$module]) || $this->loadCategoryTree($module)) {
-            return $this->getItems($this->_categories[$module]);
-        } elseif ($this->createRootNode($module)) {
+        if ($id === null) {
+            throw new InvalidParamException("Id must be provided when loading categories.");
+        } elseif (isset($this->_mapper[$id]) || $this->loadCategoryTree($id)) {
+            return $this->_getItems($this->_mapper[$id]);
+        } elseif ($this->createRootNode($id)) {
             return [];
         } else {
             throw new ErrorException("Categories for module: '$module' could not be created.");    
@@ -99,13 +95,13 @@ class CategoryManager extends Object
      * @return ManagerObject a category if it exists. False if it does not exist.
      * @throws InvalidParamException if category was not found.
      */
-    public function getCategory($id)
+    public function getItem($id)
     {
         // search in loaded items. Queries the datebase if not already loaded.
-        $category = $this->getItem($id);
+        $category = $this->_getItem($id);
         foreach ($this->getRoots() as $root) {
             if ($root->tree == $category->tree) {
-                $this->_categories[$root->module] = $root->id;
+                $this->_mapper[$root->module] = $root->id;
                 return $category;
             }
         }
@@ -125,7 +121,7 @@ class CategoryManager extends Object
             $parent = $model->parents(1)->one();
             if (!$model->parent_id) {
                 if ($model->getIsNewRecord() || !$parent->isRoot()) {
-                    $parent = $this->getModel($this->getRootId());
+                    $parent = $this->getModel($model->tree);
                     return $model->appendTo($parent, false);
                 } else {
                     return $model->save(false);
@@ -144,51 +140,19 @@ class CategoryManager extends Object
     }
 
     /**
-     * Returns an id of the root node for the current tree.
-     * 
-     * @return int id of the current root node.
-     */
-    public function getRootId()
-    {
-        if ($this->_id !== null) {
-            return $this->_id;
-        }
-        // loads categories for the current module and registers the root id.
-        $this->getCategories();
-        return $this->_id;
-    }
-
-    /**
-     * Returns an id of the module in the active controller.
-     * 
-     * @return string an id of a module.
-     */
-    public function getActiveModuleId()
-    {
-        return Yii::$app->controller->module->id;
-    }
-
-    /**
      * Loads and creates a category tree based on the provided module.
      *
      * The root node is excluded from the created tree. The root node only
-     * acts as identifier for the module using the category tree. The root node
-     * id is stored in [[$_id]].
+     * acts as identifier for the module using the category tree.
      *
      * @param string $module a module id
      * @return boolean true if tree was loaded, false if not
      */
     public function loadCategoryTree($module)
     {
-        $tree = $this->find()
-            ->select('m1.*')
-            ->where([$this->tableAlias.'.module' => $module])
-            ->leftJoin($this->tableName . ' m1', 'm1.tree = '.$this->tableAlias.'.tree')
-            ->orderBy('lft')
-            ->all();
-        if (!empty($tree)) {
-            $this->_categories[$module] = $this->_id = $tree[0]['id'];
-            $this->createTree($tree);
+        if ($this->loadTree('module', $module)) {
+            $root = $this->searchRoots('module', $module);
+            $this->_mapper[$module] = $root->id;
             return true;
         } else {
             return false;
@@ -206,7 +170,6 @@ class CategoryManager extends Object
         $model = $this->getModel();
         $model->setAttributes(['module' => $module, 'title' => $module]);
         if ($model->makeRoot()) {
-            $this->_id = $model->id;
             $this->createTree([$model->getAttributes()]);
             return true;
         } else {

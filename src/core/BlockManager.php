@@ -19,7 +19,7 @@ use bigbrush\big\models\Block;
 /**
  * BlockManager
  */
-class BlockManager extends Object
+class BlockManager extends Object implements ManagerInterface
 {
     /**
      * @var array a list of output blocks. The keys are positions the blocks are assigned to and the values
@@ -59,10 +59,13 @@ class BlockManager extends Object
      * @param int an id of a block.
      * @return Block a block instance.
      */
-    public function getBlock($id)
+    public function getItem($id)
     {
         $model = $this->getModel($id);
-        return $this->createBlock($model->namespace, $model);
+        return $this->createObject([
+            'class' => $model->namespace,
+            'model' => $model,
+        ]);
     }
 
     /**
@@ -70,7 +73,7 @@ class BlockManager extends Object
      *
      * @return array an array of [[Blocks]].
      */
-    public function getBlocks()
+    public function getItems()
     {
         $blocks = [];
         foreach ($this->find()->all() as $data) {
@@ -87,7 +90,10 @@ class BlockManager extends Object
     public function createNewBlock($id)
     {
         $extension = Yii::$app->big->extensionManager->getExtension($id);
-        $block = $this->createBlock($extension->namespace, $this->getModel());
+        $block = $this->createObject([
+            'class' => $extension->namespace,
+            'model' => $this->getModel(),
+        ]);
         $block->model->registerExtension($extension);
         $block->model->show_title = 1;
         $block->model->state = 1;
@@ -150,12 +156,9 @@ class BlockManager extends Object
      * @param ActiveRecord a block model.
      * @return Block the created block.
      */
-    public function createBlock($class, $model)
+    public function createObject(array $data)
     {
-        $block = Yii::createObject([
-            'class' => $class,
-            'model' => $model,
-        ]);
+        $block = Yii::createObject($data);
         Event::on(Block::className(), ActiveRecord::EVENT_BEFORE_INSERT, [$block, 'onBeforeSave']);
         Event::on(Block::className(), ActiveRecord::EVENT_BEFORE_UPDATE, [$block, 'onBeforeSave']);
         return $block;
@@ -172,7 +175,10 @@ class BlockManager extends Object
         // id needs to be assigned specifically
         $model->id = $data['id'];
         $model->setAttributes($data);
-        return $this->createBlock($model->namespace, $model);
+        return $this->createObject([
+            'class' => $model->namespace,
+            'model' => $model,
+        ]);
     }
 
     /**

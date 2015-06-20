@@ -9,13 +9,15 @@ namespace bigbrush\big\core;
 
 use Yii;
 use yii\base\Object;
+use yii\base\InvalidCallException;
 use yii\base\InvalidParamException;
+use yii\db\Query;
 use bigbrush\big\models\Extension;
 
 /**
  * ExtensionManager
  */
-class ExtensionManager extends Object
+class ExtensionManager extends Object implements ManagerInterface
 {
     /**
      * @var string represents the model class when creating/editing an item.
@@ -44,7 +46,7 @@ class ExtensionManager extends Object
      * Defaults to null meaning load all installed extensions.
      * @return array list of extension models.
      */
-    public function getExtensions($type = null, $state = null)
+    public function getItems($type = null, $state = null)
     {
         $query = $this->getModel()->find()->orderBy('name');
         if ($type !== null) {
@@ -62,9 +64,29 @@ class ExtensionManager extends Object
      * @param int $id an id of a extension.
      * @return bigbrush\big\models\Extension an extension model.
      */
-    public function getExtension($id)
+    public function getItem($id)
     {
         return $this->getModel($id);
+    }
+
+    /**
+     * Returns a [[Query]] ready to query the database table for extensions.
+     *
+     * @return Query
+     */
+    public function find()
+    {
+        $query = new Query();
+        $query->from($this->getModel()->tableName());
+        return $query;
+    }
+
+    /**
+     * Not implemented in extension manager.
+     */
+    public function createObject(array $data)
+    {
+        throw new InvalidCallException("ExtensionManager::createObject() is not implemented.");
     }
 
     /**

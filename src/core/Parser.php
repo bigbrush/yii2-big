@@ -135,10 +135,11 @@ class Parser extends Object
     }
 
     /**
-     * Parses the provided [[_data]] by replacing all include statements with content from blocks.
+     * Parses the current [[_data]] by replacing all include statements with content from blocks.
      *
      * @param array $config configuration for the render process. Use [[extractAttributes()]]
      * for the correct format.
+     * @param array $blocks an array of blocks where the keys are names of positions and the values are arrays of block content.
      */
     public function parseData($config, $blocks = [])
     {
@@ -159,8 +160,8 @@ class Parser extends Object
      * This methods does 2 things. First it converts all internal urls to a SEO friendly
      * version. Second it prepends the application home url to href, src and poster tags.
      *
-     * This method is used to facilitate easy porting from one platform to another. This requires
-     * dynamic URLs when saving editor content, as the application could be moved to a subdomain.
+     * This method converts urls inserted in the [[bigbrush\big\widgets\editor\Editor]]. It facilitates easy porting from one platform
+     * to another. This requires dynamic URLs when saving editor content, as the application could be moved to a subdomain.
      */
     public function parseUrls()
     {
@@ -187,6 +188,9 @@ class Parser extends Object
      */
     public function replaceUrl($matches)
     {
-        return 'href="'.Yii::$app->big->urlManager->parseInternalUrl($matches[1]);
+        $route = substr($matches[0], 6); // remove 'href="'
+        $route = str_replace('&amp;', '&', $route); // handle ambersands format of editor
+        $route = Yii::$app->big->urlManager->parseInternalUrl($route); // parse the url
+        return 'href="' . Yii::$app->getUrlManager()->createUrl($route);
     }
 }

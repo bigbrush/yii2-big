@@ -61,7 +61,7 @@ trait NestedSetManagerTrait
      *
      * @param boolean $reload indicates whether the whole tree should be reloaded regardless
      * if any trees has been loaded before.
-     * @return array list of roots
+     * @return array an array of roots where the keys are root ids and the values are objects of type [[itemClass]].
      */
     public function getRoots($reload = false)
     {
@@ -75,15 +75,15 @@ trait NestedSetManagerTrait
     /**
      * Returns a single root item with the provided id.
      *
-     * @param int $id the id of a root item
-     * @return mixed a root object
-     * @throws InvalidParamException if item was not found
+     * @param int $id the id of a root item.
+     * @return mixed a root object.
+     * @throws InvalidParamException if item was not found.
      */
     public function getRoot($id)
     {
         if (isset($this->_roots[$id])) {
             return $this->_roots[$id];
-        } elseif ($this->loadTree($id)) {
+        } elseif ($this->loadTree('id', $id)) {
             return $this->_roots[$id];
         } else {
             throw new InvalidParamException("Root with ID: '$id' has not been created in table: '$this->tableName'.");
@@ -93,15 +93,15 @@ trait NestedSetManagerTrait
     /**
      * Returns a tree of items in the provided root id.
      *
-     * @param int $id the root id a tree to find
-     * @return array list of items
-     * @throws InvalidParamException if items was not found
+     * @param int $id required root id of a tree to find (needs to default to null to be compatible with [[ManagerInterface]]).
+     * @return array list of items.
+     * @throws InvalidParamException if items was not found by the provided root id.
      */
-    public function getItems($id)
+    public function getItems($id = null)
     {
         if (isset($this->_items[$id])) {
             return $this->_items[$id];
-        } elseif ($this->loadTree($id)) {
+        } elseif ($this->loadTree('id', $id)) {
             return $this->_items[$id];
         } else {
             throw new InvalidParamException("Item with ID: '$id' has not been created in table: '$this->tableName'.");
@@ -111,33 +111,52 @@ trait NestedSetManagerTrait
     /**
      * Returns a single item.
      *
-     * @param int $id the id of an item to find
+     * @param int $id the id of an item to find.
      * @return mixed|false an item if found, otherwise false.
-     * @throws InvalidParamException if item was not found
+     * @throws InvalidParamException if item was not found.
      */
     public function getItem($id)
     {
-        if ($item = $this->searchItems($id)) {
+        if ($item = $this->searchItems('id', $id)) {
             return $item;
-        } elseif ($this->loadTree($id)) {
-            return $this->searchItems($id);
+        } elseif ($this->loadTree('id', $id)) {
+            return $this->searchItems('id', $id);
         } else {
             throw new InvalidParamException("Item with ID: '$id' has not been created in table: '$this->tableName'.");
         }
     }
 
     /**
-     * Searches all items and returns an item that matches the provided id.
+     * Searches all roots and returns a root where the provided property matches the provided value.
      * Note that this method only searches in already loaded items.
      *
-     * @param int $id the of an item to find
+     * @param int $id the of an item to find.
      * @return ManagerObject|false an object if found, otherwise false.
      */
-    public function searchItems($id)
+    public function searchRoots($property, $value)
+    {
+        foreach ($this->getRoots() as $root) {
+            if ($root->$property == $value) {
+                return $root;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Searches all items and returns an item where the provided property matches the provided value.
+     * Note that this method only searches in already loaded items.
+     *
+     * @param int $id the of an item to find.
+     * @return ManagerObject|false an object if found, otherwise false.
+     */
+    public function searchItems($property, $value)
     {
         foreach ($this->_items as $items) {
-            if (array_key_exists($id, $items)) {
-                return $items[$id];
+            foreach ($items as $item) {
+                if ($item->$property == $value) {
+                    return $item;
+                }
             }
         }
         return false;
@@ -169,17 +188,18 @@ trait NestedSetManagerTrait
     }
 
     /**
-     * Loads and creates a tree based on the provided id.
-     * The id can be of a root or an item.
+     * Loads and creates a tree based on an item where the column matches the provided value.
+     * The tree is loaded based on the tree property of the matching item.
      *
-     * @param int $id the id of a root/item
-     * @return boolean true if tree was loaded, false if not
+     * @param mixed $column the column to search for an item.
+     * @param mixed $value the value to search for.
+     * @return boolean true if a tree was loaded, false if not.
      */
-    public function loadTree($id)
+    public function loadTree($column, $value)
     {
         $tree = $this->find()
             ->select('m1.*')
-            ->where([$this->tableAlias.'.id' => $id])
+            ->where([$this->tableAlias.'.'.$column => $value])
             ->leftJoin($this->tableName . ' m1', 'm1.tree = '.$this->tableAlias.'.tree')
             ->orderBy('lft')
             ->all();
@@ -193,7 +213,7 @@ trait NestedSetManagerTrait
      * If a root is created it is registered in [[_roots]] and if an item
      * is created it is registered in [[_items]].
      *
-     * @param array $items list of items to create a from
+     * @param array $items list of items to create a from.
      * @throws InvalidParamException if a root node is not the first element of the provided array.
      */
     public function createTree($items)
@@ -216,8 +236,8 @@ trait NestedSetManagerTrait
     /**
      * Creates an item object used when creating trees.
      *
-     * @param array $data configuration array for the object
-     * @return ManagerObject or a subclass
+     * @param array $data configuration array for the object.
+     * @return ManagerObject or a subclass.
      * @see [[createTree()]]
      */
     public function createObject(array $data)
@@ -243,8 +263,8 @@ trait NestedSetManagerTrait
     /**
      * Returns model used in the current manager. If id is provided the model will be loaded from the database.
      *
-     * @param int $id optional id of a database record to load
-     * @return mixed|null 
+     * @param int $id optional id of a database record to load.
+     * @return ActiveRecord an active record.
      * @throws InvalidParamException if model was not found in the database.
      */
     public function getModel($id = 0)

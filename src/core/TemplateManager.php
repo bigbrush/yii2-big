@@ -17,13 +17,8 @@ use yii\helpers\Json;
 /**
  * TemplateManager
  */
-class TemplateManager extends Object
+class TemplateManager extends Object implements ManagerInterface
 {
-    /**
-     * @var string the text used for selecting the default template in drop down lists. The value is being translated 
-     * in [[init()]].
-     */
-    public $defaultText = '- Use default template -';
     /**
      * @var string name of a database table to load templates from.
      * The table is aliased by the letter "t".
@@ -57,7 +52,7 @@ class TemplateManager extends Object
      * @param boolean $asArray whether to load all templates as arrays.
      * @return array list of [[bigbrush\big\models\Template]] models or arrays of template data.
      */
-    public function getTemplates($asArray = true)
+    public function getItems($asArray = true)
     {
         $query = $this->getModel()->find();
         if ($asArray) {
@@ -67,16 +62,43 @@ class TemplateManager extends Object
     }
 
     /**
+     * Returns a template and possibly loads it from the database.
+     *
+     * If no id is provided, and no template has been loaded previously, the default template will be loaded. If
+     * id is provided, and diffrent from the currently loaded template, a template with the provided id is loaded from the database.
+     *
+     * @param int $id optional id of a template.
+     * @return TemplateManagerObject a template manager object.
+     */
+    public function getItem($id = 0)
+    {
+        $id = (int)$id;
+        if ($this->_active->id && (!$id || $id === $this->_active->id)) {
+            return $this->_active;
+        }
+
+        if ($id) {
+            $data = $this->find()->where(['t.id' => $id])->one();
+        } else {
+            $data = $this->find()->where(['t.is_default' => 1])->one();
+        }
+        if ($data) {
+            $active = $this->configure($data);
+        }
+        return $active;
+    }
+
+    /**
      * Returns an array ready for drop down lists.
      *
-     * @param boolean $enableDefault whether to include using the default template.
+     * @param string $unselected optional text to use as a state of "unselected".
      * @return array templates ready for a drop down list.
      */
-    public function getDropDownList($enableDefault = true)
+    public function getDropDownList($unselected = null)
     {
-        $templates = ArrayHelper::map($this->find()->all(), 'id', 'title');
-        if ($enableDefault) {
-            return [Yii::t('big', $this->defaultText)] + $templates;
+        $templates = ArrayHelper::map($this->getItems(), 'id', 'title');
+        if ($unselected) {
+            return [$unselected] + $templates;
         } else {
             return $templates;
         }
@@ -94,46 +116,10 @@ class TemplateManager extends Object
         if ($id instanceof TemplateManagerObject) {
             $this->_active = $id;
         } elseif ($id) {
-           $this->load($id);
-        } elseif (!$this->getActive()->getIsDefault()) {
+           $this->getItem($id);
+        } elseif (!$this->_active->getIsDefault()) {
             $this->reset();
         }
-    }
-
-    /**
-     * Returns the active template.
-     *
-     * @return TemplateManagerObject
-     */
-    public function getActive()
-    {
-    	return $this->_active;
-    }
-
-    /**
-     * Loads a template from the database.
-     * If no id is provided, and no template has been loaded previously, the default template will be loaded.
-     *
-     * @param int $id optional id of a template.
-     * @return TemplateManagerObject a template manager object.
-     */
-    public function load($id = 0)
-    {
-        $id = (int)$id;
-        $active = $this->getActive();
-        if ($active->id && (!$id || $id === $active->id)) {
-            return $active;
-        }
-
-        if ($id) {
-            $data = $this->find()->where(['t.id' => $id])->one();
-        } else {
-            $data = $this->find()->where(['t.is_default' => 1])->one();
-        }
-        if ($data) {
-            $active = $this->configure($data);
-        }
-        return $active;
     }
 
     /**
@@ -210,7 +196,7 @@ class TemplateManager extends Object
     }
 
     /**
-     * Returns a template model. If id is provided the model will be loaded from the database. Otheriwse
+     * Returns a template model. If id is provided the model will be loaded from the database. Otherwise
      * a new model is created.
      *
      * @param int $id optional id of a database record to load.

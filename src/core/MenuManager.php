@@ -14,15 +14,17 @@ use yii\base\Object;
 /**
  * MenuManager
  */
-class MenuManager extends Object
+class MenuManager extends Object implements ManagerInterface
 {
-    use NestedSetManagerTrait;
+    use NestedSetManagerTrait {
+        getItems as _getItems;
+    }
 
     /**
      * @var boolean whether to load all menus automatically when the manager initializes.
-     * If true the [[urlManager]] will not make any additional database calls - see [[urlManager::findMenu()]].
+     * If true this manager will not make any additional database calls when searching- see [[search()]].
      */
-    public $autoLoad = true;
+    public $autoload = true;
     /**
      * @var boolean indicates whether the menu manager should set a default route in the running application.
      * If true the default menu item will determine the default route.
@@ -30,18 +32,22 @@ class MenuManager extends Object
      */
     public $setApplicationDefaultRoute = false;
     /**
-     * @var int defines an id for the menu that has the has default menu item registered.
+     * @var int defines an id for the menu that holds the default menu item.
      * If this property is not set it will be autoloaded in [[getDefaultMenu()]].
+     * @see getDefault()
+     * @see getDefaultMenu()
      */
     private $_default;
     /**
-     * @var int an id of the active menu.
+     * @var MenuManagerObject|null a menu item or null if no active menu item has been set.
+     * @see setActive()
+     * @see getActive()
      */
     private $_active;
 
 
     /**
-     * Initializes the manager by autoloading all menus if [[autoLoad]] is enabled.
+     * Initializes the manager by autoloading all menus if [[autoload]] is enabled.
      * Also sets up trait properties.
      *
      * This method is called when [[Big]] bootstraps.
@@ -59,26 +65,21 @@ class MenuManager extends Object
             $this->modelClass = 'bigbrush\big\models\Menu';
         }
 
+        // load all menus and menu items when autoload is enabled
+        if ($this->autoload) {
+            $this->getMenus(true);
+        }
+
         // set the application default route when enabled
         if ($this->setApplicationDefaultRoute) {
             $menu = $this->getDefault();
             $this->setActive($menu);
-            $route = $menu->route;
-            if (strpos($route, '&') !== false) {
-                list($route, $params) = explode('&', $route, 2);
-                parse_str($params, $params);
-                Yii::$app->defaultRoute = $route;
-                foreach ($params as $key => $value) {
-                    $_GET[$key] = $value;
-                }
-            } else {
-                Yii::$app->defaultRoute = $route;
+            $params = Yii::$app->big->urlManager->parseInternalUrl($menu->route);
+            Yii::$app->defaultRoute = $params[0];
+            unset($params[0]);
+            foreach ($params as $key => $value) {
+                $_GET[$key] = $value;
             }
-        }
-
-        // load all menu trees when auto load is enabled
-        if ($this->autoLoad) {
-            $this->getMenus(true);
         }
         
         // register this manager when Big performs a search
@@ -86,33 +87,26 @@ class MenuManager extends Object
     }
 
     /**
-     * Searches menu items for an item where the provided property
-     * matches the provided value.
+     * Searches for an item where the provided property matches the provided value.
      *
-     * If [[autoLoad]] is enabled a database call will not be made. If
-     * [[autoLoad]] is not enabled a database call will be made if a menu is not found
+     * If [[autoload]] is enabled a database call will not be made. If
+     * [[autoload]] is not enabled a database call will be made if a menu is not found
      * in the currently loaded menu items.
      * False is returned if no matching menu item is found.
      *
      * @param string $property the property to compare against.
-     * @param string $value the value to compare against.
-     * @param boolean $extended whether to only search in loaded items. If true
-     * a database call will be made to determine if the menu item exists.
-     * @return MenuManagerObject|false
+     * @param mixed $value the value to search for.
+     * @return MenuManagerObject|false a menu item if found and false if not.
      */
-    public function search($property, $value, $extended = false)
+    public function search($property, $value)
     {
         // search in loaded menu items
-        foreach ($this->_items as $items) {
-            foreach ($items as $item) {
-                if ($item->$property === $value) {
-                    return $item;
-                }
-            }
+        if ($item = $this->searchItems($property, $value)) {
+            return $item;
         }
 
-        // query the database on extended searches
-        if (!$this->autoLoad && $extended) {
+        // query the database when autoload is not enabled to make sure whether the menu item exists
+        if (!$this->autoload) {
             $menu = $this->find()->andWhere([$property => $value])->one();
             if ($menu) {
                 return $this->createObject($menu);
@@ -124,49 +118,45 @@ class MenuManager extends Object
     /**
      * Returns a list of all menus.
      * This method loads all menus and menu items if it is the first method called in the manager
-     * or when reload is true.
+     * or when reload is true. If [[autoload]] is enabled no reload is performed.
      *
      * @param boolean $reload indicates whether the whole tree should be reloaded regardless
      * if any trees has been loaded before.
-     * @return array list of all menus
+     * @return array list of all menus.
      */
     public function getMenus($reload = false)
     {
-        return $this->getRoots($reload);
+        // no need to reload if manager has autoload enabled and has already loaded
+        if ($this->autoload && $this->_default !== null) {
+            $reload = false;
+        }
+        $menus = $this->getRoots($reload);
+        if ($this->_default === null) {
+            $this->identifyDefaultMenu();
+        }
+        return $menus;
     }
 
     /**
-     * Returns a list of all menus
+     * Returns a list of all menus.
      *
-     * @param int $id the id of a menu or a menu item within the same menu
-     * @return array list of all menu items from the menu with the provided id
+     * @param int $id the id of a menu or a menu item within the same menu.
+     * @return array list of all menu items from the menu with the provided id.
      * @throws InvalidParamException if id is provided and the menu items could not be found.
      */
-    public function getMenuItems($id = 0)
+    public function getItems($id = 0)
     {
         if ($id) {
-            return $this->getItems($id);
+            return $this->_getItems($id);
         } else {
             return $this->getDefaultMenu();
         }
     }
 
     /**
-     * Returns a menu item with the provided id
+     * Returns the default menu item.
      *
-     * @param int $id the id of a menu item
-     * @return MenuManagerObject
-     * @throws InvalidParamException if the menu item was not found
-     */
-    public function getMenuItem($id)
-    {
-        return $this->getItem($id);
-    }
-
-    /**
-     * Returns the default menu item
-     *
-     * @return MenuManagerObject
+     * @return MenuManagerObject the default menu item.
      * @throws InvalidParamException if a default menu item has not been set.
      */
     public function getDefault()
@@ -174,38 +164,29 @@ class MenuManager extends Object
         $items = $this->getDefaultMenu();
         if (!empty($items)) {
             foreach ($items as $item) {
-                if ($item->is_default) {
+                if ($item->getIsDefault()) {
                     return $item;
                 }
             }
         } else {
-            throw new InvalidParamException("No default menu item has been set.");
+            throw new InvalidParamException("No default menu item has been set in bigbrush\big\core\MenuManager.");
         }
     }
 
     /**
-     * Returns the menu that has the default menu item.
+     * Returns all menu items of the menu that holds the default menu item.
      *
-     * @return array list of menu items
+     * @return array list of menu items. Empty array if no default menu item has been set.
      */
     public function getDefaultMenu()
     {
         if ($this->_default) {
-            return $this->getItems($this->_default);
-        }
-        
-        $tree = $this->find()
-            ->select('m1.*')
-            ->where([$this->tableAlias.'.is_default' => 1])
-            ->leftJoin($this->tableName . ' m1', 'm1.tree = '.$this->tableAlias.'.tree')
-            ->orderBy('lft')
-            ->all();
-        if (empty($tree)) {
-            return $this->_roots = []; // flags menus as loaded.
+            return $this->_getItems($this->_default);
+        } elseif ($this->loadTree('is_default', 1)) {
+            $this->identifyDefaultMenu();
+            return $this->_getItems($this->_default);
         } else {
-            $this->_default = $tree[0]['id'];
-            $this->createTree($tree);
-            return $this->getItems($this->_default);
+            return $this->_roots = []; // flags menus as loaded.
         }
     }
 
@@ -216,20 +197,23 @@ class MenuManager extends Object
      */
     public function setActive($menu)
     {
-        $this->_active = $menu->id;
+        $this->_active = $menu;
     }
 
     /**
      * Returns the active menu item.
-     *
-     * @return MenuManagerObject|false the active menu if set and false if not.
+     * If [[setApplicationDefaultRoute]] is enabled a default menu will always be registered.
+     * 
+     * @return MenuManagerObject|null the active menu if set and null if not.
+     * @throws InvalidParamException see [[getDefault()]].
      */
     public function getActive()
     {
-        if ($this->_active) {
-            return $this->getMenuItem($this->_active);
+        if ($this->_active !== null) {
+            return $this->_active;
+        } else {
+            return $this->_active = $this->getDefault();;
         }
-        return false;
     }
 
     /**
@@ -240,16 +224,37 @@ class MenuManager extends Object
      */
     public function onSearch($event)
     {
-        $menus = $this->find()->select(['title', 'route', 'lft'])->orderBy('tree, lft')->all();
-        foreach ($menus as $menu) {
-            if ($menu['lft'] != 1) {
-                $event->addItem([
-                    'title' => $menu['title'],
-                    'route' => $menu['route'],
-                    'text' => '',
-                    'date' => '',
-                    'section' => Yii::t('big', 'Menus'),
-                ]);
+        foreach ($this->getMenus(true) as $root) {
+            foreach ($this->getItems($root->id) as $menu) {
+                if (!empty($event->value) && strpos($menu->title, $event->value) === false) {
+                    continue;
+                }
+                if ($menu->lft != 1) {
+                    $event->addItem([
+                        'title' => str_repeat('- ', $menu->depth - 1) . $menu->title,
+                        'route' => $menu->route,
+                        'text' => '',
+                        'date' => '',
+                        'section' => Yii::t('big', 'Menus'),
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Used internally to find an id of the menu holding the default menu item. Only loaded menu items is searched.
+     * The found menu id is stored in [[_default]].
+     *
+     * @return int an id of the menu holding the default menu item.
+     */
+    protected function identifyDefaultMenu()
+    {
+        foreach ($this->getRoots() as $menu) {
+            foreach ($this->_getItems($menu->id) as $item) {
+                if ($item->getIsDefault()) {
+                    return $this->_default = $menu->id;
+                }
             }
         }
     }

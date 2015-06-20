@@ -35,18 +35,39 @@ class BigSearch extends Widget
      */
     public $onClickCallback;
     /**
-     * @var array configuration array used to configure bigbrush\widgets\filemanager\FileManager. If not set the file manager
+     * @var array|FileManager configuration array used to configure the FileManager or a FileManager object. If not set the file manager
      * is not included in the search results.
      */
     public $fileManager;
 
 
     /**
-     * Triggers a search in Big and returns an array where the keys are section names
-     * and values are arrays of search results.
+     * Triggers a search event in Big.
      *
-     * @return array sorted list of search results. The keys are section names and
-     * the values are arrays with search items for each section.
+     * @param string|null $value a value to search for.
+     * @param boolean $dynamicUrls whether to enable dynamic url in the search.
+     * @return array list of search results. The array keys are section names
+     * and the values are zero indexed arrays of search results.
+     */
+    public static function search($value = null, $dynamicUrls = false)
+    {
+        $event = Yii::createObject([
+            'class' => SearchEvent::className(),
+            'value' => $value,
+        ]);
+        $results = Yii::$app->big->search($event, SearchEvent::EVENT_SEARCH, $dynamicUrls);
+        $sections = [];
+        foreach ($results as $item) {
+            $sections[$item['section']][] = $item;
+        }
+        return $sections;
+    }
+
+    /**
+     * Triggers a search in Big and renders multiple [[yii\grid\GridView]] on the same page. Only one grid is visible at a time
+     * and a dropdown menu can be used to switch between the grids.
+     *
+     * @return string the rendering result.
      */
     public function run()
     {
@@ -70,11 +91,13 @@ class BigSearch extends Widget
             $view->registerJs('$("#all-sections-wrap").on("click", ".insert-on-click", '.Json::encode($this->onClickCallback).');');
         }
 
-        $sections = $this->triggerSearch();
+        $sections = static::search($this->value, $this->dynamicUrls);
         $buttons = array_keys($sections);
         if (is_array($this->fileManager)) {
-            $buttons[] = Yii::t('big', 'Media');
             $this->fileManager = FileManager::widget($this->fileManager);
+        }
+        if ($this->fileManager) {
+            $buttons[] = Yii::t('big', 'Media');
         }
         return $this->render('index', [
             'sections' => $sections,
@@ -104,25 +127,5 @@ class BigSearch extends Widget
             ];
         }
         return $buttons;
-    }
-
-    /**
-     * Triggers a search event in Big.
-     *
-     * @return array list of search results. The array keys are section names
-     * and the values are zero indexed arrays of search results.
-     */
-    public function triggerSearch()
-    {
-        $event = Yii::createObject([
-            'class' => SearchEvent::className(),
-            'value' => $this->value,
-        ]);
-        $results = Yii::$app->big->search($event, SearchEvent::EVENT_SEARCH, $this->dynamicUrls);
-        $sections = [];
-        foreach ($results as $item) {
-            $sections[$item['section']][] = $item;
-        }
-        return $sections;
     }
 }

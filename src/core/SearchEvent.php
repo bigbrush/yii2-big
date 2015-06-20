@@ -43,7 +43,7 @@ class SearchEvent extends Event
      *     'route' => ['module/controller/action', 'id' => 'Yii2'],
      *     'text' => 'Text or description of the item',
      *     'date' => 'An important date to the item (could be creation date)'
-     *     'Section' => 'which section the item belongs to',
+     *     'section' => 'which section the item belongs to',
      * ]
      * ~~~
      *

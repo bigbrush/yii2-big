@@ -13,7 +13,7 @@ use yii\base\InvalidValueException;
 use yii\web\UrlRuleInterface;
 
 /**
- * UrlManager acts as a url manager within Big and as an url rule within the Yii application.
+ * UrlManager acts as an url manager within Big and as an url rule within the Yii application if [[enableUrlRule]] is true.
  */
 class UrlManager extends Object implements UrlRuleInterface
 {
@@ -23,34 +23,92 @@ class UrlManager extends Object implements UrlRuleInterface
      */
     public $enableUrlRule = true;
     /**
-     * @var string the URL suffix used for this rule.
-     * For example, ".html" can be used so that the URL looks like pointing to a static HTML page.
-     * If not, the value of [[yii\web\UrlManager::suffix]] will be used.
-     */
-    public $suffix;
-    /**
      * @var string defines the class name to use when loading url rules. All url
-     * rules must be within the same namespace as the main module file (i.e. Module.php)
+     * rules must be within the same namespace as the main module file (i.e. Module.php).
      */
     public $urlRuleClass = 'UrlRule';
     /**
-     * @var array list of rules already loaded. Each rule is indexed by the module ID
-     * it is apart of. False will be registered if a module id has no url rule created.
+     * @var array list of rules this manager should react to. Each rule is indexed by the module ID
+     * it is apart of. If a rule is added with [[setRules()]] if will be zero indexed.
      */
     private $_rules = [];
 
 
     /**
      * Initializes the url manager by registering it as an url rule in the application
-     * url manager. If will only register it self if [[enableUrlRule]] is true.
+     * url manager. If will only register itself if [[enableUrlRule]] is true.
+     * All module url rules are also collected during intialization.
      *
-     * This method is called when [[Big]] bootstraps.
+     * This method is called when [[Big]] bootstraps. This manager is the first manager being initialized.
      */
     public function init()
     {
+        foreach ($this->_rules as $i => $rule) {
+            if (is_string($rule)) {
+                $rule = ['class' => $rule];
+            }
+            if (is_array($rule)) {
+                $rule = $this->_rules[$i] = Yii::createObject($rule);
+            }
+            if (!$rule instanceof UrlRuleInterface) {
+                throw new InvalidValueException("Url rule '".get_class($rule)."' must implement yii\web\UrlRuleInterface");
+            }
+        }
         if ($this->enableUrlRule) {
             Yii::$app->getUrlManager()->addRules([$this]);
+            foreach (Yii::$app->getModules() as $id => $module) {
+                $this->registerModule($id, $module);
+            }
         }
+    }
+
+    /**
+     * @var yii\web\UrlManager url manager used for creating urls from backend to frontend.
+     */
+    public $frontendUrlManager;
+
+    /**
+     * Creates an url from the backend to the frontend.
+     *
+     * @param array $params the url params.
+     * @return string the constructed url.
+     */
+    public function createFrontendUrl($params)
+    {
+        if ($this->frontendUrlManager === null) {
+            $config = require(Yii::getAlias('@app/common/config/web.php'));
+            $config = $config['components']['urlManager'];
+            $config['class'] = 'yii\web\urlManager';
+            $config['baseUrl'] = '@web/../';
+            $config['rules'] = [$this];
+            $this->frontendUrlManager = Yii::createObject($config);
+        }
+        return $this->frontendUrlManager->createUrl($params);
+    }
+
+    /**
+     * Registers the provided array of url rules.
+     *
+     * Note that if you add rules after the UrlManager object is created, make sure
+     * you populate the array with rule objects instead of rule configurations.
+     *
+     * @param array $rules an array of rule objects.
+     */
+    public function setRules(array $rules)
+    {
+        $this->_rules = array_merge($this->_rules, $rules);
+    }
+
+    /**
+     * Returns all registered url rules.
+     * All url rules are ensured to be instantiated objects before being returned. This is done so dynamically added
+     * url rules will be creted if a string is registered.
+     *
+     * @return array url rules added to the url manager.
+     */
+    public function getRules()
+    {
+        return $this->_rules;
     }
 
     /**
@@ -74,32 +132,23 @@ class UrlManager extends Object implements UrlRuleInterface
         // search for a menu that matches
         $menuManager = Yii::$app->big->menuManager;
         $search = [$route] + $params;
-        $menu = $menuManager->search('route', $this->createInternalUrl($search, false), true);
+        $menu = $menuManager->search('route', $this->createInternalUrl($search, false));
         $url = false;
         if ($menu) {
             if ($menu->getIsDefault()) {
                 return '';
             } else {
-                $menuManager = Yii::$app->big->menuManager;
-                $url = $menu->alias;
-                $prepend = '';
-                while ($menu = $menuManager->getParent($menu)) {
-                    $prepend = $menu->alias.'/';
-                }
-                $url = $prepend.$url;
+                $url = $menu->getQuery();
             }
         } else {
-            // search for an url rule that matches
-            foreach (Yii::$app->getModules() as $id => $module) {
-                if (($rule = $this->findModuleUrlRule($id, $module)) !== false) {
-                    if (($url = $rule->createUrl($manager, $route, $params)) !== false) {
-                        break;
-                    } 
+            foreach ($this->getRules() as $rule) {
+                if (($url = $rule->createUrl($manager, $route, $params)) !== false) {
+                    break;
                 }
             }
         }
-        if ($url !== false) {
-            $url .= ($this->suffix === null ? $manager->suffix : $this->suffix);
+        if ($url !== false && $manager->suffix !== null) {
+            $url .= $manager->suffix;
         }
         return $url;
     }
@@ -115,7 +164,7 @@ class UrlManager extends Object implements UrlRuleInterface
     public function parseRequest($manager, $request)
     {
         $pathInfo = $request->getPathInfo();
-        $suffix = (string) ($this->suffix === null ? $manager->suffix : $this->suffix);
+        $suffix = (string) $manager->suffix;
         if ($suffix !== '' && $pathInfo !== '') {
             $n = strlen($suffix);
             if (substr_compare($pathInfo, $suffix, -$n, $n) === 0) {
@@ -136,22 +185,19 @@ class UrlManager extends Object implements UrlRuleInterface
             $segments = [$pathInfo];
         }
         $menuManager = Yii::$app->big->menuManager;
-        $menu = $menuManager->search('alias', array_pop($segments), true);
+        $menu = $menuManager->search('alias', array_pop($segments));
         // if a menu was found set it as active and use it to parse the request.
         if ($menu) {
             $menuManager->setActive($menu);
-            $parts = explode('&', $menu->route);
-            $route = $parts[0];
-            $params = [];
-            if (isset($parts[1])) {
-                parse_str($parts[1], $params);
-            }
+            $params = $this->parseInternalUrl($menu->route);
+            $route = $params[0];
+            unset($params[0]);
             return [$route, $params];
         } elseif (!empty($segments)) {
             // no menu was found by the first segment. Search remaining segments for
             // a matching menu.
             while (!$menu && !empty($segments)) {
-                $menu = $menuManager->search('alias', array_pop($segments), true);
+                $menu = $menuManager->search('alias', array_pop($segments));
             }
             // if a menu was found register it as active
             if ($menu) {
@@ -160,24 +206,25 @@ class UrlManager extends Object implements UrlRuleInterface
         }
         // no menu found. Search module url rules to find a match.
         $result = false;
-        foreach (Yii::$app->getModules() as $id => $module) {
-            if (($rule = $this->findModuleUrlRule($id, $module)) !== false) {
-                if (($result = $rule->parseRequest($manager, $request)) !== false) {
-                    break;
-                } 
+        foreach ($this->getRules() as $rule) {
+            if (($result = $rule->parseRequest($manager, $request)) !== false) {
+                break;
             }
         }
         return $result;
     }
 
     /**
-     * Creates an internal url.
-     * If $dynamicUrl is true the url will be parsed by [[bigbrush\big\core\Parser::parseUrls()]].
+     * Creates an internal url. If a dynamic url is created the string "index.php?r=" is prepended.
+     *
+     * The second parameter, $dynamicUrl, should be true when the url is used in content being saved to the
+     * database. It will then be parsed by [[bigbrush\big\core\Parser::parseUrls()]] when the page is being rendered.
      *
      * @param string|array $route use a string to represent a route (e.g. `site/index`),
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
      * @param boolean $dynamicUrl if true the url will have "index.php?r" prepended.
      * @return string the internal url
+     * @see parseInternalUrl()
      */
     public function createInternalUrl($route, $dynamicUrl)
     {
@@ -198,7 +245,14 @@ class UrlManager extends Object implements UrlRuleInterface
     }
 
     /**
-     * Parses an internal url.
+     * Converts a url created with [[createInternalUrl()]] into an array with route params.
+     * 
+     * For instance:
+     * ~~~php
+     * // ['pages/page/show', 'id' => '28', 'alias' => 'something']
+     * $urlManager->parseInternalUrl('pages/page/show&id=28&alias=something');
+     * ~~~
+     *
      * This method in called by [[bigbrush\big\core\Parser::replaceRoute()]] when changing
      * urls inserted in the editor.
      *
@@ -207,49 +261,54 @@ class UrlManager extends Object implements UrlRuleInterface
      */
     public function parseInternalUrl($pathInfo)
     {
-        $pathInfo = str_replace('&amp;', '&', $pathInfo);
         if (strpos($pathInfo, 'index.php?') === 0) {
-            // remove "index.php?"
-            $pathInfo = substr($pathInfo, 10);
+            // dynamic url
+            $pathInfo = substr($pathInfo, 10); // remove "index.php?"
+            parse_str($pathInfo, $params);
+            $manager = Yii::$app->getUrlManager();
+            $params[0] = $params[$manager->routeParam];
+            unset($params[$manager->routeParam]);
+        } elseif (strpos($pathInfo, '&') !== false) {
+            // non-dynamic url with route params 
+            list($route, $params) = explode('&', $pathInfo, 2);
+            parse_str($params, $params);
+            $params[0] = $route;
+        } else {
+            // non-dynamic url without route params 
+            $params = [$pathInfo];
         }
-        parse_str($pathInfo, $params);
-        $manager = Yii::$app->getUrlManager();
-        $params[0] = $params[$manager->routeParam];
-        unset($params[$manager->routeParam]);
-        return $manager->createUrl($params);
+        return $params;
     }
 
     /**
      * Searches for an url rule for the provided module id.
      *
-     * @param string $id the id of a module
-     * @param array|Object $module an array if the module has not been instantiated and
+     * @param string $id the id of a module.
+     * @param array|yii\base\Object $module an array if the module has not been instantiated and
      * an object if it has.
-     * @return UrlRuleInterface|false
-     * @throws InvalidValueException
+     * @return UrlRuleInterface|false the url rule if found and false if not.
+     * @throws InvalidValueException if an identified url rule doesn't implement [[UrlRuleInterface]].
      */
-    public function findModuleUrlRule($id, $module)
+    public function registerModule($id, $module)
     {
-        if (isset($this->_rules[$id])) {
-            return $this->_rules[$id];
-        }
         if (is_object($module)) {
             $class = $module::className();
         } else {
             $class = $module['class'];
         }
         // load url rule from same namespace as the main module file
-        $class = substr($class, 0, strrpos($class, '\\')+1).$this->urlRuleClass;
-        if (class_exists($class)) {
-            $rule = Yii::createObject([
-                'class' => $class,
-            ]);
-            if ($rule instanceof UrlRuleInterface) {
-                return $this->_rules[$id] = $rule;
-            } else {
-                throw new InvalidValueException("Url rule '".get_class($rule)."' must implement yii\web\UrlRuleInterface");
-            }
+        $class = substr($class, 0, strrpos($class, '\\') + 1) . $this->urlRuleClass;
+        if (class_exists($class) === false) {
+            return false;
         }
-        return $this->_rules[$id] = false;
+        // create and register url rule
+        $rule = Yii::createObject([
+            'class' => $class,
+        ]);
+        if ($rule instanceof UrlRuleInterface) {
+            return $this->_rules[$id] = $rule;
+        } else {
+            throw new InvalidValueException("Url rule '".get_class($rule)."' must implement yii\web\UrlRuleInterface");
+        }
     }
 }

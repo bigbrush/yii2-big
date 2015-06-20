@@ -242,7 +242,9 @@ class Big extends Object implements BootstrapInterface
      *         $event->addItem([
      *             'title' => 'The title',
      *             'route' => ['app/page/show', 'id' => 3],
-     *             'section' => 'The section',
+     *             'text' => 'Text or description of the item',
+     *             'date' => 'An important date to the item (could be creation date)'
+     *             'section' => 'The section of the item',
      *         ]);
      *     },
      *     'components' => [...],
@@ -374,7 +376,7 @@ class Big extends Object implements BootstrapInterface
      */
     public function getTemplate($id = 0)
     {
-        return $this->templateManager->load($id);
+        return $this->templateManager->getItem($id);
     }
 
     /**
@@ -467,10 +469,10 @@ class Big extends Object implements BootstrapInterface
     public function getCoreClasses()
     {
         return [
+            'urlManager' => 'bigbrush\big\core\UrlManager', // needs to be registered first so other managers can use it
             'menuManager' => 'bigbrush\big\core\MenuManager',
             'blockManager' => 'bigbrush\big\core\BlockManager',
             'categoryManager' => 'bigbrush\big\core\CategoryManager',
-            'urlManager' => 'bigbrush\big\core\UrlManager',
             'templateManager' => 'bigbrush\big\core\TemplateManager',
             'extensionManager' => 'bigbrush\big\core\ExtensionManager',
         ];

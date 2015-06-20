@@ -32,34 +32,59 @@ class MenuManagerObject extends ManagerObject
      * @var string the url for this menu item
      */
     private $_url;
+    /**
+     * @var string the query string for this menu item
+     */
+    private $_query;
 
 
     /**
      * Returns the url of this menu item.
+     * If a suffix is registered in the application url manager it will be appended when the url is internal.
      *
-     * @return string the url
+     * @return string the url.
      */
     public function getUrl()
     {
         if ($this->_url === null) {
-            if ($this->route === '#') {
-                $this->_url = $this->route;
-            } elseif (strpos($this->route, '&') !== false) {
-                list($route, $params) = explode('&', $this->route, 2);
-                parse_str($params, $params);
-                $params[0] = $route;
-                $this->_url = Yii::$app->getUrlManager()->createUrl($params);
-            } else {
-                $this->_url = Yii::$app->getUrlManager()->createUrl($this->route);
+            $this->_url = $this->getQuery();
+            // only append suffix on internal urls
+            if ($this->route !== '#' && strpos($this->route, 'http://') !== 0 && strpos($this->route, 'www') !== 0) {
+                $this->_url .= Yii::$app->getUrlManager()->suffix;
             }
         }
         return $this->_url;
     }
 
     /**
+     * Returns the query string of this menu item.
+     *
+     * @return string the query string.
+     */
+    public function getQuery()
+    {
+        if ($this->_query === null) {
+            if ($this->route === '#' || strpos($this->route, 'http://') === 0) {
+                $this->_query = $this->route;
+            } elseif (strpos($this->route, 'www') === 0) {
+                $this->_query = 'http://' . $this->route;
+            } else {
+                $manager = Yii::$app->big->menuManager;
+                $menu = $this;
+                $query = '';
+                while ($menu = $manager->getParent($menu)) {
+                    $query .= $menu->alias . '/';
+                }
+                $this->_query = $query . $this->alias;
+            }
+        }
+        return $this->_query;
+    }
+
+    /**
      * Returns a boolean indicating if this is the default menu item
      *
-     * @return boolean true if this is the default menu item, false if it not.
+     * @return boolean true if this is the default menu item, false if it is not.
      */
     public function getIsDefault()
     {
@@ -69,7 +94,7 @@ class MenuManagerObject extends ManagerObject
     /**
      * Returns a boolean indicating whether this menu is enabled.
      *
-     * @return boolean true if this menu is enabled and false if not.
+     * @return boolean true if this menu is enabled and false if it is not.
      */
     public function getIsEnabled()
     {
