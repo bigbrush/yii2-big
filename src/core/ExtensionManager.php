@@ -34,7 +34,7 @@ class ExtensionManager extends Object implements ManagerInterface
      */
     public function getBlocks($state = null)
     {
-        return $this->getExtensions(Extension::TYPE_BLOCK, $state);
+        return $this->getItems(Extension::TYPE_BLOCK, $state);
     }
 
     /**
