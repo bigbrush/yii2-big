@@ -14,9 +14,9 @@ use yii\base\Action;
 use yii\web\Response;
 
 /**
- * NestedSetAction
+ * NestedSetMoveAction
  */
-class NestedSetAction extends Action
+class NestedSetMoveAction extends Action
 {
     /**
      * The name of the POST parameters indicating id of a database record and a direction to move it.
@@ -48,7 +48,7 @@ class NestedSetAction extends Action
     public function run()
     {
         if (!$this->model instanceof yii\db\ActiveRecord) {
-            throw new InvalidConfigException("Model attribute in NestedSetAction must be populated with a yii\db\ActiveRecord.");   
+            throw new InvalidConfigException("Model attribute in NestedSetMoveAction must be populated with a yii\db\ActiveRecord.");   
         }
 
         $request = Yii::$app->getRequest();

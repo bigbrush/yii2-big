@@ -24,13 +24,7 @@ class MenuManager extends Object implements ManagerInterface
      * @var boolean whether to load all menus automatically when the manager initializes.
      * If true this manager will not make any additional database calls when searching- see [[search()]].
      */
-    public $autoload = true;
-    /**
-     * @var boolean indicates whether the menu manager should set a default route in the running application.
-     * If true the default menu item will determine the default route.
-     * @see [[yii\web\Application::defaultRoute]].
-     */
-    public $setApplicationDefaultRoute = false;
+    public $autoload = false;
     /**
      * @var int defines an id for the menu that holds the default menu item.
      * If this property is not set it will be autoloaded in [[getDefaultMenu()]].
@@ -69,21 +63,6 @@ class MenuManager extends Object implements ManagerInterface
         if ($this->autoload) {
             $this->getMenus(true);
         }
-
-        // set the application default route when enabled
-        if ($this->setApplicationDefaultRoute) {
-            $menu = $this->getDefault();
-            $this->setActive($menu);
-            $params = Yii::$app->big->urlManager->parseInternalUrl($menu->route);
-            Yii::$app->defaultRoute = $params[0];
-            unset($params[0]);
-            foreach ($params as $key => $value) {
-                $_GET[$key] = $value;
-            }
-        }
-        
-        // register this manager when Big performs a search
-        Yii::$app->big->searchHandlers[] = [$this, 'onSearch'];
     }
 
     /**

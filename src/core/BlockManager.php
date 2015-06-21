@@ -22,6 +22,10 @@ use bigbrush\big\models\Block;
 class BlockManager extends Object implements ManagerInterface
 {
     /**
+     * @var string represents the model class when creating/editing an item.
+     */
+    public $modelClass = 'bigbrush\big\models\Block';
+    /**
      * @var array a list of output blocks. The keys are positions the blocks are assigned to and the values
      * are arrays with block content.
      * @see [[Big::beginBlock()]]
@@ -89,7 +93,7 @@ class BlockManager extends Object implements ManagerInterface
      */
     public function createNewBlock($id)
     {
-        $extension = Yii::$app->big->extensionManager->getExtension($id);
+        $extension = Yii::$app->big->extensionManager->getItem($id);
         $block = $this->createObject([
             'class' => $extension->namespace,
             'model' => $this->getModel(),
@@ -159,13 +163,13 @@ class BlockManager extends Object implements ManagerInterface
     public function createObject(array $data)
     {
         $block = Yii::createObject($data);
-        Event::on(Block::className(), ActiveRecord::EVENT_BEFORE_INSERT, [$block, 'onBeforeSave']);
-        Event::on(Block::className(), ActiveRecord::EVENT_BEFORE_UPDATE, [$block, 'onBeforeSave']);
+        Event::on($block::className(), ActiveRecord::EVENT_BEFORE_INSERT, [$block, 'onBeforeSave']);
+        Event::on($block::className(), ActiveRecord::EVENT_BEFORE_UPDATE, [$block, 'onBeforeSave']);
         return $block;
     }
 
     /**
-     * Configures a  [[bigbrush\big\models\Block]] model with the provided data.
+     * Configures a [[bigbrush\big\models\Block]] model with the provided data.
      *
      * @param array $data an array of block data.
      */
@@ -221,10 +225,13 @@ class BlockManager extends Object implements ManagerInterface
      */
     public function getModel($id = 0)
     {
-        if ($id) {
-            return Block::findOne($id);
+        $model = Yii::createObject(['class' => $this->modelClass]);
+        if (!$id) {
+            return $model;
+        } elseif ($model = $model->findOne($id)) {
+            return $model;
         } else {
-            return new Block();
+            throw new InvalidParamException("Model with id: '$id' not found.");
         }
     }
 }

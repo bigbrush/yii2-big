@@ -8,7 +8,7 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
+use yii\di\ServiceLocator;
 use yii\base\BootstrapInterface;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidCallException;
@@ -33,13 +33,12 @@ use bigbrush\big\widgets\recorder\Recorder;
  *
  * @author Michael Bech <mj@bigbrush-agency.com>
  */
-class Big extends Object implements BootstrapInterface
+class Big extends ServiceLocator implements BootstrapInterface
 {
     /**
      * version
      */
-    const BIG_VERSION = '0.1.0';
-
+    const BIG_VERSION = '0.5.0';
 
     /**
      * @var string path for the frontend theme. Is needed when identifing
@@ -53,46 +52,29 @@ class Big extends Object implements BootstrapInterface
      */
     public $searchHandlers = [];
     /**
-     * @var BlockManager the block manager.
-     * Defaults to bigbrush\big\core\BlockManager.
-     */
-    public $blockManager;
-    /**
-     * @var MenuManager the menu manager.
-     * Defaults to bigbrush\big\core\MenuManager.
-     */
-    public $menuManager;
-    /**
-     * @var CategoryManager the category manager.
-     * Defaults to bigbrush\big\core\CategoryManager.
-     */
-    public $categoryManager;
-    /**
-     * @var UrlManager the url manager.
-     * Defaults to bigbrush\big\core\UrlManager.
-     */
-    public $urlManager;
-    /**
-     * @var Template the template manager.
-     * Defaults to bigbrush\big\core\TemplateManager.
-     */
-    public $templateManager;
-    /**
-     * @var ExtensionManager the extension manager.
-     * Defaults to bigbrush\big\core\ExtensionManager.
-     */
-    public $extensionManager;
-    /**
-     * @var Parser|false the application response parser. If this property is false the parser
-     * is disabled.
+     * @var boolean whether to enable dynamic content. Dynamic content is used when a theme/layout use include statements
+     * or when content saved with the editor is being displayed.
+     * When enabled the application response will be parsed by [[parser]].
      * Defaults to bigbrush\big\core\Parser.
      */
-    public $parser;
+    public $enableDynamicContent = false;
+    /**
+     * @var string the class used when creating the a parser.
+     * @see getParser()
+     */
+    public $parser = 'bigbrush\big\core\Parser';
+    /**
+     * @var boolean indicates whether the menu manager should set a default route in the running application.
+     * If true the default menu item will determine the default route.
+     * @see [[yii\web\Application::defaultRoute]].
+     */
+    public $setApplicationDefaultRoute = false;
 
 
     /**
-     * Bootstraps Big by initializing all managers and the parser. Also hooks into the main application
+     * Bootstraps Big by registering all managers in this locator. Also hooks into the main application
      * via the event system to parse layout files.
+     * 
      * Is called after the application, and Big, has been configured.
      *
      * @param yii\base\Application $app the application currently running
@@ -100,42 +82,34 @@ class Big extends Object implements BootstrapInterface
      */
     public function bootstrap($app)
     {
-        // initialize Big
-        $this->initialize();
-
-        // hook into the Yii application
-        $this->registerApplicationHooks($app);
-    }
-
-    /**
-     * Initializes Big by creating all managers.
-     * This method is called at the beginning of the boostrapping process.
-     */
-    public function initialize()
-    {
         // enable internationalization first so core classes can use it
         $this->registerTranslations([
             'class' => 'yii\i18n\PhpMessageSource',
         ]);
 
-        // core classes 
-        foreach ($this->getCoreClasses() as $property => $class) {
-            if (is_array($this->$property)) {
-                $this->$property = Yii::createObject(array_merge(['class' => $class], $this->$property));
-            } else {
-                $this->$property = Yii::createObject(['class' => $class]);
+        // check whether managers has been registered 
+        if (!$this->has('urlManager')) {
+            $this->setManagers([]);
+        }
+
+        // register menu manager when Big performs a search
+        $menuManager = $this->getMenuManager();
+        $this->searchHandlers[] = [$menuManager, 'onSearch'];
+
+        // set the application default route when enabled
+        if ($this->setApplicationDefaultRoute) {
+            $menu = $menuManager->getDefault();
+            $menuManager->setActive($menu);
+            $params = $this->getUrlManager()->parseInternalUrl($menu->route);
+            Yii::$app->defaultRoute = $params[0];
+            unset($params[0]);
+            foreach ($params as $key => $value) {
+                $_GET[$key] = $value;
             }
         }
 
-        // parser
-        if ($this->parser !== false) {
-            $config = ['class' => 'bigbrush\big\core\Parser'];
-            if (is_array($this->parser)) {
-                $this->parser = Yii::createObject(array_merge($config, $this->parser));
-            } else {
-                $this->parser = Yii::createObject($config);
-            }
-        }
+        // hook into the Yii application
+        $this->registerApplicationHooks($app);
     }
 
     /**
@@ -162,7 +136,7 @@ class Big extends Object implements BootstrapInterface
             }
         });
 
-        if ($this->parser !== false) {
+        if ($this->enableDynamicContent) {
             // register event handler that parses the application response
             $app->on(Application::EVENT_AFTER_REQUEST, [$this, 'parseResponse']);
         }
@@ -202,7 +176,7 @@ class Big extends Object implements BootstrapInterface
         }
         $response = Yii::$app->getResponse();
         if ($response->format === Response::FORMAT_HTML && !empty($response->data)) {
-            $response->data = $this->parser->run($response->data, $this->blockManager->getRegisteredBlocks());
+            $response->data = $this->getParser()->run($response->data, $this->blockManager->getRegisteredBlocks());
         }
     }
 
@@ -466,15 +440,103 @@ class Big extends Object implements BootstrapInterface
      *
      * @return array list of core classes used in Big
      */
-    public function getCoreClasses()
+    public function getCoreManagers()
     {
         return [
-            'urlManager' => 'bigbrush\big\core\UrlManager', // needs to be registered first so other managers can use it
-            'menuManager' => 'bigbrush\big\core\MenuManager',
-            'blockManager' => 'bigbrush\big\core\BlockManager',
-            'categoryManager' => 'bigbrush\big\core\CategoryManager',
-            'templateManager' => 'bigbrush\big\core\TemplateManager',
-            'extensionManager' => 'bigbrush\big\core\ExtensionManager',
+            'urlManager' => ['class' => 'bigbrush\big\core\UrlManager'], // needs to be registered first so other managers can use it
+            'menuManager' => ['class' => 'bigbrush\big\core\MenuManager'],
+            'blockManager' => ['class' => 'bigbrush\big\core\BlockManager'],
+            'categoryManager' => ['class' => 'bigbrush\big\core\CategoryManager'],
+            'templateManager' => ['class' => 'bigbrush\big\core\TemplateManager'],
+            'extensionManager' => ['class' => 'bigbrush\big\core\ExtensionManager'],
         ];
+    }
+
+    /**
+     * Registers a set of managers as definitions in this locator.
+     *
+     * @param array $managers manager definitions or instances.
+     */
+    public function setManagers($managers)
+    {
+        foreach ($this->getCoreManagers() as $id => $manager) {
+            if (isset($managers[$id])) {
+                $managers[$id] = array_merge($manager, $managers[$id]);
+            } else {
+                $managers[$id] = $manager;
+            }
+        }
+        $this->setComponents($managers);
+    }
+
+    /**
+     * Returns the block manager.
+     *
+     * @return BlockManager
+     */
+    public function getBlockManager()
+    {
+        return $this->get('blockManager');
+    }
+
+    /**
+     * Returns the menu manager.
+     *
+     * @return MenuManager
+     */
+    public function getMenuManager()
+    {
+        return $this->get('menuManager');
+    }
+
+    /**
+     * Returns the category manager.
+     *
+     * @return CategoryManager
+     */
+    public function getCategoryManager()
+    {
+        return $this->get('categoryManager');
+    }
+
+    /**
+     * Returns the url manager.
+     *
+     * @return UrlManager
+     */
+    public function getUrlManager()
+    {
+        return $this->get('urlManager');
+    }
+
+    /**
+     * Returns the template manager.
+     *
+     * @return TemplateManager
+     */
+    public function getTemplateManager()
+    {
+        return $this->get('templateManager');
+    }
+
+    /**
+     * Returns the extension manager.
+     *
+     * @return ExtensionManager
+     */
+    public function getExtensionManager()
+    {
+        return $this->get('extensionManager');
+    }
+
+    /**
+     * Returns a parser instance.
+     * A new parser is always created when this method is called.
+     *
+     * @return Parser
+     */
+    public function getParser()
+    {
+        return Yii::createObject(['class' => $this->parser]);
     }
 }

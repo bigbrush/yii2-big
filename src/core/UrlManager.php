@@ -13,7 +13,7 @@ use yii\base\InvalidValueException;
 use yii\web\UrlRuleInterface;
 
 /**
- * UrlManager acts as an url manager within Big and as an url rule within the Yii application if [[enableUrlRule]] is true.
+ * UrlManager acts as an url manager within Big and as an url rule within the Yii application if [[enableUrlRules]] is true.
  */
 class UrlManager extends Object implements UrlRuleInterface
 {
@@ -21,7 +21,7 @@ class UrlManager extends Object implements UrlRuleInterface
      * @var boolean defines if this url manager should be used as a url rule in the application
      * url manager. Defaults to true.
      */
-    public $enableUrlRule = true;
+    public $enableUrlRules = false;
     /**
      * @var string defines the class name to use when loading url rules. All url
      * rules must be within the same namespace as the main module file (i.e. Module.php).
@@ -36,7 +36,7 @@ class UrlManager extends Object implements UrlRuleInterface
 
     /**
      * Initializes the url manager by registering it as an url rule in the application
-     * url manager. If will only register itself if [[enableUrlRule]] is true.
+     * url manager. If will only register itself if [[enableUrlRules]] is true.
      * All module url rules are also collected during intialization.
      *
      * This method is called when [[Big]] bootstraps. This manager is the first manager being initialized.
@@ -54,36 +54,12 @@ class UrlManager extends Object implements UrlRuleInterface
                 throw new InvalidValueException("Url rule '".get_class($rule)."' must implement yii\web\UrlRuleInterface");
             }
         }
-        if ($this->enableUrlRule) {
+        if ($this->enableUrlRules) {
             Yii::$app->getUrlManager()->addRules([$this]);
             foreach (Yii::$app->getModules() as $id => $module) {
                 $this->registerModule($id, $module);
             }
         }
-    }
-
-    /**
-     * @var yii\web\UrlManager url manager used for creating urls from backend to frontend.
-     */
-    public $frontendUrlManager;
-
-    /**
-     * Creates an url from the backend to the frontend.
-     *
-     * @param array $params the url params.
-     * @return string the constructed url.
-     */
-    public function createFrontendUrl($params)
-    {
-        if ($this->frontendUrlManager === null) {
-            $config = require(Yii::getAlias('@app/common/config/web.php'));
-            $config = $config['components']['urlManager'];
-            $config['class'] = 'yii\web\urlManager';
-            $config['baseUrl'] = '@web/../';
-            $config['rules'] = [$this];
-            $this->frontendUrlManager = Yii::createObject($config);
-        }
-        return $this->frontendUrlManager->createUrl($params);
     }
 
     /**
@@ -281,7 +257,7 @@ class UrlManager extends Object implements UrlRuleInterface
     }
 
     /**
-     * Searches for an url rule for the provided module id.
+     * Searches for an url rule for the provided module id and registers it in this manager as an url rule.
      *
      * @param string $id the id of a module.
      * @param array|yii\base\Object $module an array if the module has not been instantiated and

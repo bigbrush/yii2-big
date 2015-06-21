@@ -84,7 +84,7 @@ class CategoryManager extends Object implements ManagerInterface
         } elseif ($this->createRootNode($id)) {
             return [];
         } else {
-            throw new ErrorException("Categories for module: '$module' could not be created.");    
+            throw new ErrorException("Categories for module: '$id' could not be created.");    
         }
     }
 
