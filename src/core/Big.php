@@ -55,7 +55,6 @@ class Big extends ServiceLocator implements BootstrapInterface
      * @var boolean whether to enable dynamic content. Dynamic content is used when a theme/layout use include statements
      * or when content saved with the editor is being displayed.
      * When enabled the application response will be parsed by [[parser]].
-     * Defaults to bigbrush\big\core\Parser.
      */
     public $enableDynamicContent = false;
     /**

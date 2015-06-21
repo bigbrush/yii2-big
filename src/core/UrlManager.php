@@ -29,7 +29,9 @@ class UrlManager extends Object implements UrlRuleInterface
     public $urlRuleClass = 'UrlRule';
     /**
      * @var array list of rules this manager should react to. Each rule is indexed by the module ID
-     * it is apart of. If a rule is added with [[setRules()]] if will be zero indexed.
+     * it is apart of. If a rule is added with [[setRules()]] the key is determined by the how [[setRules()]] is called.
+     * @see setRules()
+     * @see registerRules()
      */
     private $_rules = [];
 
@@ -43,17 +45,7 @@ class UrlManager extends Object implements UrlRuleInterface
      */
     public function init()
     {
-        foreach ($this->_rules as $i => $rule) {
-            if (is_string($rule)) {
-                $rule = ['class' => $rule];
-            }
-            if (is_array($rule)) {
-                $rule = $this->_rules[$i] = Yii::createObject($rule);
-            }
-            if (!$rule instanceof UrlRuleInterface) {
-                throw new InvalidValueException("Url rule '".get_class($rule)."' must implement yii\web\UrlRuleInterface");
-            }
-        }
+        $this->registerRules($this->_rules);
         if ($this->enableUrlRules) {
             Yii::$app->getUrlManager()->addRules([$this]);
             foreach (Yii::$app->getModules() as $id => $module) {
@@ -68,11 +60,18 @@ class UrlManager extends Object implements UrlRuleInterface
      * Note that if you add rules after the UrlManager object is created, make sure
      * you populate the array with rule objects instead of rule configurations.
      *
-     * @param array $rules an array of rule objects.
+     * @param mixed $rules the following value can be provided
+     *   - a string representing a class name
+     *   - an array of rule objects
+     *   - an array of strings representing class names
+     *   - an array of arrays where each array is a url rule configuration object
      */
-    public function setRules(array $rules)
+    public function setRules($rules)
     {
-        $this->_rules = array_merge($this->_rules, $rules);
+        if (!is_array($rules)) {
+            $rules = [$rules];
+        }
+        $this->registerRules($rules);
     }
 
     /**
@@ -257,12 +256,32 @@ class UrlManager extends Object implements UrlRuleInterface
     }
 
     /**
+     * Registers the provided rules. 
+     *
+     * @param array $rules an array of rule objects or rule configurations.
+     * @throws InvalidValueException if one of the provided rules doesn't implement UrlRuleInterface.
+     */
+    public function registerRules(array $rules)
+    {
+        foreach ($rules as $i => $rule) {
+            if (is_string($rule)) {
+                $rule = Yii::createObject(['class' => $rule]);
+            } elseif (is_array($rule)) {
+                $rule = Yii::createObject($rule);
+            }
+            if (!$rule instanceof UrlRuleInterface) {
+                throw new InvalidValueException("Url rule '".get_class($rule)."' must implement yii\web\UrlRuleInterface");
+            }
+            $this->_rules[$i] = $rule;
+        }
+    }
+
+    /**
      * Searches for an url rule for the provided module id and registers it in this manager as an url rule.
      *
      * @param string $id the id of a module.
      * @param array|yii\base\Object $module an array if the module has not been instantiated and
      * an object if it has.
-     * @return UrlRuleInterface|false the url rule if found and false if not.
      * @throws InvalidValueException if an identified url rule doesn't implement [[UrlRuleInterface]].
      */
     public function registerModule($id, $module)
@@ -278,13 +297,6 @@ class UrlManager extends Object implements UrlRuleInterface
             return false;
         }
         // create and register url rule
-        $rule = Yii::createObject([
-            'class' => $class,
-        ]);
-        if ($rule instanceof UrlRuleInterface) {
-            return $this->_rules[$id] = $rule;
-        } else {
-            throw new InvalidValueException("Url rule '".get_class($rule)."' must implement yii\web\UrlRuleInterface");
-        }
+        $this->registerRules([$class]);
     }
 }
