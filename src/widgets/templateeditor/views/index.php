@@ -8,54 +8,45 @@
 use yii\helpers\Html;
 use bigbrush\big\models\Template;
 
+$this->registerCss('
+    li.sortable-placeholder {
+        border: 1px dashed #CCC;
+        background: none;
+        margin: 0 auto;
+        min-height: 25px;
+    }
+');
+
+$chunks = array_chunk($assignedBlocks, $columns, $preserveKeys = true);
+$rowClass = 'col-md-' . 12 / $columns;
 ?>
-<div id="template-editor" class="row">
-
-    <div class="col-md-3">
-        <div id="available-blocks">
-            <h3 class="section-title"><?= Yii::t('big', 'Available blocks') ?></h3>
-            <ul class="connected">
-                <?php
-                foreach ($availableBlocks as $block) {
-                    $content = Html::tag('span', $block['title']);
-                    $content .= Html::hiddenInput('Template[positions][' . Template::UNREGISTERED . '][]', $block['id']);
-                    echo Html::tag('li', $content);
-                }
-                ?>
-            </ul>
+<div id="<?= $id ?>" class="template-editor">
+    <div class="row">
+        <div class="available-blocks">
+            <div class="col-md-3">
+                <?= $this->render('_panel', [
+                    'heading' => Yii::t('big', 'Available blocks'),
+                    'blocks' => $availableBlocks,
+                    'position' => Template::UNREGISTERED,
+                ]) ?>
+            </div>
         </div>
-    </div>
-
-    <?php
-    $chunks = array_chunk($assignedBlocks, $columns, true);
-    $class = 'col-md-' . 12 / $columns;
-    ?>
-    
-    <div class="col-md-9">
-        <div id="assigned-blocks">
-            <?php foreach ($chunks as $assignedBlocks) : ?>
-            <div class="row">
-        
-                <?php foreach ($assignedBlocks as $position => $blocks) : ?>
-                <div class="<?= $class ?>">
-                    <div class="block-position" data-position="<?= $position ?>">
-                        <h3><strong><?= ucfirst($position) ?></strong></h3>
-                        <ul class="connected">
-                            <?php
-                            foreach ($blocks as $block) {
-                                $content = Html::tag('span', $block['title']);
-                                $content .= Html::hiddenInput('Template[positions]['.$position.'][]', $block['id']);
-                                echo Html::tag('li', $content);
-                            }
-                            ?>
-                        </ul>
+        <div class="assigned-blocks">
+            <div class="col-md-9">
+                <?php foreach ($chunks as $assignedBlocks) : ?>
+                <div class="row">
+                    <?php foreach ($assignedBlocks as $position => $blocks) : ?>
+                    <div class="<?= $rowClass ?> block-position" data-position="<?= $position ?>">
+                        <?= $this->render('_panel', [
+                            'heading' => ucfirst($position),
+                            'blocks' => $blocks,
+                            'position' => $position,
+                        ]) ?>
                     </div>
+                    <?php endforeach; ?>
                 </div>
                 <?php endforeach; ?>
-        
             </div>
-        <?php endforeach; ?>
         </div>
     </div>
-
 </div>

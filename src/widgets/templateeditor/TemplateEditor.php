@@ -27,7 +27,7 @@ class TemplateEditor extends Widget
      */
     public $model;
     /**
-     * @var array list of all blocks available to assign to positions. The keys are block ids
+     * @var array list of blocks available to assign to positions. The keys are block ids
      * and the value are Blocks.
      */
     public $blocks;
@@ -36,6 +36,10 @@ class TemplateEditor extends Widget
      * Must equal a whole number when divided by 12.
      */
     public $columns = 3;
+    /**
+     * @var string defines the view file or alias used when rendering.
+     */
+    public $viewFile = 'index';
     /**
      * @var bigbrush\big\core\Template a template used to parse theme positions with blocks assigned to the template.
      * Is configured in [[init()]].
@@ -95,26 +99,32 @@ class TemplateEditor extends Widget
      */
     public function run()
     {
-        $availableBlocks = $this->removeAssignedBlocks($this->blocks);
-        $assignedBlocks = []; // formatted like: ['POSITION' => [BLOCK MODEL, ...], ...]
+        $template = $this->_template;
+        $positions = $template->getPositions();
+        $assigned = [];
         foreach (Yii::$app->big->getFrontendThemePositions() as $name => $title) {
-            $ids = $this->_template->getPosition($name);
-            $assignedBlocks[$name] = $this->getBlocks($ids);
+            if (isset($positions[$name])) {
+                $assigned[$name] = $this->getBlocks($positions[$name]);
+            } else {
+                $assigned[$name] = [];
+            }
         }
 
         $this->registerScripts();
 
-        return $this->render('index', [
-            'availableBlocks' => $availableBlocks,
-            'assignedBlocks' => $assignedBlocks,
+        return $this->render($this->viewFile, [
+            'availableBlocks' => $this->blocks,
+            'assignedBlocks' => $assigned,
             'columns' => $this->columns,
+            'id' => $this->id,
         ]);
     }
 
     /**
      * Returns blocks by the provided ids that are assigned to [[blocks]].
+     * If an id is found in [[blocks]] it will be removed so only unassigned blocks will be left in the stack.
      *
-     * @param array $ids list of block ids to blocks by.
+     * @param array $ids list of block ids to locate blocks by.
      * @return array list of blocks found by the provided ids.
      */
     public function getBlocks($ids)
@@ -123,36 +133,10 @@ class TemplateEditor extends Widget
         foreach ($ids as $id) {
             if (isset($this->blocks[$id])) {
                 $blocks[] = $this->blocks[$id];
+                unset($this->blocks[$id]);
             }
         }
         return $blocks;
-    }
-
-    /**
-     * Returns a list of blocks that is not used by the current template.
-     * 
-     * @param array $blocks list of blocks to filter. The keys must be block ids.
-     * @return array list of blocks that is not assigned to the current template 
-     */
-    public function removeAssignedBlocks($blocks)
-    {
-        $positions = $this->_template->getPositions();
-        if (empty($positions)) {
-            return $blocks;
-        }
-
-        $ids = [];
-        foreach ($positions as $position => $blocksIds) {
-            $ids = array_merge($ids, $blocksIds);
-        }
-
-        $unused = [];
-        foreach ($blocks as $block) {
-            if (in_array($block['id'], $ids) === false) {
-                $unused[] = $block;
-            }
-        }
-        return $unused;
     }
 
     /**

@@ -39,6 +39,10 @@ class BigSearch extends Widget
      * is not included in the search results.
      */
     public $fileManager;
+    /**
+     * @var string defines the view file or alias used when rendering.
+     */
+    public $viewFile = 'index';
 
 
     /**
@@ -99,7 +103,7 @@ class BigSearch extends Widget
         if ($this->fileManager) {
             $buttons[] = Yii::t('big', 'Media');
         }
-        return $this->render('index', [
+        return $this->render($this->viewFile, [
             'sections' => $sections,
             'buttons' => $this->createDropDownButtons($buttons),
             'fileManager' => $this->fileManager,
