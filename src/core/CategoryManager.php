@@ -37,9 +37,6 @@ class CategoryManager extends Object implements ManagerInterface
     public function init()
     {
         // set properties defined in trait if not set by application configuration.
-        if ($this->tableName === null) {
-            $this->tableName = '{{%category}}';
-        }
         if ($this->modelClass === null) {
             $this->modelClass = 'bigbrush\big\models\Category';
         }
@@ -47,6 +44,8 @@ class CategoryManager extends Object implements ManagerInterface
 
     /**
      * Returns an array ready for drop down lists for the provided module.
+     *
+     * Note this method uses the property "title" if an item.
      *
      * @param string $module a module id to load categories for.
      * @param string $unselected optional text to use as a state of "unselected".
@@ -59,8 +58,9 @@ class CategoryManager extends Object implements ManagerInterface
         if (!$indenter) {
             return $categories + ArrayHelper::map($this->getItems($module), 'id', 'title');
         }
+        $depthAttribute = $this->getDatabaseColumnName('depth');
         foreach ($this->getItems($module) as $category) {
-            $categories[$category->id] = str_repeat($indenter, $category->depth - 1) . $category->title;
+            $categories[$category->id] = str_repeat($indenter, $category->$depthAttribute - 1) . $category->title;
         }
         return $categories;
     }
@@ -73,7 +73,7 @@ class CategoryManager extends Object implements ManagerInterface
      * 
      * @param string $id a module id to load categories for.
      * @return array a category tree. Empty array if a category tree is automatically created.
-     * @throws ErrorException if a category tree for a module could not be created.
+     * @throws ErrorException in [[createRootNode()]].
      */
     public function getItems($id = null)
     {
@@ -81,10 +81,9 @@ class CategoryManager extends Object implements ManagerInterface
             throw new InvalidParamException("Id must be provided when loading categories.");
         } elseif (isset($this->_mapper[$id]) || $this->loadCategoryTree($id)) {
             return $this->_getItems($this->_mapper[$id]);
-        } elseif ($this->createRootNode($id)) {
-            return [];
         } else {
-            throw new ErrorException("Categories for module: '$id' could not be created.");    
+            $this->createRootNode($id);
+            return [];
         }
     }
 
@@ -97,10 +96,11 @@ class CategoryManager extends Object implements ManagerInterface
      */
     public function getItem($id)
     {
-        // search in loaded items. Queries the datebase if not already loaded.
+        $treeAttribute = $this->getDatabaseColumnName('depth');
+        // search in loaded items. Queries the database if not already loaded.
         $category = $this->_getItem($id);
         foreach ($this->getRoots() as $root) {
-            if ($root->tree == $category->tree) {
+            if ($root->$treeAttribute == $category->$treeAttribute) {
                 $this->_mapper[$root->module] = $root->id;
                 return $category;
             }
@@ -109,25 +109,31 @@ class CategoryManager extends Object implements ManagerInterface
     }
 
     /**
-     * Saves a category model. 
+     * Saves a category model.
      *
+     * Note this method uses the property "parent_id" which should be populated with an id of
+     * a parent item (if any).
+     *
+     * @param string $id a module id the provided category belongs to.
      * @param bigbrush\big\models\Category a category model to save. Use [[getModel()]]
      * to create or load a model.
      * @return boolean true if save is successful, false if not.
+     * @throws ErrorException in [[createRootNode()]].
      */
-    public function saveModel(&$model)
+    public function saveModel($id, &$model)
     {
         if ($model->load(Yii::$app->getRequest()->post()) && $model->validate()) {
             $parent = $model->parents(1)->one();
+            $root = $model->find()->where(['module' => $id])->one();
+            
             if (!$model->parent_id) {
-                if ($model->getIsNewRecord() || !$parent->isRoot()) {
-                    $parent = $this->getModel($model->tree);
-                    return $model->appendTo($parent, false);
+                if (!$parent || $parent->id !== $root->id) {
+                    return $model->appendTo($root, false);
                 } else {
                     return $model->save(false);
                 }
             } else {
-                if ($model->getIsNewRecord() || $parent->id != $model->parent_id) {
+                if (!$parent || $parent->id != $model->parent_id) {
                     $parent = $this->getModel($model->parent_id);
                     return $model->appendTo($parent, false);
                 } else {
@@ -160,20 +166,21 @@ class CategoryManager extends Object implements ManagerInterface
     }
 
     /**
-     * Creates a root node for a tree.
+     * Creates a root node for a category tree.
      *
-     * @param string $module a module id
-     * @return boolean true if save was successful, false if not.
+     * @param string $id a module id to create the root node for.
+     * @return bigbrush\big\models\Category the created root node. Return model is defined by [[modelClass]].
+     * @throws ErrorException if a root node for the provided id could not be created.
      */
-    public function createRootNode($module)
+    public function createRootNode($id)
     {
         $model = $this->getModel();
-        $model->setAttributes(['module' => $module, 'title' => $module]);
+        $model->setAttributes(['module' => $id, 'title' => $id]);
         if ($model->makeRoot()) {
             $this->createTree([$model->getAttributes()]);
-            return true;
+            return $model;
         } else {
-            return false;
+            throw new ErrorException("Categories for module: '$id' could not be created.");
         }
     }
 }

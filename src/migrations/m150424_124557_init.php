@@ -39,6 +39,7 @@ class m150424_124557_init extends Migration
             'meta_title' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_description' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_keywords' => Schema::TYPE_STRING . ' NOT NULL',
+            'params' => Schema::TYPE_TEXT . ' NOT NULL',
         ], $tableOptions);
         // category table
         $this->createTable('{{%category}}', [
@@ -57,6 +58,7 @@ class m150424_124557_init extends Migration
             'meta_title' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_description' => Schema::TYPE_STRING . ' NOT NULL',
             'meta_keywords' => Schema::TYPE_STRING . ' NOT NULL',
+            'params' => Schema::TYPE_TEXT . ' NOT NULL',
         ], $tableOptions);
         // template table
         $this->createTable('{{%template}}', [

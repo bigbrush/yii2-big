@@ -31,6 +31,7 @@ use creocoder\nestedsets\NestedSetsBehavior;
  * @property string $meta_title
  * @property string $meta_description
  * @property string $meta_keywords
+ * @property string $params
  */
 class Category extends ActiveRecord
 {
@@ -91,6 +92,7 @@ class Category extends ActiveRecord
             ['parent_id', 'integer'],
             ['content', 'filter', 'filter' => '\yii\helpers\HtmlPurifier::process'],
             [['title', 'meta_title', 'meta_description', 'meta_keywords', 'module'], 'string', 'max' => 255],
+            ['params', 'string'],
         ];
     }
 

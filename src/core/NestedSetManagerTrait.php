@@ -12,26 +12,42 @@ use yii\base\InvalidParamException;
 use yii\db\Query;
 
 /**
- * NestedSetManagerTrait
+ * NestedSetManagerTrait is used by managers that returns a model with the [[creocoder\nestedsets\NestedSetsBehavior]] attached.
+ *
+ * This trait is optimized through a caching system and by the fact that ActiveRecords are not used. The database is queried
+ * directly and a [[ManagerObject]] is created for each database row. 
+ *
+ * Roots and children of roots are called "roots" and "items". They are stored in separate cache containers and can be accessed
+ * with [[getRoots]], [[getRoot]], [[getItems]] and [[getItem]].
+ *
+ * To implement this trait in a manager the property [[modelClass]] must be set with the class of the ActiveRecord to use.
+ *
+ * Use this trait as follows:
+ * ~~~php
+ * class MyManager extends Object implements ManagerInterface
+ * {
+ *     use NestedSetManagerTrait;
+ *
+ *     function init() {
+ *         $this->modelClass = 'namespace\of\your\model';
+ *     }
+ * }
+ * ~~~
  */
 trait NestedSetManagerTrait
 {
-    /**
-     * @var string name of a database table to load trees from.
-     */
-    public $tableName;
     /**
      * @var string represents the model class when creating/editing an item.
      */
     public $modelClass;
     /**
-     * @var string the alias used when querying the database table.
-     */
-    public $tableAlias = 'm';
-    /**
      * @var string represents the class when creating an item.
      */
     public $itemClass = 'bigbrush\big\core\ManagerObject';
+    /**
+     * @var string the alias used when querying the database table.
+     */
+    public $tableAlias = 'm';
     /**
      * @var array list with all loaded roots indexed by the id of each root.
      * Format of this array: [
@@ -53,6 +69,10 @@ trait NestedSetManagerTrait
      * ]
      */
     private $_items = [];
+    /**
+     * @var array maps internal property definitions to actual database columns defined in [[creocoder\nestedsets\NestedSetsBehavior]].
+     */
+    private $_propertyMapper;
 
 
     /**
@@ -67,7 +87,12 @@ trait NestedSetManagerTrait
     {
         if ($this->_roots === null || $reload) {
             $this->_roots = []; // flag tree as loaded.
-            $this->createTree($this->find()->orderBy($this->tableAlias.'.tree, '.$this->tableAlias.'.lft')->all());
+            $lft = $this->getDatabaseColumnName('lft');
+            $tree = $this->getDatabaseColumnName('tree');
+            $items = $this->find()
+                ->orderBy($this->tableAlias . '.' . $tree . ', ' . $this->tableAlias . '.' . $lft)
+                ->all();
+            $this->createTree($items);
         }
         return $this->_roots;
     }
@@ -86,7 +111,7 @@ trait NestedSetManagerTrait
         } elseif ($this->loadTree('id', $id)) {
             return $this->_roots[$id];
         } else {
-            throw new InvalidParamException("Root with ID: '$id' has not been created in table: '$this->tableName'.");
+            throw new InvalidParamException("Root with ID: '$id' has not been created in table: '" . $this->getModel()->tableName() . "'.");
         }
     }
 
@@ -104,7 +129,7 @@ trait NestedSetManagerTrait
         } elseif ($this->loadTree('id', $id)) {
             return $this->_items[$id];
         } else {
-            throw new InvalidParamException("Item with ID: '$id' has not been created in table: '$this->tableName'.");
+            throw new InvalidParamException("Item with ID: '$id' has not been created in table: '" . $this->getModel()->tableName() . "'.");
         }
     }
 
@@ -122,7 +147,7 @@ trait NestedSetManagerTrait
         } elseif ($this->loadTree('id', $id)) {
             return $this->searchItems('id', $id);
         } else {
-            throw new InvalidParamException("Item with ID: '$id' has not been created in table: '$this->tableName'.");
+            throw new InvalidParamException("Item with ID: '$id' has not been created in table: '" . $this->getModel()->tableName() . "'.");
         }
     }
 
@@ -164,22 +189,27 @@ trait NestedSetManagerTrait
 
     /**
      * Returns the direct parent of the provided object.
-     * If a root object or a new ActiveRecord is provided false is returned.
+     * If a root object is provided false is returned.
      *
      * @param ManagerObject|yii\db\ActiveRecord $object either an ActiveRecord or a manager object.
      * @return ManagerObject|false a manager object if the provided object has a parent. False if not.
      */
     public function getParent($object)
     {
-        if ($object->lft == 1 || $object->id == 0) {
+        $lft = $this->getDatabaseColumnName('lft');
+        $rgt = $this->getDatabaseColumnName('rgt');
+        $depth = $this->getDatabaseColumnName('depth');
+        $tree = $this->getDatabaseColumnName('tree');
+
+        if ($object->$lft == 1) {
             return false;
         }
         foreach ($this->_items as $items) {
             foreach ($items as $item) {
-                if ($item->tree == $object->tree
-                && $item->lft < $object->lft
-                && $item->rgt > $object->rgt
-                && $item->depth == $object->depth -1) {
+                if ($item->$tree == $object->$tree
+                && $item->$lft < $object->$lft
+                && $item->$rgt > $object->$rgt
+                && $item->$depth == $object->$depth -1) {
                     return $item;
                 }
             }
@@ -197,14 +227,17 @@ trait NestedSetManagerTrait
      */
     public function loadTree($column, $value)
     {
-        $tree = $this->find()
+        $lft = $this->getDatabaseColumnName('lft');
+        $tree = $this->getDatabaseColumnName('tree');
+
+        $items = $this->find()
             ->select('m1.*')
-            ->where([$this->tableAlias.'.'.$column => $value])
-            ->leftJoin($this->tableName . ' m1', 'm1.tree = '.$this->tableAlias.'.tree')
-            ->orderBy('lft')
+            ->where([$this->tableAlias . '.' . $column => $value])
+            ->leftJoin($this->getModel()->tableName() . ' m1', 'm1.' . $tree . ' = ' . $this->tableAlias . '.' . $tree)
+            ->orderBy($lft)
             ->all();
-        $this->createTree($tree);
-        return empty($tree) === false;
+        $this->createTree($items);
+        return empty($items) === false;
     }
 
     /**
@@ -218,10 +251,12 @@ trait NestedSetManagerTrait
      */
     public function createTree($items)
     {
+        $lft = $this->getDatabaseColumnName('lft');
+
         $rootId = null;
         foreach ($items as $item) {
             $item = $this->createObject($item);
-            if ($item->lft == 1) {
+            if ($item->$lft == 1) {
                 $rootId = $item->id;
                 $this->_roots[$rootId] = $item;
                 $this->_items[$rootId] = [];
@@ -248,7 +283,7 @@ trait NestedSetManagerTrait
     }
 
     /**
-     * Return a query ready for the [[tableName]] database table. The table
+     * Return a query ready for the database table used in with a model retrived with [[getModel()]]. The table
      * is aliased according to [[tableAlias]].
      *
      * @return Query
@@ -256,7 +291,7 @@ trait NestedSetManagerTrait
     public function find()
     {
         $query = new Query();
-        $query->from($this->tableName.' '.$this->tableAlias);
+        $query->from($this->getModel()->tableName() . ' ' . $this->tableAlias);
         return $query;
     }
 
@@ -276,6 +311,36 @@ trait NestedSetManagerTrait
         	return $model;
         } else {
             throw new InvalidParamException("Model with id: '$id' not found.");
+        }
+    }
+
+    /**
+     * Returns a database column name as defined in [[creocoder\nestedsets\NestedSetsBehavior]].
+     *
+     * Internal references are as follows:
+     * - leftAttribute: lft
+     * - rightAttribute: rgt
+     * - depthAttribute: depth
+     * - treeAttribute: tree
+     *
+     * @param string $property the internal name.
+     * @return string actual name of the database column.
+     */
+    public function getDatabaseColumnName($name)
+    {
+        if ($this->_propertyMapper === null) {
+            $model = $this->getModel();
+            $this->_propertyMapper = [
+                'lft' => $model->leftAttribute,
+                'rgt' => $model->rightAttribute,
+                'depth' => $model->depthAttribute,
+                'tree' => $model->treeAttribute,
+            ];
+        }
+        if (isset($this->_propertyMapper[$name])) {
+            return $this->_propertyMapper[$name];
+        } else {
+            throw new InvalidParamException("Internal reference '$name' is supported. Supoorted parameters are: 'lft', 'rgt', 'depth' and 'tree'");
         }
     }
 }

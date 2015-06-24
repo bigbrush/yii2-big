@@ -17,7 +17,8 @@ use yii\base\NotSupportedException;
 class ManagerObject extends Object implements ArrayAccess
 {
 	/**
-	 * @var array holds object properties. 
+	 * @var array|object holds object properties.
+     * If an object is registered it must implement [[ArrayAccess]].
 	 */
     private $_data;
 

@@ -28,6 +28,7 @@ use creocoder\nestedsets\NestedSetsBehavior;
  * @property string $meta_title
  * @property string $meta_description
  * @property string $meta_keywords
+ * @property string $params
  */
 class Menu extends ActiveRecord
 {
@@ -81,10 +82,9 @@ class Menu extends ActiveRecord
      */
     public function scenarios()
     {
-        return [
-            static::SCENARIO_DEFAULT  => ['title', 'menu_id', 'state', 'parent_id', 'route', 'is_default', 'meta_title', 'meta_description', 'meta_keywords'],
+        return array_merge(parent::scenarios(), [
             static::SCENARIO_MENU => ['title'],
-        ];
+        ]);
     }
 
     /**
@@ -96,9 +96,10 @@ class Menu extends ActiveRecord
             [['title', 'route'], 'required'],
             ['state', 'default', 'value' => static::STATE_ACTIVE],
             ['state', 'in', 'range' => array_keys($this->getStateOptions())],
-            ['menu_id', 'integer', 'min' => 1, 'tooSmall' => 'Choose a menu for this item'],
+            ['menu_id', 'integer', 'min' => 1, 'tooSmall' => Yii::t('cms', 'Choose a menu for this item')],
             [['parent_id', 'is_default'], 'integer'],
             [['meta_title', 'meta_description', 'meta_keywords'], 'string', 'max' => 255],
+            ['params', 'string'],
         ];
     }
 

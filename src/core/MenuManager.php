@@ -9,7 +9,9 @@ namespace bigbrush\big\core;
 
 use Yii;
 use yii\base\InvalidParamException;
+use yii\base\InvalidConfigException;
 use yii\base\Object;
+use yii\helpers\Json;
 
 /**
  * MenuManager
@@ -18,6 +20,7 @@ class MenuManager extends Object implements ManagerInterface
 {
     use NestedSetManagerTrait {
         getItems as _getItems;
+        createObject as _createObject;
     }
 
     /**
@@ -52,11 +55,13 @@ class MenuManager extends Object implements ManagerInterface
         if ($this->itemClass === 'bigbrush\big\core\ManagerObject') {
             $this->itemClass = 'bigbrush\big\core\MenuManagerObject';
         }
-        if ($this->tableName === null) {
-            $this->tableName = '{{%menu}}';
-        }
         if ($this->modelClass === null) {
             $this->modelClass = 'bigbrush\big\models\Menu';
+        }
+
+        // check model of this manager has NestedSetsBehavior attached
+        if ($this->getModel()->hasProperty('leftAttribute') === false) {
+            throw new InvalidConfigException("ActiveRecord used in MenuManager must have the 'NestedSetsBehavior' attached");
         }
 
         // load all menus and menu items when autoload is enabled
@@ -203,6 +208,7 @@ class MenuManager extends Object implements ManagerInterface
      */
     public function onSearch($event)
     {
+        $depthAttribute = $this->getDatabaseColumnName('depth');
         foreach ($this->getMenus(true) as $root) {
             foreach ($this->getItems($root->id) as $menu) {
                 if (!empty($event->value) && strpos($menu->title, $event->value) === false) {
@@ -210,7 +216,7 @@ class MenuManager extends Object implements ManagerInterface
                 }
                 if ($menu->lft != 1) {
                     $event->addItem([
-                        'title' => str_repeat('- ', $menu->depth - 1) . $menu->title,
+                        'title' => str_repeat('- ', $menu->$depthAttribute - 1) . $menu->title,
                         'route' => $menu->route,
                         'text' => '',
                         'date' => '',
@@ -219,6 +225,20 @@ class MenuManager extends Object implements ManagerInterface
                 }
             }
         }
+    }
+
+    /**
+     * Creates an item object used when creating trees.
+     * Overloaded to decode the params property to an array.
+     *
+     * @param array $data configuration array for the object.
+     * @return ManagerObject or a subclass.
+     * @see [[createTree()]]
+     */
+    public function createObject(array $data)
+    {
+        $data['params'] = Json::decode($data['params']);
+        return $this->_createObject($data);
     }
 
     /**

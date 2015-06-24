@@ -30,7 +30,7 @@ interface ManagerInterface
     /**
      * Creates an item object used in this manager.
      *
-     * @param array $data configuration array for the object.
+     * @param mixed $data configuration array for the object.
      * @return ManagerObject a manager object.
      */
     public function createObject(array $data);
