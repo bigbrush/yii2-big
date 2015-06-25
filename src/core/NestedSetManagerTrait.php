@@ -79,6 +79,20 @@ trait NestedSetManagerTrait
      * Returns all created root items. The whole tree is loaded from the database
      * if this is the first method called in this trait.
      *
+     * The returned array is reset() to ensure the internal pointer is at the first element. This is necessary when an array is used
+     * in function calls like below. If the array is used in a foreach statement before calling while() the first array element
+     * will be left out.
+     * ~~~php 
+     * $items = $this->getItems($id = 1);
+     * foreach ($items as $item) {}
+     * 
+     * $items = $this->getItems($id = 1);
+     * while (list($id, $item) = each($items)) {
+     *     // first element is skipped if reset() is not called
+     * }
+     * ~~~ 
+     * see: http://stackoverflow.com/questions/10057671/how-foreach-actually-works
+     *
      * @param boolean $reload indicates whether the whole tree should be reloaded regardless
      * if any trees has been loaded before.
      * @return array an array of roots where the keys are root ids and the values are objects of type [[itemClass]].
@@ -94,6 +108,7 @@ trait NestedSetManagerTrait
                 ->all();
             $this->createTree($items);
         }
+        reset($this->_roots);
         return $this->_roots;
     }
 
@@ -106,9 +121,7 @@ trait NestedSetManagerTrait
      */
     public function getRoot($id)
     {
-        if (isset($this->_roots[$id])) {
-            return $this->_roots[$id];
-        } elseif ($this->loadTree('id', $id)) {
+        if (isset($this->_roots[$id]) || $this->loadTree('id', $id)) {
             return $this->_roots[$id];
         } else {
             throw new InvalidParamException("Root with ID: '$id' has not been created in table: '" . $this->getModel()->tableName() . "'.");
@@ -121,13 +134,14 @@ trait NestedSetManagerTrait
      * @param int $id required root id of a tree to find (needs to default to null to be compatible with [[ManagerInterface]]).
      * @return array list of items.
      * @throws InvalidParamException if items was not found by the provided root id.
+     * @see getRoots()
      */
     public function getItems($id = null)
     {
-        if (isset($this->_items[$id])) {
-            return $this->_items[$id];
-        } elseif ($this->loadTree('id', $id)) {
-            return $this->_items[$id];
+        if (isset($this->_items[$id]) || $this->loadTree('id', $id)) {
+            $items = $this->_items[$id];
+            reset($items);
+            return $items;
         } else {
             throw new InvalidParamException("Item with ID: '$id' has not been created in table: '" . $this->getModel()->tableName() . "'.");
         }
@@ -340,7 +354,7 @@ trait NestedSetManagerTrait
         if (isset($this->_propertyMapper[$name])) {
             return $this->_propertyMapper[$name];
         } else {
-            throw new InvalidParamException("Internal reference '$name' is supported. Supoorted parameters are: 'lft', 'rgt', 'depth' and 'tree'");
+            throw new InvalidParamException("Internal reference '$name' is not supported. Supoorted parameters are: 'lft', 'rgt', 'depth' and 'tree'");
         }
     }
 }
