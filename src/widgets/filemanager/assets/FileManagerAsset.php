@@ -19,7 +19,7 @@ class FileManagerAsset extends AssetBundle
         'css/elfinder.min.css',
     ];
     public $js = [
-        'js/elFinder.min.js',
+        'js/elfinder.min.js',
     ];
     public $depends = [
         'yii\jui\JuiAsset',
