@@ -101,29 +101,29 @@ class NestedSetMoveAction extends Action
         if ($direction === 'up') {
             if (($prev = $model->prev()->one()) !== null) {
                 if ($model->insertBefore($prev)) {
-                    $message = 'Menu item moved successfully';
+                    $message = Yii::t('big', 'Menu item moved up.');
                 } else {
                     $status = 'error';
-                    $message = 'An error occured. Please try again';
+                    $message = Yii::t('big', 'An error occured. Please try again.');
                 }
             } else {
                 $status = 'info';
-                $message = 'Menu item not moved. It is the first item';
+                $message = Yii::t('big', 'Menu item not moved. It is the first item.');
             }
         } elseif ($direction === 'down') {
             if (($next = $model->next()->one()) !== null) {
                 if ($model->insertAfter($next)) {
-                    $message = 'Menu item moved successfully';
+                    $message = Yii::t('big', 'Menu item moved down.');
                 } else {
                     $status = 'error';
-                    $message = 'An error occured. Please try again';
+                    $message = Yii::t('big', 'An error occured. Please try again.');
                 }
             } else {
                 $status = 'info';
-                $message = 'Menu item not moved. It is the last item';
+                $message = Yii::t('big', 'Menu item not moved. It is the last item.');
             }
         } else {
-            $message = 'Direction can only be "up" or "down"';
+            $message = Yii::t('big', 'Direction can only be "up" or "down"');
             $status = 'error';
         }
 
