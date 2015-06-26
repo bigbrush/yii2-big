@@ -8,11 +8,11 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\data\ArrayDataProvider;
-use yii\bootstrap\ButtonDropDown;
+use yii\bootstrap\ButtonDropdown;
 ?>
 <div class="row">
     <div class="col-md-12">
-        <?= ButtonDropDown::widget([
+        <?= ButtonDropdown::widget([
             'label' => Yii::t('big', 'Select section'),
             'options' => ['class' => 'btn btn-info'],
             'dropdown' => [

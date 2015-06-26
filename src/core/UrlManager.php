@@ -280,7 +280,7 @@ class UrlManager extends Object implements UrlRuleInterface
      * Searches for an url rule for the provided module id and registers it in this manager as an url rule.
      *
      * @param string $id the id of a module.
-     * @param array|yii\base\Object $module an array if the module has not been instantiated and
+     * @param array|string|yii\base\Object $module array or string if the module has not been instantiated and
      * an object if it has.
      * @throws InvalidValueException if an identified url rule doesn't implement [[UrlRuleInterface]].
      */
@@ -288,8 +288,10 @@ class UrlManager extends Object implements UrlRuleInterface
     {
         if (is_object($module)) {
             $class = $module::className();
-        } else {
+        } elseif (is_array($module)) {
             $class = $module['class'];
+        } else {
+            $class = $module;
         }
         // load url rule from same namespace as the main module file
         $class = substr($class, 0, strrpos($class, '\\') + 1) . $this->urlRuleClass;
