@@ -47,10 +47,14 @@ class MenuManagerObject extends ManagerObject
     public function getUrl()
     {
         if ($this->_url === null) {
-            $this->_url = $this->getQuery();
-            // only append suffix on internal urls
-            if ($this->route !== '#' && strpos($this->route, 'http://') !== 0 && strpos($this->route, 'www') !== 0) {
-                $this->_url .= Yii::$app->getUrlManager()->suffix;
+            if ($this->getIsDefault()) {
+                $this->_url = '';
+            } else {
+                $this->_url = $this->getQuery();
+                // only append suffix on internal urls
+                if ($this->route !== '#' && strpos($this->route, 'http://') !== 0 && strpos($this->route, 'www') !== 0) {
+                    $this->_url .= Yii::$app->getUrlManager()->suffix;
+                }
             }
         }
         return $this->_url;
