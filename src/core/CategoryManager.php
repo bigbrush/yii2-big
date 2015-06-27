@@ -96,7 +96,7 @@ class CategoryManager extends Object implements ManagerInterface
      */
     public function getItem($id)
     {
-        $treeAttribute = $this->getDatabaseColumnName('depth');
+        $treeAttribute = $this->getDatabaseColumnName('tree');
         // search in loaded items. Queries the database if not already loaded.
         $category = $this->_getItem($id);
         foreach ($this->getRoots() as $root) {
