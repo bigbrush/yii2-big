@@ -11,6 +11,7 @@ use Yii;
 use yii\db\ActiveRecord;
 use yii\behaviors\SluggableBehavior;
 use yii\behaviors\TimestampBehavior;
+use yii\helpers\Json;
 use creocoder\nestedsets\NestedSetsBehavior;
 
 /**
@@ -83,6 +84,37 @@ class Category extends ActiveRecord
     }
 
     /**
+     * Returns the text value of the [[state]] property.
+     * 
+     * @return string the [[state]] property as a string representation.
+     */
+    public function getStateText()
+    {
+        $options = $this->getStateOptions();
+        return isset($options[$this->state]) ? $options[$this->state] : '';
+    }
+
+    /**
+     * Returns the "created_at" property as a formatted date.
+     *
+     * @return string a formatted date.
+     */
+    public function getCreatedAtText()
+    {
+        return Yii::$app->getFormatter()->asDateTime($this->created_at);
+    }
+
+    /**
+     * Returns the "created_at" property as a formatted date.
+     *
+     * @return string a formatted date.
+     */
+    public function getUpdatedAtText()
+    {
+        return Yii::$app->getFormatter()->asDateTime($this->updated_at);
+    }
+
+    /**
      * @inheritdoc
      */
     public function rules()
@@ -92,7 +124,7 @@ class Category extends ActiveRecord
             ['parent_id', 'integer'],
             ['content', 'filter', 'filter' => '\yii\helpers\HtmlPurifier::process'],
             [['title', 'meta_title', 'meta_description', 'meta_keywords', 'module'], 'string', 'max' => 255],
-            ['params', 'string'],
+            ['params', 'safe'],
         ];
     }
 
@@ -123,6 +155,27 @@ class Category extends ActiveRecord
         return [
             static::SCENARIO_DEFAULT => static::OP_ALL,
         ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            $this->params = Json::encode($this->params);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function afterFind()
+    {
+        $this->params = Json::decode($this->params);
     }
 
     /**

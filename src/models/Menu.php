@@ -10,6 +10,7 @@ namespace bigbrush\big\models;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\behaviors\SluggableBehavior;
+use yii\helpers\Json;
 use creocoder\nestedsets\NestedSetsBehavior;
 
 /**
@@ -99,7 +100,7 @@ class Menu extends ActiveRecord
             ['menu_id', 'integer', 'min' => 1, 'tooSmall' => Yii::t('big', 'Choose a menu for this item')],
             [['parent_id', 'is_default'], 'integer'],
             [['meta_title', 'meta_description', 'meta_keywords'], 'string', 'max' => 255],
-            ['params', 'string'],
+            ['params', 'safe'],
         ];
     }
 
@@ -177,6 +178,8 @@ class Menu extends ActiveRecord
             return false;
         }
 
+        $this->params = Json::encode($this->params);
+
         if ($this->is_default && ($this->getIsNewRecord() || !$this->_cachedAttributes['is_default'])) {
             $model = $this->find()->where(['is_default' => 1])->one();
             // menu do not exist if a default is not set
@@ -193,6 +196,7 @@ class Menu extends ActiveRecord
      */
     public function afterFind()
     {
+        $this->params = Json::decode($this->params);
         $this->_cachedAttributes = $this->getAttributes(['is_default']);
     }
 }

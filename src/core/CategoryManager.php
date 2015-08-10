@@ -12,6 +12,7 @@ use yii\base\Object;
 use yii\base\ErrorException;
 use yii\base\InvalidParamException;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 
 /**
  * CategoryManager
@@ -21,6 +22,7 @@ class CategoryManager extends Object implements ManagerInterface
     use NestedSetManagerTrait {
         getItems as _getItems;
         getItem as _getItem;
+        createObject as _createObject;
     }
 
     /**
@@ -45,7 +47,7 @@ class CategoryManager extends Object implements ManagerInterface
     /**
      * Returns an array ready for drop down lists for the provided module.
      *
-     * Note this method uses the property "title" if an item.
+     * Note this method uses the property "title" for the value being displayed.
      *
      * @param string $module a module id to load categories for.
      * @param string $unselected optional text to use as a state of "unselected".
@@ -106,6 +108,20 @@ class CategoryManager extends Object implements ManagerInterface
             }
         }
         return false;
+    }
+
+    /**
+     * Creates an item object used when creating trees.
+     * Overloaded to decode the params property to an array.
+     *
+     * @param array $data configuration array for the object.
+     * @return ManagerObject or a subclass.
+     * @see [[createTree()]]
+     */
+    public function createObject(array $data)
+    {
+        $data['params'] = Json::decode($data['params']);
+        return $this->_createObject($data);
     }
 
     /**

@@ -297,7 +297,7 @@ trait NestedSetManagerTrait
     }
 
     /**
-     * Return a query ready for the database table used in with a model retrived with [[getModel()]]. The table
+     * Return a query ready for the database table used with a model retrieved with [[getModel()]]. The table
      * is aliased according to [[tableAlias]].
      *
      * @return Query
