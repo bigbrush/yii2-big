@@ -163,8 +163,9 @@ class BlockManager extends Object implements ManagerInterface
     public function createObject(array $data)
     {
         $block = Yii::createObject($data);
-        Event::on($block::className(), ActiveRecord::EVENT_BEFORE_INSERT, [$block, 'onBeforeSave']);
-        Event::on($block::className(), ActiveRecord::EVENT_BEFORE_UPDATE, [$block, 'onBeforeSave']);
+        $model = $block->model;
+        Event::on($model::className(), ActiveRecord::EVENT_BEFORE_INSERT, [$block, 'onBeforeSave']);
+        Event::on($model::className(), ActiveRecord::EVENT_BEFORE_UPDATE, [$block, 'onBeforeSave']);
         return $block;
     }
 
