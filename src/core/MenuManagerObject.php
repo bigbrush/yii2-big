@@ -48,7 +48,7 @@ class MenuManagerObject extends ManagerObject
     {
         if ($this->_url === null) {
             if ($this->getIsDefault()) {
-                $this->_url = '';
+                $this->_url = Yii::$app->homeUrl;
             } else {
                 $this->_url = $this->getQuery();
                 // only append suffix on internal urls
