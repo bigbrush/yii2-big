@@ -143,6 +143,7 @@ class Category extends ActiveRecord
                 'class' => SluggableBehavior::className(),
                 'attribute' => 'title',
                 'slugAttribute' => 'alias',
+                'immutable' => true,
             ],
         ];
     }

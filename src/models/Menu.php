@@ -118,6 +118,7 @@ class Menu extends ActiveRecord
                 'class' => SluggableBehavior::className(),
                 'attribute' => 'title',
                 'slugAttribute' => 'alias',
+                'immutable' => true,
             ],
         ];
     }
