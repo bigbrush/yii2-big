@@ -99,7 +99,7 @@ class Menu extends ActiveRecord
             ['state', 'in', 'range' => array_keys($this->getStateOptions())],
             ['menu_id', 'integer', 'min' => 1, 'tooSmall' => Yii::t('big', 'Choose a menu for this item')],
             [['parent_id', 'is_default'], 'integer'],
-            [['meta_title', 'meta_description', 'meta_keywords'], 'string', 'max' => 255],
+            [['meta_title', 'meta_description', 'meta_keywords', 'alias'], 'string', 'max' => 255],
             ['params', 'safe'],
         ];
     }
