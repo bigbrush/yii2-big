@@ -51,6 +51,24 @@ class ManagerObject extends Object implements ArrayAccess
     }
 
     /**
+     * Sets value of a property.
+     *
+     * @param string $name the property name or the event name
+     * @param mixed $value the property value
+     * @throws UnknownPropertyException if the property is not defined
+     * @throws InvalidCallException if the property is read-only
+     * @see __get()
+     */
+    public function __set($name, $value)
+    {
+        if (isset($this->_data[$name])) {
+            $this->_data[$name] = $value;
+        } else {
+            parent::__set($name, $value);
+        }
+    }
+
+    /**
      * Checks if a property is set, i.e. defined and not null.
      *
      * Do not call this method directly as it is a PHP magic method that
@@ -100,7 +118,11 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        throw new NotSupportedException("ManagerObject is read-only.");
+        if ($offset !== null && isset($this->_data[$offset])) {
+            $this->_data[$offset] = $value;
+        } else {
+            throw new NotSupportedException("ManagerObject properties can only be modified.");
+        }
     }
 
     /**
@@ -110,6 +132,6 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function offsetUnset($offset)
     {
-        throw new NotSupportedException("ManagerObject is read-only.");
+        throw new NotSupportedException("ManagerObject properties can not be unset.");
     }
 }
