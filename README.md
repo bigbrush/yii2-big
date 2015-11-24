@@ -25,13 +25,13 @@ With Composer installed, you can install Big Cms like so:
 Either run
 
 ```bash
-$ composer require bigbrush/yii2-big
+$ composer require "bigbrush/yii2-big=~1.0"
 ```
 
 or add
 
 ```
-"bigbrush/yii2-big": "dev-master"
+"bigbrush/yii2-big": "~1.0"
 ```
 
 to the `require` section of your `composer.json` file.
