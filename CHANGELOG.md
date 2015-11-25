@@ -1,10 +1,14 @@
 Big Framework Change log
 ========================
 
-1.0.0 XXX 00, 2015
+1.0.1 Nobember 25, 2015
 -------------------------
+- Manager object properties can now be changed (was read-only before)
 
-- TBD
+
+1.0.0 September 17, 2015
+-------------------------
+- Production ready release
 
 
 0.1.0 June 03, 2015
