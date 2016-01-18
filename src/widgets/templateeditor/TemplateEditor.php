@@ -103,11 +103,14 @@ class TemplateEditor extends Widget
         $positions = $template->getPositions();
         $assigned = [];
         foreach (Yii::$app->big->getFrontendThemePositions() as $name => $title) {
+            $item = [
+                'title' => $title,
+                'blocks' => [],
+            ];
             if (isset($positions[$name])) {
-                $assigned[$name] = $this->getBlocks($positions[$name]);
-            } else {
-                $assigned[$name] = [];
+                $item['blocks'] = $this->getBlocks($positions[$name]);
             }
+            $assigned[$name] = $item;
         }
 
         $this->registerScripts();

@@ -38,8 +38,8 @@ $rowClass = 'col-md-' . 12 / $columns;
                     <?php foreach ($assignedBlocks as $position => $blocks) : ?>
                     <div class="<?= $rowClass ?> block-position" data-position="<?= $position ?>">
                         <?= $this->render('_panel', [
-                            'heading' => ucfirst($position),
-                            'blocks' => $blocks,
+                            'heading' => $blocks['title'],
+                            'blocks' => $blocks['blocks'],
                             'position' => $position,
                         ]) ?>
                     </div>
