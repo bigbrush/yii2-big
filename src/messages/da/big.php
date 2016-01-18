@@ -52,6 +52,7 @@ return [
     'Show title' => 'Vis titel',
     'State' => 'Status',
     'Thrashed' => 'Smidt ud',
+    'Use default layout' => 'Brug standard layout',
     'Title' => 'Titel',
     'Type' => 'Type',
     'Yes' => 'Ja',

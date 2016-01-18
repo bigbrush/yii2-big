@@ -18,6 +18,7 @@ use yii\helpers\Json;
  * @property integer $id
  * @property string $title
  * @property array $positions
+ * @property string $layout
  * @property integer $is_default
  */
 class TemplateManagerObject extends ManagerObject

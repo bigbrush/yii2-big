@@ -140,6 +140,7 @@ class TemplateManager extends Object implements ManagerInterface
      *         ...
      *     ],
      *     'is_default' => 0 OR 1,
+     *     'layout' => name of layout or an empty string,
      * ]
      * ~~~
      */
@@ -166,6 +167,7 @@ class TemplateManager extends Object implements ManagerInterface
             'id' => 0,
             'title' => '',
             'positions' => [],
+            'layout' => '',
             'is_default' => 0,
         ]));
     }

@@ -14,6 +14,7 @@ use yii\base\InvalidConfigException;
 use yii\base\InvalidCallException;
 use yii\base\InvalidParamException;
 use yii\helpers\Url;
+use yii\helpers\FileHelper;
 use yii\web\Application;
 use yii\web\View;
 use yii\web\Response;
@@ -361,6 +362,10 @@ class Big extends ServiceLocator implements BootstrapInterface
     public function setTemplate($id)
     {
         $this->templateManager->setActive($id);
+        $template = $this->getTemplate();
+        if (!empty($template->layout)) {
+            Yii::$app->layout = $template->layout;
+        }
     }
 
     /**
@@ -386,7 +391,7 @@ class Big extends ServiceLocator implements BootstrapInterface
      */
     public function getThemePositions($theme)
     {
-        $file = Yii::getAlias($theme . '/positions.php');   
+        $file = Yii::getAlias($theme . '/positions.php');
         if (is_file($file)) {
             return require($file);
         } else {
@@ -421,6 +426,58 @@ class Big extends ServiceLocator implements BootstrapInterface
     public function getFrontendThemePositions()
     {
         return $this->getThemePositions($this->frontendTheme);
+    }
+
+    /**
+     * Returns layouts available in the specified theme.
+     * This method looks in the directory "views/layouts" within the provided theme for layout files.
+     *
+     * @param string $theme path or alias for a theme.
+     * @return array list of avalible layouts for the provided theme. The keys are file names (without the ".php" extension)
+     * and the values are names of the files with the first letter as uppercase.
+     */
+    public function getThemeLayouts($theme)
+    {
+        $folder = Yii::getAlias($theme . '/views/layouts');
+        $files = [];
+        if (is_dir($folder)) {
+            $files = FileHelper::findFiles($folder, ['only' => ['*.php']]);
+        }
+        $layouts = ['' => Yii::t('big', 'Use default layout')];
+        foreach ($files as $file) {
+            $name = basename($file, '.php');
+            $layouts[$name] = ucfirst($name);
+        }
+        return $layouts;
+    }
+
+    /**
+     * Returns layouts available in the active theme.
+     *
+     * @return array list of positions used in the active theme.
+     */
+    public function getActiveThemeLayouts()
+    {
+        // get the current view. If a controller exists use the controller view otherwise
+        // use the application view.
+        $controller = Yii::$app->controller;
+        $view = $controller ? $controller->getView() : Yii::$app->getView();
+        if ($view->theme && $view->theme instanceof yii\base\Theme) {
+            // find positions available for the current theme
+            return $this->getThemeLayouts($view->theme->basePath);
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * Returns layouts available in the frontend theme.
+     *
+     * @return array list of positions used in the frontend theme.
+     */
+    public function getFrontendThemeLayouts()
+    {
+        return $this->getThemeLayouts($this->frontendTheme);
     }
 
     /**

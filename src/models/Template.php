@@ -17,6 +17,7 @@ use yii\helpers\Json;
  * @property integer $id
  * @property string $title
  * @property string $positions
+ * @property string $layout
  * @property integer $is_default
  */
 class Template extends ActiveRecord
@@ -43,6 +44,7 @@ class Template extends ActiveRecord
             'title' => Yii::t('big', 'Title'),
             'positions' => Yii::t('big', 'Positions'),
             'is_default' => Yii::t('big', 'Is default'),
+            'layout' => Yii::t('big', 'Layout'),
         ];
     }
 
@@ -54,6 +56,8 @@ class Template extends ActiveRecord
         return [
             ['title', 'required'],
             ['positions', 'validatePositions'],
+            ['layout', 'default', 'value' => ''],
+            ['layout', 'string', 'max' => 255],
             ['is_default', 'default', 'value' => 0],
             ['is_default', 'integer', 'min' => 0, 'max' => 1],
             ['is_default', 'validateDefault'],
