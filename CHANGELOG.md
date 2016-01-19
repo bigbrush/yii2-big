@@ -1,7 +1,15 @@
 Big Framework Change log
 ========================
 
-1.0.1 Nobember 25, 2015
+1.0.2 January XX, 2016
+-------------------------
+- Enh: A page in Pages module can now have up to 6 images attached
+- Enh #26: A Yii 2 layout can be selected when creating/editing template
+- Enh #22: TemplateEditor now renders block positions correctly
+- Enh #25: Removed unnecessary use statement from BlockManager
+
+
+1.0.1 November 25, 2015
 -------------------------
 - Manager object properties can now be changed (was read-only before)
 
