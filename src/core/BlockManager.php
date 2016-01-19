@@ -14,7 +14,6 @@ use yii\base\InvalidConfigException;
 use yii\base\InvalidParamException;
 use yii\db\Query;
 use yii\db\ActiveRecord;
-use bigbrush\big\models\Block;
 
 /**
  * BlockManager
@@ -117,7 +116,7 @@ class BlockManager extends Object implements ManagerInterface
         foreach ($positions as $position => $blockIds) {
             $ids = array_merge($ids, $blockIds);
         }
-        $blocks = $this->find()->where(['or', ['id' => $ids]])->andWhere(['state' => Block::STATE_ACTIVE])->indexBy('id')->all();
+        $blocks = $this->find()->where(['or', ['id' => $ids]])->andWhere(['state' => \bigbrush\big\models\Block::STATE_ACTIVE])->indexBy('id')->all();
         foreach ($positions as $position => $blockIds) {
             foreach ($blockIds as $id) {
                 if (isset($blocks[$id])) {
