@@ -9,6 +9,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\data\ArrayDataProvider;
 use yii\bootstrap\ButtonDropdown;
+use yii\widgets\Pjax;
 ?>
 <div class="row">
     <div class="col-md-12">
@@ -33,6 +34,7 @@ use yii\bootstrap\ButtonDropdown;
     <div id="section-<?= $counter++ ?>" class="section-wrapper" style="display:none;">
         <div class="row">
             <div class="col-md-12">
+                <?php Pjax::begin(); ?>
                 <?= GridView::widget([
                     'dataProvider' => new ArrayDataProvider(['allModels' => $items]),
                     'columns' => [
@@ -51,7 +53,8 @@ use yii\bootstrap\ButtonDropdown;
                             },
                         ],
                     ],
-            ]); ?>
+                ]); ?>
+                <?php Pjax::end(); ?>
             </div>
         </div>
     </div>
