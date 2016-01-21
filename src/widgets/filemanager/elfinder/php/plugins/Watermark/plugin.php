@@ -88,6 +88,11 @@ class elFinderPluginWatermark {
 			return false;
 		}
 		
+		// check Animation Gif
+		if (elFinder::isAnimationGif($src)) {
+			return false;
+		}
+		
 		// check water mark image
 		if (! file_exists($opts['source'])) {
 			$opts['source'] = dirname(__FILE__) . "/" . $opts['source'];
@@ -128,7 +133,7 @@ class elFinderPluginWatermark {
 		$dest_x = $srcImgInfo[0] - $watermark_width - $marginLeft;
 		$dest_y = $srcImgInfo[1] - $watermark_height - $marginBottom;
 		
-		if (class_exists('Imagick')) {
+		if (class_exists('Imagick', false)) {
 			return $this->watermarkPrint_imagick($src, $watermark, $dest_x, $dest_y, $quality, $transparency, $watermarkImgInfo);
 		} else {
 			return $this->watermarkPrint_gd($src, $watermark, $dest_x, $dest_y, $quality, $transparency, $watermarkImgInfo, $srcImgInfo);

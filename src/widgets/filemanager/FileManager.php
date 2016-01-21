@@ -118,6 +118,12 @@ class FileManager extends Widget
         }
 
         $view = $this->getView();
+        // https://github.com/Studio-42/elFinder/issues/865
+        $view->registerJs('
+            if($.fn.button.noConflict) {
+                $.fn.btn = $.fn.button.noConflict();
+            }
+        ');
         $bundle = FileManagerAsset::register($view);
         // save assets bundle url so the volume driver file icon is displayed in elFinder
         Yii::$app->getSession()->set(self::SESSION_VAR_ICON_URL, Url::to($bundle->baseUrl . '/'));

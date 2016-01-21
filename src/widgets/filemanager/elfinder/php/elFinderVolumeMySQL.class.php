@@ -70,7 +70,7 @@ class elFinderVolumeMySQL extends elFinderVolumeDriver {
 			'files_table'   => 'elfinder_file',
 			'tmbPath'       => '',
 			'tmpPath'       => '',
-			'icon'          => (defined('ELFINDER_IMG_PARENT_URL')? (rtrim(ELFINDER_IMG_PARENT_URL, '/').'/') : '').'img/volume_icon_sql.png'
+			'rootCssClass'  => 'elfinder-navbar-root-sql'
 		);
 		$this->options = array_merge($this->options, $opts);
 		$this->options['mimeDetect'] = 'internal';
@@ -210,53 +210,6 @@ class elFinderVolumeMySQL extends elFinderVolumeDriver {
 		return $this->query($sql) && $this->db->affected_rows > 0;
 	}
 
-	/**
-	 * Search files
-	 *
-	 * @param  string  $q  search string
-	 * @param  array   $mimes
-	 * @return array
-	 * @author Dmitry (dio) Levashov
-	 **/
-	public function search($q, $mimes) {
-		$result = array();
-
-		$sql = 'SELECT f.id, f.parent_id, f.name, f.size, f.mtime AS ts, f.mime, f.read, f.write, f.locked, f.hidden, f.width, f.height, 0 AS dirs 
-				FROM %s AS f 
-				WHERE f.name RLIKE "%s"';
-		
-		$sql = sprintf($sql, $this->tbf, $this->db->real_escape_string($q));
-		
-		if (($res = $this->query($sql))) {
-			while ($row = $res->fetch_assoc()) {
-				if ($this->mimeAccepted($row['mime'], $mimes)) {
-					$id = $row['id'];
-					if ($row['parent_id']) {
-						$row['phash'] = $this->encode($row['parent_id']);
-					} 
-
-					if ($row['mime'] == 'directory') {
-						unset($row['width']);
-						unset($row['height']);
-					} else {
-						unset($row['dirs']);
-					}
-
-					unset($row['id']);
-					unset($row['parent_id']);
-
-
-
-					if (($stat = $this->updateCache($id, $row)) && empty($stat['hidden'])) {
-						$result[] = $stat;
-					}
-				}
-			}
-		}
-		
-		return $result;
-	}
-
 	/*********************************************************************/
 	/*                               FS API                              */
 	/*********************************************************************/
@@ -355,7 +308,84 @@ class elFinderVolumeMySQL extends elFinderVolumeDriver {
 	 * @author Dmitry (dio) Levashov
 	 **/
 	protected function doSearch($path, $q, $mimes) {
-		return array();
+		$dirs = array();
+		$timeout = $this->options['searchTimeout']? $this->searchStart + $this->options['searchTimeout'] : 0;
+		
+		if ($path != $this->root) {
+			$inpath = array(intval($path));
+			while($inpath) {
+				$in = '('.join(',', $inpath).')';
+				$inpath = array();
+				$sql = 'SELECT f.id FROM %s AS f WHERE f.parent_id IN '.$in.' AND `mime` = \'directory\'';
+				$sql = sprintf($sql, $this->tbf);
+				if ($res = $this->query($sql)) {
+					$_dir = array();
+					while ($dat = $res->fetch_assoc()) {
+						$inpath[] = $dat['id'];
+					}
+					$dirs = array_merge($dirs, $inpath);
+				}
+			}
+		}
+
+		$result = array();
+		
+		if ($mimes) {
+			$whrs = array();
+			foreach($mimes as $mime) {
+				if (strpos($mime, '/') === false) {
+					$whrs[] = sprintf('f.mime LIKE "%s/%%"', $this->db->real_escape_string($mime));
+				} else {
+					$whrs[] = sprintf('f.mime = "%s"', $this->db->real_escape_string($mime));
+				}
+			}
+			$whr = join(' OR ', $whrs);
+		} else {
+			$whr = sprintf('f.name RLIKE "%s"', $this->db->real_escape_string($q));
+		}
+		if ($dirs) {
+			$whr = '(' . $whr . ') AND (`parent_id` IN (' . join(',', $dirs) . '))';
+		}
+		
+		$sql = 'SELECT f.id, f.parent_id, f.name, f.size, f.mtime AS ts, f.mime, f.read, f.write, f.locked, f.hidden, f.width, f.height, 0 AS dirs 
+				FROM %s AS f 
+				WHERE %s';
+		
+		$sql = sprintf($sql, $this->tbf, $whr);
+		
+		if (($res = $this->query($sql))) {
+			while ($row = $res->fetch_assoc()) {
+				if ($timeout && $timeout < time()) {
+					$this->setError(elFinder::ERROR_SEARCH_TIMEOUT, $this->path($this->encode($path)));
+					break;
+				}
+				
+				if (!$this->mimeAccepted($row['mime'], $mimes)) {
+					continue;
+				}
+				$id = $row['id'];
+				if ($row['parent_id']) {
+					$row['phash'] = $this->encode($row['parent_id']);
+				} 
+				$row['path'] = $this->_path($id);
+
+				if ($row['mime'] == 'directory') {
+					unset($row['width']);
+					unset($row['height']);
+				} else {
+					unset($row['dirs']);
+				}
+
+				unset($row['id']);
+				unset($row['parent_id']);
+
+				if (($stat = $this->updateCache($id, $row)) && empty($stat['hidden'])) {
+					$result[] = $stat;
+				}
+			}
+		}
+		
+		return $result;
 	}
 
 
@@ -452,7 +482,7 @@ class elFinderVolumeMySQL extends elFinderVolumeDriver {
 			$dir = $this->stat($id);
 			$path .= $dir['name'].$this->separator;
 		}
-		return $path.$file['name'];
+		return $this->rootName.$this->separator.$path.$file['name'];
 	}
 	
 	/**
@@ -740,6 +770,7 @@ class elFinderVolumeMySQL extends elFinderVolumeDriver {
 					fwrite($trgfp, fread($fp, 8192));
 				}
 				fclose($trgfp);
+				chmod($tmpfile, 0644);
 				
 				$sql = $id > 0
 					? 'REPLACE INTO %s (id, parent_id, name, content, size, mtime, mime, width, height) VALUES ('.$id.', %d, "%s", LOAD_FILE("%s"), %d, %d, "%s", %d, %d)'
@@ -806,6 +837,15 @@ class elFinderVolumeMySQL extends elFinderVolumeDriver {
 	 **/
 	protected function _checkArchivers() {
 		return;
+	}
+
+	/**
+	 * chmod implementation
+	 *
+	 * @return bool
+	 **/
+	protected function _chmod($path, $mode) {
+		return false;
 	}
 
 	/**
