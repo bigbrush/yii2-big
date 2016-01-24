@@ -3,9 +3,9 @@ Big Framework Change log
 
 1.0.2 January XX, 2016
 -------------------------
+- Enh: BigSearch widget: Search result GridViews are now updated with ajax so the whole page doesn't reload
 - Upd: FileManager - Elfinder updated to v2.1.6 (from 2.0 rc1)
-- Enh: A page in Pages module can now have up to 6 images attached
-- Enh #26: A Yii 2 layout can be selected when creating/editing template
+- Enh #26: A Yii 2 layout can be selected when creating/editing templates
 - Enh #22: TemplateEditor now renders block positions correctly
 - Enh #25: Removed unnecessary use statement from BlockManager
 
