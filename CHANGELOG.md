@@ -1,6 +1,12 @@
 Big Framework Change log
 ========================
 
+1.2.0 January XX, 2016
+-------------------------
+- new: PluginManager added
+- Enh: Category model now implements templates
+
+
 1.1.0 January 24, 2016
 -------------------------
 - Enh: BigSearch widget: Search result GridViews are now updated with ajax so the whole page doesn't reload
