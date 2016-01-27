@@ -33,6 +33,7 @@ use creocoder\nestedsets\NestedSetsBehavior;
  * @property string $meta_description
  * @property string $meta_keywords
  * @property string $params
+ * @property string $template_id
  */
 class Category extends ActiveRecord
 {
@@ -67,6 +68,7 @@ class Category extends ActiveRecord
             'meta_title' => Yii::t('big', 'Meta title'),
             'meta_description' => Yii::t('big', 'Meta description'),
             'meta_keywords' => Yii::t('big', 'Meta keywords'),
+            'template_id' => Yii::t('big', 'Template'),
         ];
     }
 
@@ -115,13 +117,23 @@ class Category extends ActiveRecord
     }
 
     /**
+     * Returns the template of this category.
+     *
+     * @return ActiveQueryInterface the relational query object.
+     */
+    public function getTemplate()
+    {
+        return $this->hasOne(Template::className(), ['id' => 'template_id']);
+    }
+
+    /**
      * @inheritdoc
      */
     public function rules()
     {
         return [
             ['title', 'required'],
-            ['parent_id', 'integer'],
+            [['parent_id', 'template_id'], 'integer'],
             ['content', 'filter', 'filter' => '\yii\helpers\HtmlPurifier::process'],
             [['title', 'meta_title', 'meta_description', 'meta_keywords', 'module'], 'string', 'max' => 255],
             ['params', 'safe'],

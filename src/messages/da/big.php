@@ -53,6 +53,7 @@ return [
     'State' => 'Status',
     'Thrashed' => 'Smidt ud',
     'Use default layout' => 'Brug standard layout',
+    'Template' => 'Skabelon',
     'Title' => 'Titel',
     'Type' => 'Type',
     'Yes' => 'Ja',
