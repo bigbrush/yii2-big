@@ -505,6 +505,7 @@ class Big extends ServiceLocator implements BootstrapInterface
             'categoryManager' => ['class' => 'bigbrush\big\core\CategoryManager'],
             'templateManager' => ['class' => 'bigbrush\big\core\TemplateManager'],
             'extensionManager' => ['class' => 'bigbrush\big\core\ExtensionManager'],
+            'pluginManager' => ['class' => 'bigbrush\big\core\PluginManager'],
         ];
     }
 
@@ -583,6 +584,21 @@ class Big extends ServiceLocator implements BootstrapInterface
     public function getExtensionManager()
     {
         return $this->get('extensionManager');
+    }
+
+    /**
+     * Returns the plugin manager.
+     *
+     * @param string $group optional group for the plugin manager to target.
+     * @return PluginManager
+     */
+    public function getPluginManager($group = null)
+    {
+        $manager = $this->get('pluginManager');
+        if ($group) {
+            $manager->group = $group;
+        }
+        return $manager;
     }
 
     /**

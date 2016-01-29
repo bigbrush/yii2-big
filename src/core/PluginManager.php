@@ -86,8 +86,10 @@ class PluginManager extends Component
      */
     public function trigger($name, Event $event = null)
     {
-        if (!$this->group || !$this->pluginsFolder) {
-            throw new InvalidConfigException('The properties "$group" and "$pluginsFolder" must be set in ' . get_class($this));
+        if (!$this->pluginsFolder) {
+            throw new InvalidConfigException('The property "$pluginsFolder" must be set in ' . get_class($this) . '.');
+        } elseif (!$this->group) {
+            throw new InvalidConfigException('The property "$group" must be set in ' . get_class($this) . '.');
         }
         foreach ($this->findPlugins($this->group) as $plugin) {
             $plugin->register($this);
