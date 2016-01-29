@@ -16,14 +16,14 @@ use yii\base\Event;
 
 /**
  * PluginManager is a simple but highly flexible manager to handle automated plugins. It automatically
- * loads plugins and gives each plugin the option to register itself as event handler to triggered events.
+ * loads plugins and gives each plugin the option to register itself as event handler in the plugin manager.
  *
- * You can use the plugin manager just like regular events in Yii 2, the important difference is the
- * [[group()]] method. This sets the group of plugins the manager will target.
+ * You can use the plugin manager just like regular events in Yii 2. The [[group]] property needs to be defined
+ * as it defines which folder, within [[pluginsFolder]], to target.
  *
  * ~~~php
  * // example one - without an event object
- * $manager = Yii::$app->big->pluginManager->group('pluginGroup')->trigger('nameOfEventToTrigger');
+ * Yii::$app->big->getPluginManager('pluginGroup')->trigger('user.saved');
  * 
  * // example two - with a custom event object
  * use my\custom\events\MyEvent;
@@ -31,13 +31,13 @@ use yii\base\Event;
  *     'price' => 100,
  *     'quantity' => 2,
  * ]);
- * Yii::$app->big->pluginManager->trigger('nameOfEventToTrigger', $myEvent);
- * // plugins can then modify parameters in $myEvent which can be retrieved later like so
+ * Yii::$app->big->getPluginManager('pluginGroup')->trigger('user.saved', $myEvent);
+ * // plugins can then modify parameters in $myEvent which can be retrieved like so
  * $price = $myEvent->price;
  * 
  * // example three - with a custom folder for plugins
- * $manager = Yii::$app->big->pluginManager->group('pluginGroup');
- * $manager->pluginsFolder = '@my/custom/plugin/folder';
+ * $manager = Yii::$app->big->getPluginManager('pluginGroup');
+ * $manager->pluginsFolder = '@app/my/custom/plugin/folder';
  * $manager->trigger('user.saved');
  * ~~~ 
  * 
@@ -63,22 +63,12 @@ class PluginManager extends Component
 
 
     /**
-     * Registers the specified group as active in this plugin manager.
-     *
-     * @param string $group a group of plugins.
-     * @return PluginManager this object to support chaining.
-     */
-    public function group($group)
-    {
-        $this->group = $group;
-        return $this;
-    }
-
-    /**
-     * Triggers a plugin event in Big.
-     * This override locates all plugins within [[group]] and automatically attaches them to this manager
-     * as event handlers. Each plugin is only attached as an event handler if it cotains a method with the same name
-     * as the provided event name.
+     * Triggers a plugin event.
+     * This method override locates all plugins within [[group]] and automatically allows each one to register itself
+     * as event handler in this manager.
+     * 
+     * A plugin must implement the [[PluginInterface]] to be compatible with this manager. It definess the register() method
+     * which gives each plugin the option to register itself as event handler in the plugin manager.
      *
      * @param string $name the event name.
      * @param Event $event the event parameter. If not set, a default [[Event]] object will be created.
