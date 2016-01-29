@@ -10,7 +10,6 @@ namespace bigbrush\big\core;
 use DirectoryIterator;
 use Yii;
 use yii\base\InvalidConfigException;
-use yii\base\InvalidValueException;
 use yii\base\Component;
 use yii\base\Event;
 
