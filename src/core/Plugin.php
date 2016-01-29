@@ -16,6 +16,13 @@ use yii\base\ViewContextInterface;
  * Plugin is the base class of all plugins. It implements [[PluginInterface]] which makes it compatible
  * with [[PluginManager]]. It also implements [[ViewContextInterface]] which makes plugins support
  * relative view names.
+ *
+ * A plugin is not required to extend this class, but if it does, it can use the familiar [[render()]] method
+ * known from controllers and widgets in Yii2. If your plugin subclasses [[Plugin]] the method
+ * [[PluginInterface::register($manager)]] must be implemented.
+ *
+ * If a plugin is being used as event handler for events triggered through other objects than the [[PluginManager]]
+ * then event handlers are supposed to be registered in the init() method.
  */
 abstract class Plugin extends Object implements PluginInterface, ViewContextInterface
 {

@@ -9,7 +9,7 @@ namespace bigbrush\big\core;
 
 /**
  * PluginInterface defines base functionality for all plugins. Specifically it adds the [[register()]] method to plugins. Here
- * plugins can register itself in the manager with appropriate event handlers.
+ * plugins can register itself in the [[PluginManager]] (or anywhere else) with appropriate event handlers.
  */
 interface PluginInterface
 {

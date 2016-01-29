@@ -19,7 +19,7 @@ use yii\base\Event;
  * loads plugins and gives each plugin the option to register itself as event handler in the plugin manager.
  *
  * You can use the plugin manager just like regular events in Yii 2. The [[group]] property needs to be defined
- * as it defines which folder, within [[pluginsFolder]], to target.
+ * as it defines which folder, within [[pluginsFolder]], to target plugins.
  *
  * ~~~php
  * // example one - without an event object
@@ -57,7 +57,7 @@ class PluginManager extends Component
      */
     public $pluginsFolder = '@app/plugins';
     /**
-     * @var string $filename the name of the bootstrap file for each plugin.
+     * @var string $filename name of the bootstrap file (without the file extension) for each plugin.
      */
     public $filename = 'Plugin';
 
@@ -81,10 +81,22 @@ class PluginManager extends Component
         } elseif (!$this->group) {
             throw new InvalidConfigException('The property "$group" must be set in ' . get_class($this) . '.');
         }
-        foreach ($this->findPlugins($this->group) as $plugin) {
-            $plugin->register($this);
-        }
+        $this->activateGroup($this->group);
         parent::trigger($name, $event);
+    }
+
+    /**
+     * Activates a plugin group by calling the register() method on each plugin.
+     *
+     * @param string $group the plugin group to activate.
+     */
+    public function activateGroup($group)
+    {
+        foreach ($this->findPlugins($group) as $plugin) {
+            if ($plugin instanceof PluginInterface) {
+                $plugin->register($this);
+            }
+        }
     }
 
     /**
@@ -112,14 +124,9 @@ class PluginManager extends Component
                     $namespace = str_replace('/', '\\', substr($this->pluginsFolder, 1));
                     // append plugin group and plugin bootstrap file name
                     $namespace .= '\\' . $group . '\\' . $dir->getFilename() . '\\' . $this->filename;
-                    $plugin = Yii::createObject([
+                    $plugins[] = Yii::createObject([
                         'class' => $namespace,
                     ]);
-                    if ($plugin instanceof PluginInterface) {
-                        $plugins[] = $plugin;
-                    } else {
-                        throw new InvalidValueException("Plugin '".get_class($plugin)."' must implement bigbrush\cms\components\PluginInterface");
-                    }
                 }
             }
         }
