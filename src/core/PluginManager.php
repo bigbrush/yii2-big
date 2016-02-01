@@ -63,11 +63,11 @@ class PluginManager extends Component
 
     /**
      * Triggers a plugin event.
-     * This method override locates all plugins within [[group]] and automatically allows each one to register itself
-     * as event handler in this manager.
+     * This method override locates all plugins within [[group]] and automatically allows each plugin to register
+     * itself as event handler in this manager.
      * 
-     * A plugin must implement the [[PluginInterface]] to be compatible with this manager. It definess the register() method
-     * which gives each plugin the option to register itself as event handler in the plugin manager.
+     * If a plugin implements [[PluginInterface]] the [[PluginInterface::register()]] method is called allowing the
+     * plugin to register itself as event handler in the plugin manager (or any other subclass of [[Component]]).
      *
      * @param string $name the event name.
      * @param Event $event the event parameter. If not set, a default [[Event]] object will be created.
