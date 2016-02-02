@@ -17,10 +17,10 @@ use yii\base\NotSupportedException;
 class ManagerObject extends Object implements ArrayAccess
 {
 	/**
-	 * @var array|object holds object properties.
+	 * @var array|object $data holds object properties.
      * If an object is registered it must implement [[ArrayAccess]].
 	 */
-    private $_data;
+    protected $data;
 
     
     /**
@@ -30,7 +30,7 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function __construct($data, $config = [])
     {
-    	$this->_data = $data;
+    	$this->data = $data;
         parent::__construct($config);
     }
 
@@ -43,8 +43,8 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function __get($name)
     {
-        if (isset($this->_data[$name])) {
-            return $this->_data[$name];
+        if (isset($this->data[$name])) {
+            return $this->data[$name];
         } else {
             return parent::__get($name);
         }
@@ -61,8 +61,8 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function __set($name, $value)
     {
-        if (isset($this->_data[$name])) {
-            $this->_data[$name] = $value;
+        if (isset($this->data[$name])) {
+            $this->data[$name] = $value;
         } else {
             parent::__set($name, $value);
         }
@@ -79,7 +79,7 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function __isset($name)
     {
-        if (isset($this->_data[$name])) {
+        if (isset($this->data[$name])) {
             return true;
         } else {
             return parent::__isset($name);
@@ -95,7 +95,7 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function offsetExists($offset)
     {
-        return isset($this->_data[$offset]);
+        return isset($this->data[$offset]);
     }
 
     /**
@@ -107,7 +107,7 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function offsetGet($offset)
     {
-        return isset($this->_data[$offset]) ? $this->_data[$offset] : null;
+        return isset($this->data[$offset]) ? $this->data[$offset] : null;
     }
 
     /**
@@ -118,8 +118,8 @@ class ManagerObject extends Object implements ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        if ($offset !== null && isset($this->_data[$offset])) {
-            $this->_data[$offset] = $value;
+        if ($offset !== null && isset($this->data[$offset])) {
+            $this->data[$offset] = $value;
         } else {
             throw new NotSupportedException("ManagerObject properties can only be modified.");
         }
