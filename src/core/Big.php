@@ -506,6 +506,7 @@ class Big extends ServiceLocator implements BootstrapInterface
             'templateManager' => ['class' => 'bigbrush\big\core\TemplateManager'],
             'extensionManager' => ['class' => 'bigbrush\big\core\ExtensionManager'],
             'pluginManager' => ['class' => 'bigbrush\big\core\PluginManager'],
+            'configManager' => ['class' => 'bigbrush\big\core\ConfigManager'],
         ];
     }
 
@@ -599,6 +600,16 @@ class Big extends ServiceLocator implements BootstrapInterface
             $manager->group = $group;
         }
         return $manager;
+    }
+
+    /**
+     * Returns the config manager.
+     *
+     * @return ConfigManager
+     */
+    public function getConfigManager()
+    {
+        return $this->get('configManager');
     }
 
     /**
