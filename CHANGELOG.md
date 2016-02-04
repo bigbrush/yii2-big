@@ -3,6 +3,7 @@ Big Framework Change log
 
 1.2.0 January XX, 2016
 -------------------------
+- new: ConfigManager added
 - new: PluginManager added
 - Enh: Category model now implements templates
 
