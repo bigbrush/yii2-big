@@ -8,11 +8,8 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\InvalidConfigException;
 use yii\base\Object;
-use yii\caching\Cache;
 use yii\db\Query;
-use yii\di\Instance;
 
 /**
  * ConfigManager
@@ -260,7 +257,7 @@ class ConfigManager extends Object implements ManagerInterface
     /**
      * Return a query ready to query the database used with this manager.
      *
-     * @return Query a query object.
+     * @return yii\db\Query a query object.
      */
     public function find()
     {
