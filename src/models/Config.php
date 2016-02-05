@@ -53,7 +53,7 @@ class Config extends ActiveRecord
     public function rules()
     {
         return [
-            ['id', 'required'],
+            [['id', 'section'], 'required'],
             ['value', 'default', 'value' => ''],
             ['value', 'string'],
             [['id', 'section'], 'string', 'max' => 255],

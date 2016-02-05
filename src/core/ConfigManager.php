@@ -19,14 +19,27 @@ use yii\di\Instance;
  *
  * You should use the config manager like so
  * ~~~php
- * $config = Yii::$app->big->configManager->getItems('SECTION NAME / MODULE ID');
- * $adminEmail = $config->get('adminEmail');
- * $isNull = $config->get('value_does_not_exist');
+ * $manager = Yii::$app->big->configManager;
+ * $config = $manager->getItems('SECTION NAME');
  * 
+ * $systemEmail = $config->get('systemEmail'); // will return null if "systemEmail" is not set.
+ * or
+ * $systemEmail = $config->systemEmail; // will throw exception if "systemEmail" is not set.
  * 
+ * $isNull = $config->get('name_does_not_exist', null);
+ * 
+ * // setting properties
+ * $config->set('name', 'value');
+ * or
+ * $manager->set('name', 'value', 'section');
+ * 
+ * // the manager has a shorthand method for retrieving config values:
+ * $manager->get('section.name', 'defaultValue');
+ * $manager->get('cms.systemEmail', 'noreply@noreply.com');
  * ~~~
+ * See [[get()]] for more information on the shorthand method.
  */
-class ConfigManager extends Object
+class ConfigManager extends Object implements ManagerInterface
 {
     /**
      * @var string name of the table for saving config information.
@@ -37,97 +50,135 @@ class ConfigManager extends Object
      */
     public $itemClass = 'bigbrush\big\core\ConfigManagerObject';
     /**
-     * @var array $_items cache of [[ConfigManagerObject]] classes. The key is a section name
+     * @var array $items cache container containing [[ConfigManagerObject]] objects. The keys are section names
      * and the values are [[ConfigManagerObject]] objects.
+     * Structure:
+     * ~~~php
+     * [
+     *     'SECTION NAME' => ConfigManagerObject,
+     *     'cms' => ConfigManagerObject,
+     *     ...
+     * ]
+     * ~~~
      */
-    private $_items;
+    protected $items;
 
 
     /**
-     * Returns the config value for the provided name.
-     * The specified name can be a mapped name separated by a dot. For example:
+     * Returns a config value based on the specified name. This is a shorthand for [[ConfigManagerObject::get()]].
+     * The specified name must be a mapped name containing minimum 1 dot. For example:
      * ~~~php
-     * $manager->get('adminEmail');
+     * $manager->get('cms.systemEmail');
      * ~~~
-     * Will return the "adminEmail" value.
+     * Will return the "systemEmail" value from the "cms" section.
      *
-     * While a mapped name like this:
-     * ~~~php
-     * $manager->get('cms.name');
-     * ~~~
-     * Will return the "name" value from the "cms" section.
-     *
-     * If a mapped name contains more than 1 dot only the string before the first dotted is relevant for this manager.
+     * If a mapped name contains more than 1 dot only the string before the first dot is relevant.
      * For instance:
      * ~~~php
-     * $manager->get('cms.production.email');
+     * $manager->get('cms.production.systemEmail');
      * ~~~
-     * Will return the "production.email" value from the "cms" section.
+     * Will return the "production.systemEmail" value from the "cms" section.
      *
-     * When the provided name is not mapped, only unmapped config entries will be evaluated. When
-     * the provided name is mapped, only the provided section will be evaluated.
+     * Note that the specified name MUST be mapped (by 1 or more dots).
      *
-     * @param string $name the name of a config entry.
+     * @param string $name a mapped name of a config entry.
      * @param mixed $defaultValue a default value returned if $name could not be found in this config manager.
      * @return mixed the config value.
      */
     public function get($name, $defaultValue = null)
     {
-        # code...
+        if (strpos($name, '.') === false) {
+            return $defaultValue;
+        }
+        list($section, $property) = explode('.', $name, 2);
+        return $this->getItems($section)->get($property, $defaultValue);
     }
 
     /**
-     * Sets a config value in this manager.
+     * Saves/updates a config value in the database. If the save is successful the
+     * [[ConfigManagerObject]] for the specified section is updated.
      * 
-     * @param mixed $name name of a config value to set.
-     * @param mixed $value the value to set.
+     * @param string $name name of a config value to set.
+     * @param string $value the value to set.
      * @param string $section a section to register the config to.
-     * @return mixed the registered value.
+     * @return bool true if value was saved, false if not.
      */
-    public function set($name, $value, $section)
+    public function add($name, $value, $section)
     {
-        # code...
+        $dataSaved = $this->save([
+            'Config' => [
+                'id' => $name,
+                'value' => $value,
+                'section' => $section,
+            ]
+        ]);
+        if ($dataSaved) {
+            $this->getItems($section)->setValue($name, $value);
+            return true;
+        }
+        return false;
     }
 
     /**
-     * Returns all config items for the specified section. If section is not provided
-     * then config for every section is returned. 
+     * Returns a config object with configuration for the specified section.
      * 
-     * @param string $section an optional section to grab config items from.
-     * @return array list of config items.
+     * @param string $section a section to grab config items from.
+     * @return ConfigManagerObject a config object.
      */
     public function getItems($section = null)
     {
-        if (isset($this->_items[$section])) {
-            return $this->_items[$section];
+        if (isset($this->items[$section])) {
+            return $this->items[$section];
         }
 
-        $config = $this->createObject($this->load($section));
-        $config->section = $section;
-        return $this->_items[$section] = $config;
+        $data = $this->load($section);
+        $config = $this->createObject($data);
+        return $this->items[$section] = $config;
     }
 
     /**
-     * Saves the provided data to the database. The data must contain the keys "id", "value" and "section".
-     * If a record already exist with specified "id" and "section" it will be updated. Otherwise a new record
-     * is saved in the database.
-     * The provided value could come from Yii::$app->getRequst()->post();
+     * Defined in [[ManagerInterface]]. Delegates to [[getItems()]].
+     *
+     * @param string $section a section to grab config items from.
+     * @return ConfigManagerObject a config object.
+     */
+    public function getItem($section)
+    {
+        return $this->getItems($section);
+    }
+
+    /**
+     * Saves the provided data to the database. The data must contain the keys "id", "value" and "section" in
+     * the "Config" namespace. For instance:
+     * ~~~php
+     * $data = [
+     *     'Config' => [
+     *         'id' => 'REQUIRED',
+     *         'value' => 'CAN BE EMPTY',
+     *         'section' => 'REQUIRED',
+     *     ],
+     * ];
+     * ~~~
+     * If a record already exist with specified "id" and "section" it will be updated with "value. Otherwise
+     * a new record is saved in the database.
+     * The provided data could come from Yii::$app->getRequst()->post();.
      *
      * @param array $data the data to save. 
-     * @return true if data was saved, false if not.
+     * @return bool true if data was saved, false if not.
      */
     public function save($data)
     {
         if ($this->isDataValid($data)) {
+            $data = $data['Config'];
             $model = $this->getModel();
             $dbModel = $model->find()->where([
-                'id' => $data['Config']['id'],
-                'section' => $data['Config']['section']
+                'id' => $data['id'],
+                'section' => $data['section']
             ])->one();
             if ($dbModel) {
                 $model = $dbModel;
             }
-            $model->setAttributes($data['Config']);
+            $model->setAttributes($data);
             return $model->save();
         }
         return false;
@@ -135,18 +186,26 @@ class ConfigManager extends Object
     }
 
     /**
-     * Deletes the specified value from the database.
+     * Deletes the specified data from the database.
      *
-     * @param
-     * @param
-     * @return true if value was deleted, false if not.
+     * @param array $data the data to be deleted. The data must contain the keys "id" and "section" in
+     * the "Config" namespace. For instance:
+     * ~~~php
+     * $data = [
+     *     'Config' => [
+     *         'id' => 'REQUIRED',
+     *         'section' => 'REQUIRED',
+     *     ],
+     * ];
+     * @return bool true if value was deleted, false if not.
      */
     public function delete($data)
     {
         if ($this->isDataValid($data)) {
+            $data = $data['Config'];
             $model = $this->getModel()->find()->where([
-                'id' => $data['Config']['id'],
-                'section' => $data['Config']['section']
+                'id' => $data['id'],
+                'section' => $data['section']
             ])->one();
             if ($model) {
                 return $model->delete();
@@ -156,31 +215,46 @@ class ConfigManager extends Object
     }
 
     /**
-     * 
+     * Returns a boolean indicating whether the provided data array is valid. A valid array has an array set in
+     * the "Config" namespace. The array in "Config" must contain the keys "id", "value" and "section".
+     * For instance:
+     * ~~~php
+     * $data = [
+     *     'Config' => [
+     *         'id' => 'REQUIRED',
+     *         'value' => 'REQUIRED',
+     *         'section' => 'REQUIRED',
+     *     ],
+     * ];
      *
-     * @param array $data the to be saved in the database. Must contain the keys "id", "value" and "section".
+     * @param array $data the to be saved in the database.
      * @return true if data was saved, false if not.
      */
     public function isDataValid($data)
     {
-        if (!isset($data['Config']) || !is_array($data['Config'])) {
+        if (!is_array($data['Config']) || !isset($data['Config'])) {
             return false;
         }
         $data = $data['Config'];
-        if (!isset($data['id'], $data['value'], $data['section'])) {
-            return false;
-        }
-        return true;
+        return isset($data['id'], $data['value'], $data['section']);
     }
 
     /**
      * Configures the provided [[yii\base\Module]] with configurations stored in this manager.
      *
-     * @param yii\base\Module $module a module, or a subclass, to configure.
+     * @param yii\base\Module $module a module to configure.
+     * @param string $section optional section to load config from. If this is not provided
+     * the value $module->id is used. Can be used to setup the module with a specific config section.
+     * @return yii\base\Module the module with updated configurations.
      */
-    public function configure($module)
+    public function configureModule($module, $section = null)
     {
-        # code...
+        $section = $section ?: $module->id;
+        $config = $this->getItems($section);
+        foreach ($config as $name => $value) {
+            $module->$name = $value;
+        }
+        return $module;
     }
 
     /**
@@ -196,29 +270,34 @@ class ConfigManager extends Object
 
     /**
      * Creates an item object used in this manager.
+     * The specified data must contain the key "section". Use [[load()]] to ensure properly
+     * formatted data.
      *
      * @param mixed $data configuration array for the object.
      * @return ManagerObject a manager object.
      */
     public function createObject(array $data)
     {
+        $section = $data['section'];
+        unset($data['section']);
         return Yii::createObject([
-            'class' => $this->itemClass
-        ], [$data]);
+            'class' => $this->itemClass,
+            'section' => $section,
+        ], [$data, $this]);
     }
 
     /**
      * Loads config by the provided section.
      *
-     * @param string $section optional section to load config by.
+     * @param string $section a section to load config by.
      */
     public function load($section)
     {
-        $query = $this->find();
+        $query = $this->find()->select(['id', 'value']);
         if ($section) {
             $query->where(['section' => $section])->orderBy('id');
         }
-        $data = [];
+        $data = ['section' => $section];
         foreach ($query->all() as $row) {
             $data[$row['id']] = $row['value'];
         }
@@ -226,30 +305,14 @@ class ConfigManager extends Object
     }
 
     /**
-     * Returns an array of [[modelClass]] models for the specified section.
-     *
-     * @param string $section a section to load models by.
-     * @return array list of models.
-     */
-    public function getModels($section)
-    {
-        return $this->getModel()->findAll(['section' => $section]);
-    }
-
-    /**
      * Returns a model used in this manager.
-     * If id is provided the model will be loaded from the database.
+     * A new model is always returned.
      *
      * @param int $id optional id of a database record to load.
      * @return ActiveRecord|null an active record. Null if id is provided but not found.
      */
     public function getModel($id = 0)
     {
-        $model = Yii::createObject(['class' => $this->modelClass]);
-        if ($id) {
-            return $model->findOne($id);
-        } else {
-            return $model;
-        }
+        return Yii::createObject(['class' => $this->modelClass]);
     }
 }

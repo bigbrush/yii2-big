@@ -17,7 +17,8 @@ use yii\helpers\Html;
  * ConfigManagerObject represents a section within [[ConfigManager]]. It provides methods for retrieving
  * config information from this section.
  *
- * A value in the this object can be accessed like it was an object property.
+ * A value in this object can be accessed like it was an object property. If the property doesn't exist
+ * an exception is thrown. If you want to avoid an exception being thrown use [[get()]] instead.
  *
  * @property array $data [[ManagerObject]]
  * @property string $id
@@ -27,10 +28,27 @@ use yii\helpers\Html;
 class ConfigManagerObject extends ManagerObject implements IteratorAggregate
 {
     /**
-     * @var string $section the section this config belongs to.
+     * @var string $section the section this config object refers to.
      */
     public $section;
+    /**
+     * @var ConfigManager $_manager the [[ConfigManager]] that instantiated this object.
+     */
+    private $_manager;
 
+
+    /**
+     * Constructor
+     *
+     * @param array $data the data of this object
+     * @param ConfigManager $manager the config manager that instatiated this object.
+     * @param array $config configuration for this object.
+     */
+    public function __construct($data, ConfigManager $manager, $config = [])
+    {
+        $this->_manager = $manager;
+        parent::__construct($data, $config);
+    }
 
     /**
      * Returns a config value from this section.
@@ -48,10 +66,34 @@ class ConfigManagerObject extends ManagerObject implements IteratorAggregate
     }
 
     /**
-     * Returns this config as an zero-index array. Each array element has the entries ´id´ and value´.
+     * Sets a config value in this config object. The value is saved in the database.
+     *
+     * @param string $name name of the config entry.
+     * @param mixed $value value of the config entry.
+     */
+    public function set($name, $value)
+    {
+        if ($this->_manager->add($name, $value, $this->section)) {
+            $this->setValue($name, $value);
+        }
+    }
+
+    /**
+     * Sets a value in this config object. The value is NOT saved to the database.
+     *
+     * @param string $name name of the config entry.
+     * @param mixed $value value of the config entry.
+     */
+    public function setValue($name, $value)
+    {
+        $this->data[$name] = $value;
+    }
+
+    /**
+     * Returns this config as an zero-index array. Each array element has the entries 'id', 'value' and 'section'.
      * The returned array can be used with [[yii\data\ArrayDataProvider]].
      *
-     * @return array this config as an zero-indexed array.
+     * @return array this config object as an zero-indexed array.
      */
     public function asArray()
     {
