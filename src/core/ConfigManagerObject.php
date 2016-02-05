@@ -9,9 +9,7 @@ namespace bigbrush\big\core;
 
 use ArrayIterator;
 use IteratorAggregate;
-use Yii;
 use yii\base\Object;
-use yii\helpers\Html;
 
 /**
  * ConfigManagerObject represents a section within [[ConfigManager]]. It provides methods for retrieving
