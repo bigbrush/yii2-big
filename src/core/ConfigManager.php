@@ -92,34 +92,9 @@ class ConfigManager extends Object implements ManagerInterface
     }
 
     /**
-     * Saves/updates a config value in the database. If the save is successful the
-     * [[ConfigManagerObject]] for the specified section is updated.
-     * 
-     * @param string $name name of a config value to set.
-     * @param string $value the value to set.
-     * @param string $section a section to register the config to.
-     * @return bool true if value was saved, false if not.
-     */
-    public function add($name, $value, $section)
-    {
-        $dataSaved = $this->save([
-            'Config' => [
-                'id' => $name,
-                'value' => $value,
-                'section' => $section,
-            ]
-        ]);
-        if ($dataSaved) {
-            $this->getItems($section)->setValue($name, $value);
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Returns a config object with configuration for the specified section.
      * 
-     * @param string $section a section to grab config items from.
+     * @param string $section a section to return config items for.
      * @return ConfigManagerObject a config object.
      */
     public function getItems($section = null)
@@ -131,6 +106,54 @@ class ConfigManager extends Object implements ManagerInterface
         $data = $this->load($section);
         $config = $this->createObject($data);
         return $this->items[$section] = $config;
+    }
+
+    /**
+     * Saves/updates a config value in the database. If the save is successful the
+     * [[ConfigManagerObject]] for the specified section is updated.
+     * 
+     * @param string $name name of a config value to set.
+     * @param string $value the value to set.
+     * @param string $section a section to register the config to.
+     * @return bool true if value was saved, false if not.
+     */
+    public function set($name, $value, $section)
+    {
+        $data = [
+            'Config' => [
+                'id' => $name,
+                'value' => $value,
+                'section' => $section,
+            ]
+        ];
+        if ($this->save($data)) {
+            $this->getItems($section)->setValue($name, $value);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Removes the specified config name from the specified section.
+     * 
+     * @param string $name name of a config value to remove.
+     * @param string $section the section to remove the config name from.
+     * @return bool true if value was removed, false if not.
+     */
+    public function remove($name, $section)
+    {
+        $data = [
+            'Config' => [
+                'id' => $name,
+                'value' => '',
+                'section' => $section,
+            ],
+        ];
+        if ($this->delete($data)) {
+            $this->getItems($section)->removeValue($name);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -191,6 +214,7 @@ class ConfigManager extends Object implements ManagerInterface
      * $data = [
      *     'Config' => [
      *         'id' => 'REQUIRED',
+     *         'value' => 'CAN BE EMPTY',
      *         'section' => 'REQUIRED',
      *     ],
      * ];
@@ -229,7 +253,7 @@ class ConfigManager extends Object implements ManagerInterface
      */
     public function isDataValid($data)
     {
-        if (!is_array($data['Config']) || !isset($data['Config'])) {
+        if (!isset($data['Config']) || !is_array($data['Config'])) {
             return false;
         }
         $data = $data['Config'];
@@ -267,7 +291,7 @@ class ConfigManager extends Object implements ManagerInterface
 
     /**
      * Creates an item object used in this manager.
-     * The specified data must contain the key "section". Use [[load()]] to ensure properly
+     * The specified data MUST contain the key "section". Use [[load()]] to ensure properly
      * formatted data.
      *
      * @param mixed $data configuration array for the object.

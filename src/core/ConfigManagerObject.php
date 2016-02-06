@@ -65,15 +65,15 @@ class ConfigManagerObject extends ManagerObject implements IteratorAggregate
 
     /**
      * Sets a config value in this config object. The value is saved in the database.
+     * Note that the [[ConfigManager]] will update this object if the database save was successful.
      *
      * @param string $name name of the config entry.
      * @param mixed $value value of the config entry.
+     * @return bool true if value was saved, false if not.
      */
     public function set($name, $value)
     {
-        if ($this->_manager->add($name, $value, $this->section)) {
-            $this->setValue($name, $value);
-        }
+        return $this->_manager->add($name, $value, $this->section);
     }
 
     /**
@@ -85,6 +85,30 @@ class ConfigManagerObject extends ManagerObject implements IteratorAggregate
     public function setValue($name, $value)
     {
         $this->data[$name] = $value;
+    }
+
+    /**
+     * Removes a value from this config object. This is removed from the database.
+     * Note that the [[ConfigManager]] will update this object if the database deletion was successful.
+     *
+     * @param string $name a name of the value to remove.
+     * @return bool true if value was removed, false if not.
+     */
+    public function remove($name)
+    {
+        return $this->_manager->remove($name, $this->section);
+    }
+
+    /**
+     * Removes the specified config name from this config object. The value is NOT removed from the database.
+     *
+     * @param string $name name of a config entry.
+     */
+    public function removeValue($name)
+    {
+         if (isset($this->data[$name])) {
+            unset($this->data[$name]);
+         }
     }
 
     /**
