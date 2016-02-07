@@ -41,6 +41,7 @@ return [
     'Name' => 'Navn',
     'Namespace' => 'Klasse',
     'No' => 'Nr',
+    'Page not found' => 'Side ikke fundet',
     'Parent' => 'Læg under',
     'Positions' => 'Positioner',
     'Route' => 'Url',

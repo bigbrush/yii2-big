@@ -10,6 +10,7 @@ namespace bigbrush\big\core;
 use Yii;
 use yii\base\Object;
 use yii\base\InvalidValueException;
+use yii\web\NotFoundHttpException;
 use yii\web\UrlRuleInterface;
 
 /**
@@ -163,6 +164,10 @@ class UrlManager extends Object implements UrlRuleInterface
         $menu = $menuManager->search('alias', array_pop($segments));
         // if a menu was found set it as active and use it to parse the request.
         if ($menu) {
+            // throw exception if menu is not enabled
+            if (!$menu->getIsEnabled()) {
+                throw new NotFoundHttpException(Yii::t('big', 'Page not found'));
+            }
             $menuManager->setActive($menu);
             $params = $this->parseInternalUrl($menu->route);
             $route = $params[0];
@@ -175,7 +180,7 @@ class UrlManager extends Object implements UrlRuleInterface
                 $menu = $menuManager->search('alias', array_pop($segments));
             }
             // if a menu was found register it as active
-            if ($menu) {
+            if ($menu && $menu->getIsEnabled()) {
                 $menuManager->setActive($menu);
             }
         }
