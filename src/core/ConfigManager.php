@@ -9,6 +9,8 @@ namespace bigbrush\big\core;
 
 use Yii;
 use yii\base\Object;
+use yii\base\InvalidParamException;
+use yii\db\ActiveRecord;
 use yii\db\Query;
 
 /**
@@ -35,17 +37,74 @@ use yii\db\Query;
  * $manager->get('cms.systemEmail', 'noreply@noreply.com');
  * ~~~
  * See [[get()]] for more information on the shorthand method.
+ *
+ * The ConfigManager can be configured for each section specifically. Either by a custom rule
+ * object that implements [[ConfigManagerRuleInterface]] or a configuration array for the default
+ * rule object [[ConfigManagerRule]]. 
+ * The ConfigManager can be configured through the application configuration like so:
+ * ~~~php
+ * ...
+ * 'components' => [
+ *     'big' => [
+ *         ...
+ *         'managers' => [
+ *               'configManager' => [
+ *                   'rules' => [
+ *                       'cart' =>[
+ *                           'lockedFields' => ['category.products_per_page', 'product.show_prices'],
+ *                           'changeLockedFields' => true,
+ *                       ],
+ *                   ],
+ *               ],
+ *         ],
+ *         ...
+ *     ],
+ * ]
+ * ...
+ * ~~~
+ * 
+ * And through code like so:
+ * ~~~php
+ * Yii::$app->big->configManager->configureSection('cms', [
+ *    'lockedFields' => ['appName', 'systemEmail'],
+ *    'changeLockedFields' => true,
+ * ]);
+ *
+ * // with a custom rule object
+ * Yii::$app->big->configManager->configureSection('cms', new MyConfigManagerRule());
+ * ~~~
  */
 class ConfigManager extends Object implements ManagerInterface
 {
     /**
-     * @var string name of the table for saving config information.
+     * @var string $modelClass a class name of the model used by this manager.
      */
     public $modelClass = 'bigbrush\big\models\Config';
     /**
-     * @var string represents the class when creating an configuration object for a section.
+     * @var ManagerObject $itemClass represents the class when creating a configuration object for a section.
      */
     public $itemClass = 'bigbrush\big\core\ConfigManagerObject';
+    /**
+     * @var ConfigManagerRule $ruleClass represents the class when creating a rule object for a section.
+     */
+    public $ruleClass = 'bigbrush\big\core\ConfigManagerRule';
+    /**
+     * @var array $rules list of objects or configuration arrays indexed by the section each one belongs to.
+     * For example:
+     * ~~~php
+     * [
+     *     'SECTION NAME' => ConfigManagerRule,
+     *     'cms' => ConfigManagerRule,
+     *     'SECTION NAME' => [
+     *         'lockedFields' => ['field1'],
+     *     ],
+     *     'cms' => YourCustomRule,
+     *     ...
+     * ]
+     * ~~~
+     * If an object is registered with [[setRules()]] or [[configureSection]] it must implement [[ConfigManagerRuleInterface]].
+     */
+    protected $rules = [];
     /**
      * @var array $items cache container containing [[ConfigManagerObject]] objects. The keys are section names
      * and the values are [[ConfigManagerObject]] objects.
@@ -76,7 +135,7 @@ class ConfigManager extends Object implements ManagerInterface
      * ~~~
      * Will return the "production.systemEmail" value from the "cms" section.
      *
-     * Note that the specified name MUST be mapped (by 1 or more dots).
+     * Note that the specified name MUST contain at least 1 dot.
      *
      * @param string $name a mapped name of a config entry.
      * @param mixed $defaultValue a default value returned if $name could not be found in this config manager.
@@ -92,7 +151,7 @@ class ConfigManager extends Object implements ManagerInterface
     }
 
     /**
-     * Returns a config object with configuration for the specified section.
+     * Returns a config object with configurations for the specified section.
      * 
      * @param string $section a section to return config items for.
      * @return ConfigManagerObject a config object.
@@ -157,6 +216,79 @@ class ConfigManager extends Object implements ManagerInterface
     }
 
     /**
+     * Configures and registers a config manager rule for the specified section.
+     *
+     * @param string $section a section to configure.
+     * @param array|ConfigManagerRuleInterface $config configuration array for a rule or an rule object.
+     */
+    public function configureSection($section, $config)
+    {
+        $this->setRules([$section => $config]);
+    }
+
+    /**
+     * Registers an array of objects that iplements [[ConfigManagerRuleInterface]].
+     *
+     * @param array an array of [[ConfigManagerRuleInterface]] objects or configuration arrays to create rule objects.
+     * The key are section name and the values can be either a configuration array or objects that must implements
+     * [[ConfigManagerRuleInterface]] interface.
+     *
+     * Below is the configuration array for BigCms. This setup is compatible with the [[ConfigManagerRule]] rule object.
+     * ~~~php
+     * [
+     *     'cms' => [
+     *         'lockedFields' => ['appName', 'systemEmail'],
+     *         'changeLockedFields' => true,
+     *     ]
+     * ]
+     * ~~~
+     */
+    public function setRules($rules)
+    {
+        foreach ($rules as $section => $rule) {
+            $this->rules[$section] = $rule;
+        }
+    }
+
+    /**
+     * Returns all rules applied in this config manager.
+     *
+     * @return array list of applied rules.
+     */
+    public function getRules()
+    {
+        return $this->rules;
+    }
+
+    /**
+     * Returns a rule object that implements [[ConfigManagerRuleInterface]] for the specified section.
+     *
+     * @param string $section a section to return a rule object for. 
+     * @return ConfigManagerRuleInterface a rule object.
+     * @throws InvalidParamException if a registered rule object does not implement [[ConfigManagerRuleInterface]].
+     */
+    public function getRule($section)
+    {
+        $rule = isset($this->rules[$section]) ? $this->rules[$section] : [];
+        if (is_array($rule)) {
+            if (isset($rule['class'])) {
+                $class = $rule['class'];
+                unset($rule['class']);
+            } else {
+                $class = $this->ruleClass;
+            }
+            $rule = Yii::createObject([
+                'class' => $class,
+                'config' => $rule,
+            ]);
+        }
+        if (!$rule instanceof ConfigManagerRuleInterface) {
+            throw new InvalidParamException("The ConfigManager rule '" . get_class($rule) . "' must implement " . ConfigManagerRuleInterface::className());
+        }
+        return $this->rules[$section] = $rule;
+    }
+
+    /**
      * Defined in [[ManagerInterface]]. Delegates to [[getItems()]].
      *
      * @param string $section a section to grab config items from.
@@ -190,13 +322,9 @@ class ConfigManager extends Object implements ManagerInterface
     {
         if ($this->isDataValid($data)) {
             $data = $data['Config'];
-            $model = $this->getModel();
-            $dbModel = $model->find()->where([
-                'id' => $data['id'],
-                'section' => $data['section']
-            ])->one();
-            if ($dbModel) {
-                $model = $dbModel;
+            $model = $this->getModel([$data['id'], $data['section']]);
+            if (!$model) {
+                $model = $this->getModel();
             }
             $model->setAttributes($data);
             return $model->save();
@@ -224,10 +352,7 @@ class ConfigManager extends Object implements ManagerInterface
     {
         if ($this->isDataValid($data)) {
             $data = $data['Config'];
-            $model = $this->getModel()->find()->where([
-                'id' => $data['id'],
-                'section' => $data['section']
-            ])->one();
+            $model = $this->getModel([$data['id'], $data['section']]);
             if ($model) {
                 return $model->delete();
             }
@@ -243,7 +368,7 @@ class ConfigManager extends Object implements ManagerInterface
      * $data = [
      *     'Config' => [
      *         'id' => 'REQUIRED',
-     *         'value' => 'REQUIRED',
+     *         'value' => 'CAN BE EMPTY',
      *         'section' => 'REQUIRED',
      *     ],
      * ];
@@ -257,7 +382,7 @@ class ConfigManager extends Object implements ManagerInterface
             return false;
         }
         $data = $data['Config'];
-        return isset($data['id'], $data['value'], $data['section']);
+        return isset($data['id'], $data['value'], $data['section']) && !empty($data['id']) && !empty($data['section']);
     }
 
     /**
@@ -327,13 +452,39 @@ class ConfigManager extends Object implements ManagerInterface
 
     /**
      * Returns a model used in this manager.
-     * A new model is always returned.
+     * The model will be setup with a [[ConfigManagerRuleInterface]] so each section can be validated
+     * separately.
      *
-     * @param int $id optional id of a database record to load.
+     * @param array $id optional array containing a composite primary key consisting of ['id', 'section'].
      * @return ActiveRecord|null an active record. Null if id is provided but not found.
      */
-    public function getModel($id = 0)
+    public function getModel($id = [])
     {
-        return Yii::createObject(['class' => $this->modelClass]);
+        $model = Yii::createObject($this->modelClass);
+        if (!empty($id)) {
+            $model = $model->findOne($id);
+        }
+        if ($model) {
+            $rule = $this->getRule($model->section);
+            $model->on(ActiveRecord::EVENT_BEFORE_INSERT, function($event) use ($rule) {
+                $event->isValid = $rule->onBeforeSave($event->sender);
+                if (!$event->isValid) {
+                    $event->sender->addError('id', $rule->getMessage());
+                }
+            });
+            $model->on(ActiveRecord::EVENT_BEFORE_UPDATE, function($event) use ($rule) {
+                $event->isValid = $rule->onBeforeSave($event->sender);
+                if (!$event->isValid) {
+                    $event->sender->addError('id', $rule->getMessage());
+                }
+            });
+            $model->on(ActiveRecord::EVENT_BEFORE_DELETE, function($event) use ($rule) {
+                $event->isValid = $rule->onBeforeDelete($event->sender);
+                if (!$event->isValid) {
+                    $event->sender->addError('id', $rule->getMessage());
+                }
+            });
+        }
+        return $model;
     }
 }
