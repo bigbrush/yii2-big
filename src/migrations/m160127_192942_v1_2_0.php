@@ -21,11 +21,6 @@ class m160127_192942_v1_2_0 extends Migration
             'section' => $this->string()->notNull(),
             'PRIMARY KEY(id, section)'
         ], $tableOptions);
-
-        $this->batchInsert('{{%config}}', ['id', 'value', 'section'], [
-            ['appName', 'Big Cms', 'cms'],
-            ['systemEmail', 'noreply@noreply.com', 'cms'],
-        ]);
     }
 
     public function down()
