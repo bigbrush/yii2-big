@@ -11,6 +11,7 @@ use Yii;
 use yii\db\ActiveRecord;
 use yii\behaviors\SluggableBehavior;
 use yii\behaviors\TimestampBehavior;
+use yii\helpers\Inflector;
 use yii\helpers\Json;
 use creocoder\nestedsets\NestedSetsBehavior;
 
@@ -135,9 +136,28 @@ class Category extends ActiveRecord
             ['title', 'required'],
             [['parent_id', 'template_id'], 'integer'],
             ['content', 'filter', 'filter' => '\yii\helpers\HtmlPurifier::process'],
-            [['title', 'meta_title', 'meta_description', 'meta_keywords', 'module'], 'string', 'max' => 255],
+            [['title', 'meta_title', 'meta_description', 'meta_keywords', 'alias', 'module'], 'string', 'max' => 255],
+            ['alias', 'validateAlias'],
             ['params', 'safe'],
         ];
+    }
+
+    /**
+     * Validates the [[alias]] attributes. If another category with the same alias exists
+     * the current alias will automatically be made unique by appending an incremental counter.
+     *
+     * @param string $attribute the attribute currently being validated
+     * @param mixed $params the value of the "params" given in the rule
+     */
+    public function validateAlias($attribute, $params)
+    {
+        $alias = empty($this->alias) ? Inflector::slug($this->title) : $this->alias;
+        $counter = 0;
+        while (($model = $this->findOne(['alias' => $alias])) !== null) {
+            $counter++;
+            $alias = $alias . '-' . $counter;
+        }
+        $this->alias = $alias;
     }
 
     /**
@@ -150,12 +170,6 @@ class Category extends ActiveRecord
             'tree' => [
                 'class' => NestedSetsBehavior::className(),
                 'treeAttribute' => 'tree',
-            ],
-            [
-                'class' => SluggableBehavior::className(),
-                'attribute' => 'title',
-                'slugAttribute' => 'alias',
-                'immutable' => true,
             ],
         ];
     }
@@ -189,6 +203,7 @@ class Category extends ActiveRecord
     public function afterFind()
     {
         $this->params = Json::decode($this->params);
+        parent::afterFind();
     }
 
     /**
