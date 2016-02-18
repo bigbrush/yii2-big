@@ -43,7 +43,7 @@ return [
     'Meta title' => 'Meta titel',
     'Name' => 'Navn',
     'Namespace' => 'Klasse',
-    'No' => 'Nr',
+    'No' => 'Nej',
     'Page not found' => 'Side ikke fundet',
     'Parent' => 'Læg under',
     'Positions' => 'Positioner',
