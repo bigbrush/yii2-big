@@ -23,6 +23,8 @@ return [
     'Available blocks' => 'Mulige blokke',
     'Block' => 'Blok',
     'Choose a menu for this item' => 'Vælg en menu for dette menupunkt',
+    'Config "{name}" is locked and cannot be changed.' => 'Indstilling "{name}" er låst og kan ikke ændres.',
+    'Config "{name}" is locked and cannot be deleted.' => 'Indstilling "{name}" er låst og kan ikke slettes.',
     'Content' => 'Indhold',
     'Direction can only be "up" or "down"' => 'Retning kan kun være "op" eller "ned"',
     'Extension' => 'Udvidelse',

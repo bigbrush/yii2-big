@@ -85,6 +85,7 @@ class Big extends ServiceLocator implements BootstrapInterface
         // enable internationalization first so core classes can use it
         $this->registerTranslations([
             'class' => 'yii\i18n\PhpMessageSource',
+            'basePath' => '@bigbrush/big/messages',
         ]);
 
         // check whether managers has been registered 
