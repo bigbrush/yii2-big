@@ -6,7 +6,6 @@ Big Framework Change log
 - new: ConfigManager added
 - new: PluginManager added
 - Enh: Category model now implements templates
-- Enh: elFinder updated to v.2.1.6
 - Enh: A lot of fixes and improvements
 - Enh: Inactive menu items now throws an NotFoundHttpException when requested.
 
