@@ -15,7 +15,8 @@ use yii\db\Query;
 use bigbrush\big\models\Extension;
 
 /**
- * ExtensionManager
+ * ExtensionManager handles installation and management of extensions. Currently only block
+ * extension exists within Big.
  */
 class ExtensionManager extends Object implements ManagerInterface
 {

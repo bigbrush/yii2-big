@@ -15,7 +15,23 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 
 /**
- * TemplateManager
+ * TemplateManager provides method to handle templates in Big. The main method is [[setActive()]]
+ * which registers a specific template as active. Big will use the template to parse a layout file
+ * with block include statements.
+ *
+ * Register a template as active like so:
+ * 
+ * ~~~php
+ * Yii::$app->big->templateManager->setActive('TEMPLATE ID');
+ * ~~~
+ * 
+ * Or get the default template like so:
+ * 
+ * ~~~php
+ * Yii::$app->big->templateManager->getItem();
+ * ~~~
+ * 
+ * An ID can be specified in [[getItem()]] which returns the specified template.
  */
 class TemplateManager extends Object implements ManagerInterface
 {

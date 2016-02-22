@@ -14,7 +14,14 @@ use yii\web\NotFoundHttpException;
 use yii\web\UrlRuleInterface;
 
 /**
- * UrlManager acts as an url manager within Big and as an url rule within the Yii application if [[enableUrlRules]] is true.
+ * UrlManager acts as an url manager within Big and as an url rule within the Yii2 application. It
+ * handles creation and parsing of dynamic urls and automatically locates module specific url rules.
+ *
+ * Whether this manager should act as a url can defined by setting [[enableUrlRules]] to true.
+ *
+ * ~~~php
+ * ~~~
+ *
  */
 class UrlManager extends Object implements UrlRuleInterface
 {

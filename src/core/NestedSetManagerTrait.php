@@ -12,7 +12,7 @@ use yii\base\InvalidParamException;
 use yii\db\Query;
 
 /**
- * NestedSetManagerTrait is used by managers that returns a model with the [[creocoder\nestedsets\NestedSetsBehavior]] attached.
+ * NestedSetManagerTrait is used by managers that returns a model with the [[\creocoder\nestedsets\NestedSetsBehavior]] attached.
  *
  * This trait is optimized through a caching system and by the fact that ActiveRecords are not used. The database is queried
  * directly and a [[ManagerObject]] is created for each database row. 
@@ -20,9 +20,11 @@ use yii\db\Query;
  * Roots and children of roots are called "roots" and "items". They are stored in separate cache containers and can be accessed
  * with [[getRoots]], [[getRoot]], [[getItems]] and [[getItem]].
  *
- * To implement this trait in a manager the property [[modelClass]] must be set with the class of the ActiveRecord to use.
+ * To implement this trait in a manager the property [[modelClass]] must be set with the class of the ActiveRecord to use. The
+ * ActiveRecord is only used retrieve the table name to query rows from.
  *
  * Use this trait as follows:
+ *
  * ~~~php
  * class MyManager extends Object implements ManagerInterface
  * {
@@ -33,6 +35,7 @@ use yii\db\Query;
  *     }
  * }
  * ~~~
+ *
  */
 trait NestedSetManagerTrait
 {

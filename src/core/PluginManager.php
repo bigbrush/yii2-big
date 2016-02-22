@@ -31,8 +31,8 @@ use yii\base\Event;
  *     'quantity' => 2,
  * ]);
  * Yii::$app->big->getPluginManager('pluginGroup')->trigger('user.saved', $myEvent);
- * // plugins can then modify parameters in $myEvent which can be retrieved like so
- * $price = $myEvent->price;
+ * // plugins can then modify parameters in $myEvent which can be retrieved later.
+ * $modifiedPrice = $myEvent->price;
  * 
  * // example three - with a custom folder for plugins
  * $manager = Yii::$app->big->getPluginManager('pluginGroup');

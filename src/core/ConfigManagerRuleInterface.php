@@ -9,7 +9,7 @@ namespace bigbrush\big\core;
 
 /**
  * ConfigManagerRuleInterface defines a set of methods that needs to be implemented in order for an
- * objec to be compatible with [[ConfigManager]]. It is specifically used by [[bigbrush\big\models\Config]] 
+ * objec to be compatible with [[ConfigManager]]. It is specifically used by [[\bigbrush\big\models\Config]] 
  * before saving and deleting models.
  */
 interface ConfigManagerRuleInterface

@@ -14,7 +14,26 @@ use yii\base\Object;
 use yii\helpers\Json;
 
 /**
- * MenuManager
+ * MenuManager provides an interface for managing a nested set of menu items.
+ * You can grab all created menus like so:
+ *
+ * ~~~php
+ * $menus = Yii::$app->big->menuManager->getMenus();
+ * ~~~
+ *
+ * One menu item will always be defined as default and can not be deleted. You can grab the
+ * default menu, which is the menu with the default menu item, like so:
+ *
+ * ~~~php
+ * $items = Yii::$app->big->menuManager->getItems();
+ * ~~~
+ *
+ * Or you can get all menu items from a specific menu by specifying a menu ID:
+ *
+ * ~~~php
+ * $items = Yii::$app->big->menuManager->getItems('ID OF A MENU');
+ * ~~~
+ *
  */
 class MenuManager extends Object implements ManagerInterface
 {
@@ -25,7 +44,7 @@ class MenuManager extends Object implements ManagerInterface
 
     /**
      * @var boolean whether to load all menus automatically when the manager initializes.
-     * If true this manager will not make any additional database calls when searching- see [[search()]].
+     * If true this manager will not make any additional database calls when searching - see [[search()]].
      */
     public $autoload = false;
     /**
@@ -46,8 +65,6 @@ class MenuManager extends Object implements ManagerInterface
     /**
      * Initializes the manager by autoloading all menus if [[autoload]] is enabled.
      * Also sets up trait properties.
-     *
-     * This method is called when [[Big]] bootstraps.
      */
     public function init()
     {

@@ -21,16 +21,74 @@ use yii\web\Response;
 use bigbrush\big\widgets\recorder\Recorder;
 
 /**
- * Big is the core class of the Big framework. It provides an interface for
- * common functionalities and access to the different managers.
+ * Big is the core class of the Big framework. It provides an entry point to the framework
+ * which primarily provides access to different managers.
  *
- * Big can be used as a stand alone Yii 2 extension but is actually created to provide an
- * application with split frontend and backend ready for shared hosts. Big is also
- * designed to be easy to integrate into any Yii 2 application.
+ * Big consists of the following managers:
  *
- * Big does not require inheritance from any specific classes (other than Yii classes obviously).
+ *  - [[BlockManager]]
+ *  - [[CategoryManager]]
+ *  - [[ConfigManager]]
+ *  - [[ExtensionManager]]
+ *  - [[MenuManager]]
+ *  - [[PluginManager]]
+ *  - [[TemplateManager]]
+ *  - [[UrlManager]]
+ *
+ * Big can be plugged into any Yii 2 application and is designed to be easy to integrate. It does
+ * not require inheritance from any specific classes (other than Yii classes obviously).
  * Big reacts during runtime by implementing the [[BootstrapInterface]] to plug into
  * a running Yii application.
+ *
+ * Big should be configured through the application configurations, like so:
+ *
+ * ~~~php
+ * ...
+ * 'bootstrap' => [
+ *     'big',
+ * ],
+ * ...
+ * 'components' => [
+ *     'big' => [
+ *         'class' => 'bigbrush\big\core\Big',
+ *     ],
+ * ],
+ * ...
+ * ~~~
+ *
+ * By default Big is deactivated. This means that specific functionality of Big should be
+ * enabled when needed. If for instance Big should automatically set the application default route
+ * add the following to the application configuration:
+ *
+ * ~~~php
+ * 'components' => [
+ *     'big' => [
+ *         'class' => 'bigbrush\big\core\Big',
+ *         'setApplicationDefaultRoute' => true,
+ *     ],
+ * ],
+ * ~~~
+ *
+ * Big will then use the default menu item of [[MenuManager]] to set the application default route.
+ * As this will activate the [[MenuManager]] you could set the property [[MenuManager::autoload]]
+ * to "true" so all menus are loaded in one swoop. This could be more efficient than loading each
+ * menu on it's own. The decision is up to you.
+ *
+ * To enable autoload add this to the configuration:
+ *
+ * ~~~php
+ * 'components' => [
+ *     'big' => [
+ *         'class' => 'bigbrush\big\core\Big',
+ *         'setApplicationDefaultRoute' => true,
+ *         'managers' => [
+ *             'menuManager' => [
+ *                 'autoload' => true,
+ *             ],
+ *         ],
+ *     ],
+ * ],
+ * ~~~
  *
  * @author Michael Bech <mj@bigbrush-agency.com>
  */

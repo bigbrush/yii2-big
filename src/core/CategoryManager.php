@@ -15,7 +15,25 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 
 /**
- * CategoryManager
+ * CategoryManager provides an easy way to integrate nested categories into any Yii2 module.
+ * Use this manager like so:
+ *
+ * ~~~php
+ * $categories = Yii::$app->big->categoryManager->getItems('MODULE ID');
+ * ~~~
+ *
+ * This returns an array with [[ManagerObject]] objects which can be used with [[yii\data\ArrayDataProvider]].
+ * If a category tree has not been created it will automatically be created by this manager.
+ *
+ * This manager also provides a helper method to create a dropdown list from the categories:
+ *
+ * ~~~php
+ * $dropDownList = Yii::$app->big->categoryManager->getDropDownList('MODULE ID');
+ *
+ * // and if you want an unselected <option> element as the first in the dropdown
+ * $dropDownList = Yii::$app->big->categoryManager->getDropDownList('MODULE ID', 'Choose category');
+ * ~~~
+ *
  */
 class CategoryManager extends Object implements ManagerInterface
 {
@@ -134,7 +152,6 @@ class CategoryManager extends Object implements ManagerInterface
      * @param bigbrush\big\models\Category a category model to save. Use [[getModel()]]
      * to create or load a model.
      * @return boolean true if save is successful, false if not.
-     * @throws ErrorException in [[createRootNode()]].
      */
     public function saveModel($id, &$model)
     {

@@ -16,7 +16,15 @@ use yii\db\Query;
 use yii\db\ActiveRecord;
 
 /**
- * BlockManager
+ * BlockManager handles all block related tasks in Big.
+ *
+ * This manager mainly works behind the scene but can be accessed like any other manager.
+ * A block can be set with code like so:
+ *
+ * ~~~php
+ * Yii::$app->big->blockManager->addBlock('POSITION NAME', '<p>My block content</p>');
+ * ~~~
+ *
  */
 class BlockManager extends Object implements ManagerInterface
 {

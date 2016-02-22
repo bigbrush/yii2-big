@@ -16,32 +16,35 @@ use yii\db\Query;
 /**
  * ConfigManager
  *
- * You should use the config manager like so
+ * You should use the config manager like so:
+ *
  * ~~~php
  * $manager = Yii::$app->big->configManager;
  * $config = $manager->getItems('SECTION NAME');
  * 
  * $systemEmail = $config->get('systemEmail'); // will return null if "systemEmail" is not set.
- * or
+ * // or
  * $systemEmail = $config->systemEmail; // will throw exception if "systemEmail" is not set.
  * 
  * $isNull = $config->get('name_does_not_exist', null);
  * 
  * // setting properties
  * $config->set('name', 'value');
- * or
+ * // or
  * $manager->set('name', 'value', 'section');
  * 
  * // the manager has a shorthand method for retrieving config values:
  * $manager->get('section.name', 'defaultValue');
  * $manager->get('cms.systemEmail', 'noreply@noreply.com');
  * ~~~
+ *
  * See [[get()]] for more information on the shorthand method.
  *
  * The ConfigManager can be configured for each section specifically. Either by a custom rule
  * object that implements [[ConfigManagerRuleInterface]] or a configuration array for the default
  * rule object [[ConfigManagerRule]]. 
  * The ConfigManager can be configured through the application configuration like so:
+ *
  * ~~~php
  * ...
  * 'components' => [
@@ -64,6 +67,7 @@ use yii\db\Query;
  * ~~~
  * 
  * And through code like so:
+ * 
  * ~~~php
  * Yii::$app->big->configManager->configureSection('cms', [
  *    'lockedFields' => ['appName', 'systemEmail'],
@@ -73,6 +77,7 @@ use yii\db\Query;
  * // with a custom rule object
  * Yii::$app->big->configManager->configureSection('cms', new MyConfigManagerRule());
  * ~~~
+ * 
  */
 class ConfigManager extends Object implements ManagerInterface
 {
@@ -123,22 +128,26 @@ class ConfigManager extends Object implements ManagerInterface
     /**
      * Returns a config value based on the specified name. This is a shorthand for [[ConfigManagerObject::get()]].
      * The specified name must be a mapped name containing minimum 1 dot. For example:
+     *
      * ~~~php
      * $manager->get('cms.systemEmail');
      * ~~~
+     *
      * Will return the "systemEmail" value from the "cms" section.
      *
      * If a mapped name contains more than 1 dot only the string before the first dot is relevant.
      * For instance:
+     *
      * ~~~php
      * $manager->get('cms.production.systemEmail');
      * ~~~
+     *
      * Will return the "production.systemEmail" value from the "cms" section.
      *
      * Note that the specified name MUST contain at least 1 dot.
      *
      * @param string $name a mapped name of a config entry.
-     * @param mixed $defaultValue a default value returned if $name could not be found in this config manager.
+     * @param mixed $defaultValue a default value returned if $name could not be found.
      * @return mixed the config value.
      */
     public function get($name, $defaultValue = null)
