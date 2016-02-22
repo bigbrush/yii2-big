@@ -17,9 +17,54 @@ use yii\web\UrlRuleInterface;
  * UrlManager acts as an url manager within Big and as an url rule within the Yii2 application. It
  * handles creation and parsing of dynamic urls and automatically locates module specific url rules.
  *
- * Whether this manager should act as a url can defined by setting [[enableUrlRules]] to true.
+ * Whether this manager should act as a url rule can defined by setting [[enableUrlRules]] to true. If enabled
+ * this manager will search through all modules registered in the Yii2 application. If a file with
+ * the name of [[urlRuleClass]] exists in the module directory this url rule class will automatically
+ * be loaded and used as an url rule.
+ *
+ * Url creating is handled in a special way by this url manager. It allows you to create dynamic and SEO
+ * optimized urls. This is used by the [[\bigbrush\big\widgets\editor\Editor]] editor when inserting links.
+ * Inserted links will be parsed (SEO optimzed) by Big right before the application renders its response.
+ *
+ * Create a dynamic url:
+ * 
+ * ~~~php
+ * // creates the url: 'index.php?r=module/controller/action&param1=value1'
+ * $url = Yii::$app->urlManager->createInternalUrl(['module/controller/action', 'param1' => 'value1'], true);
+ * ~~~
+ *
+ * Parse a dynamic url:
+ * 
+ * ~~~php
+ * // creates the route: ['module/controller/action', 'param1' => 'value1']
+ * $route = Yii::$app->urlManager->parseInternalUrl('index.php?r=/module/controller/action&param1=value1');
+ * ~~~
+ *
+ * Url rules can be configured through the application configuration:
  *
  * ~~~php
+ * ...
+ * 'components' => [
+ *     'big' => [
+ *         ...
+ *         'managers' => [
+ *               'urlManager' => [
+ *                   'rules' => [
+ *                       'namespace\of\my\custom\UrlRule',
+ *                       ['class' => 'MyUrlRule', 'some-param' => 'some-value'],
+ *                   ],
+ *               ],
+ *         ],
+ *         ...
+ *     ],
+ * ]
+ * ...
+ * ~~~
+ *
+ * Or with code like so:
+ * 
+ * ~~~php
+ * Yii::$app->urlManager->setRules(['myCustomName' => 'namespace\of\my\custom\UrlRule']);
  * ~~~
  *
  */
@@ -307,10 +352,9 @@ class UrlManager extends Object implements UrlRuleInterface
         }
         // load url rule from same namespace as the main module file
         $class = substr($class, 0, strrpos($class, '\\') + 1) . $this->urlRuleClass;
-        if (class_exists($class) === false) {
-            return false;
+        if (class_exists($class)) {
+            // create and register url rule
+            $this->registerRules([$id => $class]);
         }
-        // create and register url rule
-        $this->registerRules([$class]);
     }
 }
