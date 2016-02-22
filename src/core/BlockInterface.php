@@ -13,7 +13,7 @@ namespace bigbrush\big\core;
 interface BlockInterface
 {
     /**
-     * Runs before [[bigbrush\big\models\Block]] is saved but after it has validated.
+     * Runs before [[\bigbrush\big\models\Block]] is saved but after it has validated.
      * Event handler for ActiveRecord::EVENT_BEFORE_INSERT and ActiveRecord::EVENT_BEFORE_UPDATE
      * which is registered in [[BlockManager::createObject()]].
      *

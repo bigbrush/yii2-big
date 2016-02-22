@@ -26,14 +26,14 @@ use bigbrush\big\widgets\recorder\Recorder;
  *
  * Big consists of the following managers:
  *
- *  - [[BlockManager]]
- *  - [[CategoryManager]]
- *  - [[ConfigManager]]
- *  - [[ExtensionManager]]
- *  - [[MenuManager]]
- *  - [[PluginManager]]
- *  - [[TemplateManager]]
- *  - [[UrlManager]]
+ *  - [BlockManager](bigbrush-big-core-blockmanager.html)
+ *  - [CategoryManager](bigbrush-big-core-categorymanager.html)
+ *  - [ConfigManager](bigbrush-big-core-configmanager.html)
+ *  - [ExtensionManager](bigbrush-big-core-extensionmanager.html)
+ *  - [MenuManager](bigbrush-big-core-menumanager.html)
+ *  - [PluginManager](bigbrush-big-core-pluginmanager.html)
+ *  - [TemplateManager](bigbrush-big-core-templatemanager.html)
+ *  - [UrlManager](bigbrush-big-core-urlmanager.html)
  *
  * Big can be plugged into any Yii 2 application and is designed to be easy to integrate. It does
  * not require inheritance from any specific classes (other than Yii classes obviously).
