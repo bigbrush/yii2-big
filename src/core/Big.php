@@ -660,16 +660,11 @@ class Big extends ServiceLocator implements BootstrapInterface
     /**
      * Returns the plugin manager.
      *
-     * @param string $group optional group for the plugin manager to target.
      * @return PluginManager
      */
-    public function getPluginManager($group = null)
+    public function getPluginManager()
     {
-        $manager = $this->get('pluginManager');
-        if ($group) {
-            $manager->group = $group;
-        }
-        return $manager;
+        return $this->get('pluginManager');
     }
 
     /**
