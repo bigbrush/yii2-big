@@ -124,7 +124,7 @@ class Big extends ServiceLocator implements BootstrapInterface
     /**
      * @var boolean indicates whether the menu manager should set a default route in the running application.
      * If true the default menu item will determine the default route.
-     * @see [[yii\web\Application::defaultRoute]].
+     * @see [[\yii\web\Application::defaultRoute]].
      */
     public $setApplicationDefaultRoute = false;
 
@@ -203,7 +203,7 @@ class Big extends ServiceLocator implements BootstrapInterface
 
     /**
      * Renders blocks assigned to positions in the active template.
-     * This method loads a [[Template]] if one has not been loaded yet.
+     * This method loads a [[\bigbrush\big\models\Template]] if one has not been loaded yet.
      *
      * @param array $positions list of positions used in the active theme. See [[getThemePositions()]]
      * for information about the format of the array.
@@ -257,8 +257,10 @@ class Big extends ServiceLocator implements BootstrapInterface
      * information about the url format.
      * Dynamic urls will be parsed by [[Parser::parseUrls()]] which is called by [[parseResponse()]].
      *
-     * Widget [[bigbrush\big\widgets\bigsearch\BigSearch]] can be used to make searches in Big.
+     * Widget [[\bigbrush\big\widgets\bigsearch\BigSearch]] can be used to make searches in Big.
+     *
      * Example:
+     *
      * ~~~
      * BigSearch::widget([
      *     'value' => 'The value to search for', // optional
@@ -267,6 +269,7 @@ class Big extends ServiceLocator implements BootstrapInterface
      * ~~~
      *
      * To plug into the search event system in Big add the following to the application configuration file.
+     *
      * ~~~php
      * return [
      *     'id' => 'APPLICATION ID',
@@ -285,6 +288,7 @@ class Big extends ServiceLocator implements BootstrapInterface
      * ~~~
      *
      * Another way to plug into the searches in Big is to add the following to the application configuration file.
+     *
      * ~~~php
      * return [
      *     'id' => 'APPLICATION ID',
@@ -301,13 +305,16 @@ class Big extends ServiceLocator implements BootstrapInterface
      * ];
      * ~~~
      *
-     * @param Event $event an event object. If [[bigbrush\big\widgets\bigsearch\BigSearch]] is used this
+     * @param Event $event an event object. If [[\bigbrush\big\widgets\bigsearch\BigSearch]] is used this
      * parameter is a [[SearchEvent]] object.
      * @param string $name the event name to trigger.
      * @param booloean $dynamicUrls if true all urls will have "index.php?r" prepended. See
      * [[UrlManager::createInternalUrl()]] for more information.
      * @return array list of search results.
+     *
      * Default format of the returned array is: 
+     *
+     * ~~~php
      * [
      *     [
      *         'title' => 'Title for the item',
@@ -318,6 +325,7 @@ class Big extends ServiceLocator implements BootstrapInterface
      *     ],
      *     ...
      * ]
+     * ~~~
      */
     public function search($event, $name, $dynamicUrls = false)
     {
@@ -347,6 +355,7 @@ class Big extends ServiceLocator implements BootstrapInterface
      * Determines whether a position is active in the current template.
      *
      * Use like the following:
+     *
      * ~~~php
      * <?php if (Yii::$app->big->isPositionActive('sidebar')) : ?>
      * <div id="sidebar-wrapper">
@@ -368,7 +377,9 @@ class Big extends ServiceLocator implements BootstrapInterface
      * A matching [[endBlock()]] call should be called later.
      *
      * Use this method to register blocks from anywhere within the application.
+     *
      * For instance:
+     *
      * ~~~
      * <?php Yii::$app->big->beginBlock('BLOCK POSITION'); ?>
      * <div class="recorded-block">
@@ -392,7 +403,7 @@ class Big extends ServiceLocator implements BootstrapInterface
      *
      * @return Recorder the [[Recorder]] widget instance
      * @throws InvalidCallException if [[beginBlock()]] and [[endBlock()]] calls are
-     * not properly nested in [[yii\base\Widget::end()]].
+     * not properly nested in [[\yii\base\Widget::end()]].
      * @see [[beginBlock()]]
      */
     public function endBlock()
@@ -437,6 +448,7 @@ class Big extends ServiceLocator implements BootstrapInterface
      * positions in the user interface.
      *
      * Example of file content: 
+     *
      * ~~~php
      * return [
      *     'position-id' => 'Displayed title',
@@ -551,7 +563,6 @@ class Big extends ServiceLocator implements BootstrapInterface
 
     /**
      * Returns an array with all core classes used in Big.
-     * Used internally by [[initialize()]].
      *
      * @return array list of core classes used in Big
      */
