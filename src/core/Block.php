@@ -7,11 +7,15 @@
 
 namespace bigbrush\big\core;
 
+use ReflectionClass;
 use Yii;
-use yii\base\Widget;
+use yii\base\Object;
 
 /**
- * Block
+ * Block is considered as a building block in views and is primarily implemented by `include statements`.
+ *
+ * It resembles Yii2 widgets quite a bit. The main difference is that a Block doesn't provide the
+ * `widget()` method like a Yii2 widget does.
  *
  * @property ActiveRecord $model
  * @property integer $blockId
@@ -22,12 +26,12 @@ use yii\base\Widget;
  * @property string $scope
  * @property boolean $isEnabled
  */
-abstract class Block extends Widget implements BlockInterface
+abstract class Block extends Object implements BlockInterface
 {
     /**
-     * @var Block the model used with this block.
+     * @var \bigbrush\big\models\Block the model assigned to this block.
      */
-    public $model;
+    private $_model;
 
 
     /**
@@ -35,7 +39,7 @@ abstract class Block extends Widget implements BlockInterface
      * Event handler for ActiveRecord::EVENT_BEFORE_INSERT and ActiveRecord::EVENT_BEFORE_UPDATE
      * which is registered in BlockManager::createBlock().
      *
-     * @param yii\base\ModelEvent the event being triggered.
+     * @param \yii\base\ModelEvent the event being triggered.
      */
     public function onBeforeSave($event)
     {
@@ -46,7 +50,7 @@ abstract class Block extends Widget implements BlockInterface
      * This method gets called right before a block model is saved. The model is validated at this point.
      * In this method any Block specific logic should run. For example saving a block specific model.
      * 
-     * @param bigbrush\big\models\Block the model being saved.
+     * @param \bigbrush\big\models\Block the model being saved.
      * @return boolean whether the current save procedure should proceed. If any block.
      * specific logic fails false should be returned - i.e. return $blockSpecificModel->save();
      */
@@ -69,6 +73,61 @@ abstract class Block extends Widget implements BlockInterface
     public function getEditRaw()
     {
         return false;
+    }
+
+    /**
+     * Sets a model in this block.
+     *
+     * @param \yii\db\ActiveRecord $model a model to register to this block.
+     */
+    public function setModel($model)
+    {
+        $this->_model = $model;
+    }
+
+    /**
+     * Returns the model used in this block.
+     *
+     * @return \yii\db\ActiveRecord the model regsitered to this block.
+     */
+    public function getModel()
+    {
+        return $this->_model;
+    }
+
+    /**
+     * Renders a view.
+     * The view to be rendered can be specified in one of the following formats:
+     *
+     * - path alias (e.g. "@app/views/site/index");
+     * - absolute path within application (e.g. "//site/index"): the view name starts with double slashes.
+     *   The actual view file will be looked for under the [[Application::viewPath|view path]] of the application.
+     * - absolute path within module (e.g. "/site/index"): the view name starts with a single slash.
+     *   The actual view file will be looked for under the [[Module::viewPath|view path]] of the currently
+     *   active module.
+     * - relative path (e.g. "index"): the actual view file will be looked for under [[viewPath]].
+     *
+     * If the view name does not contain a file extension, it will use the default one `.php`.
+     *
+     * @param string $view the view name.
+     * @param array $params the parameters (name-value pairs) that should be made available in the view.
+     * @return string the rendering result.
+     * @throws InvalidParamException if the view file does not exist.
+     */
+    public function render($view, $params = [])
+    {
+        return Yii::$app->getView()->render($view, $params, $this);
+    }
+
+    /**
+     * Returns the directory containing the view files for this widget.
+     * The default implementation returns the 'views' subdirectory under the directory containing the widget class file.
+     * @return string the directory containing the view files for this widget.
+     */
+    public function getViewPath()
+    {
+        $class = new ReflectionClass($this);
+        return dirname($class->getFileName()) . DIRECTORY_SEPARATOR . 'views';
     }
 
     /**

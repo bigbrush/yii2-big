@@ -18,11 +18,26 @@ use yii\db\ActiveRecord;
 /**
  * BlockManager handles all block related tasks in Big.
  *
- * This manager mainly works behind the scene but can be accessed like any other manager.
- * A block can be set with code like so:
+ * A block can be set to a position like so:
  *
  * ~~~php
  * Yii::$app->big->blockManager->addBlock('POSITION NAME', '<p>My block content</p>');
+ * ~~~
+ *
+ * Grabbing block data can be performed through [[find()]] and [[getModel()]]. For instance:
+ *
+ * ~~~php
+ * // using a yii\db\Query
+ * $blocks = Yii::$app->big->blockManager->find()->all();
+ *
+ * // or using a yii\db\ActiveRecord
+ * $models = Yii::$app->big->blockManager->getModel()->all();
+ * ~~~
+ *
+ * If you want a block:
+ *
+ * ~~~php
+ * $block = Yii::$app->big->blockManager->getItem('BLOCK ID');
  * ~~~
  *
  */
@@ -163,13 +178,15 @@ class BlockManager extends Object implements ManagerInterface
     /**
      * Creates a block of the provided class with the provided model assigned.
      *
-     * @param string $class a fully qualified class name without the leading backslash.
-     * @param ActiveRecord a block model.
-     * @return Block the created block.
+     * @param mixed $data configuration array for the object.
+     * @return ManagerObject a manager object.
      */
     public function createObject(array $data)
     {
         $block = Yii::createObject($data);
+        if (!$block instanceof BlockInterface) {
+        	throw new InvalidParamException("A Block must implement the interface 'bigbrush\big\core\BlockInterface'.");
+        }
         $model = $block->model;
         Event::on($model::className(), ActiveRecord::EVENT_BEFORE_INSERT, [$block, 'onBeforeSave']);
         Event::on($model::className(), ActiveRecord::EVENT_BEFORE_UPDATE, [$block, 'onBeforeSave']);
@@ -211,9 +228,9 @@ class BlockManager extends Object implements ManagerInterface
     }
 
     /**
-     * Returns a BlockQuery.
+     * Returns a Query that is setup to query from the database defined by [[getModel()]].
      *
-     * @return BlockQuery
+     * @return yii\db\QueryQuery
      */
     public function find()
     {
