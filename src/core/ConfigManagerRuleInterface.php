@@ -9,18 +9,18 @@ namespace bigbrush\big\core;
 
 /**
  * ConfigManagerRuleInterface defines a set of methods that needs to be implemented in order for an
- * objec to be compatible with [[ConfigManager]]. It is specifically used by [[\bigbrush\big\models\Config]] 
- * before saving and deleting models.
+ * object to be compatible with [[ConfigManager]]. It is specifically used when the [[ConfigManager]]
+ * creates, updates or deletes config entries.
  */
 interface ConfigManagerRuleInterface
 {
     /**
-     * Registers configurations for this rule. These configurations can be used when validating models
+     * Registers rules in this config rule. These rules is used when validating
      * in [[onBeforeSave()]] and [[onBeforeSave()]].
      *
-     * @param array $config a configuration array for this rule.
+     * @param array $rules an array of rules for this config rule.
      */
-    public function setConfig($config);
+    public function setRules($rules);
 
     /**
      * Validates that the specified model can be saved/updated.
@@ -39,7 +39,7 @@ interface ConfigManagerRuleInterface
     public function onBeforeDelete($model);
 
     /**
-     * Returns the most message of this rule.
+     * Returns the most recent message of this rule.
      *
      * @return string a message.
      */

@@ -14,7 +14,7 @@ use yii\db\ActiveRecord;
 use yii\db\Query;
 
 /**
- * ConfigManager
+ * ConfigManager provides an easy way to implement a key=>value configuration system.
  *
  * You should use the config manager like so:
  *
@@ -49,7 +49,6 @@ use yii\db\Query;
  * ...
  * 'components' => [
  *     'big' => [
- *         ...
  *         'managers' => [
  *               'configManager' => [
  *                   'rules' => [
@@ -60,7 +59,6 @@ use yii\db\Query;
  *                   ],
  *               ],
  *         ],
- *         ...
  *     ],
  * ]
  * ...
@@ -95,6 +93,7 @@ class ConfigManager extends Object implements ManagerInterface
     public $ruleClass = 'bigbrush\big\core\ConfigManagerRule';
     /**
      * @var array $rules list of objects or configuration arrays indexed by the section each one belongs to.
+     *
      * For example:
      * ~~~php
      * [
@@ -103,17 +102,19 @@ class ConfigManager extends Object implements ManagerInterface
      *     'SECTION NAME' => [
      *         'lockedFields' => ['field1'],
      *     ],
-     *     'cms' => YourCustomRule,
      *     ...
      * ]
      * ~~~
+     *
      * If an object is registered with [[setRules()]] or [[configureSection]] it must implement [[ConfigManagerRuleInterface]].
      */
     protected $rules = [];
     /**
      * @var array $items cache container containing [[ConfigManagerObject]] objects. The keys are section names
      * and the values are [[ConfigManagerObject]] objects.
+     *
      * Structure:
+     *
      * ~~~php
      * [
      *     'SECTION NAME' => ConfigManagerObject,
@@ -121,6 +122,7 @@ class ConfigManager extends Object implements ManagerInterface
      *     ...
      * ]
      * ~~~
+     *
      */
     protected $items;
 
@@ -225,7 +227,7 @@ class ConfigManager extends Object implements ManagerInterface
     }
 
     /**
-     * Configures and registers a config manager rule for the specified section.
+     * Registers the specified config manager rule to the specified section.
      *
      * @param string $section a section to configure.
      * @param array|ConfigManagerRuleInterface $config configuration array for a rule or an rule object.
@@ -238,24 +240,17 @@ class ConfigManager extends Object implements ManagerInterface
     /**
      * Registers an array of objects that iplements [[ConfigManagerRuleInterface]].
      *
-     * @param array an array of [[ConfigManagerRuleInterface]] objects or configuration arrays to create rule objects.
-     * The key are section name and the values can be either a configuration array or objects that must implements
-     * [[ConfigManagerRuleInterface]] interface.
+     * @param array $config an array of [[ConfigManagerRuleInterface]] objects or configuration arrays to create rule objects.
+     * The keys are section names and the values can be either:
+     *     - a configuration array
+     *     - objects that must implement the [[ConfigManagerRuleInterface]] interface.
      *
-     * Below is the configuration array for BigCms. This setup is compatible with the [[ConfigManagerRule]] rule object.
-     * ~~~php
-     * [
-     *     'cms' => [
-     *         'lockedFields' => ['appName', 'systemEmail'],
-     *         'changeLockedFields' => true,
-     *     ]
-     * ]
-     * ~~~
+     * Note that if a rule for a specfied section already exists it will be overridden.
      */
-    public function setRules($rules)
+    public function setRules($config)
     {
-        foreach ($rules as $section => $rule) {
-            $this->rules[$section] = $rule;
+        foreach ($config as $section => $rules) {
+            $this->rules[$section] = $rules;
         }
     }
 
@@ -288,11 +283,11 @@ class ConfigManager extends Object implements ManagerInterface
             }
             $rule = Yii::createObject([
                 'class' => $class,
-                'config' => $rule,
+                'rules' => $rule,
             ]);
         }
         if (!$rule instanceof ConfigManagerRuleInterface) {
-            throw new InvalidParamException("The ConfigManager rule '" . get_class($rule) . "' must implement " . ConfigManagerRuleInterface::className());
+            throw new InvalidParamException("The ConfigManager rule '" . get_class($rule) . "' must implement the 'bigbrush\big\core\ConfigManagerRuleInterface' interface");
         }
         return $this->rules[$section] = $rule;
     }

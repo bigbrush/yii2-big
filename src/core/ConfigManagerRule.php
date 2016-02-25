@@ -8,24 +8,25 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Behavior;
-use yii\db\ActiveRecord;
-use yii\helpers\ArrayHelper;
+use yii\base\Object;
+use yii\base\InvalidConfigException;
 
 /**
- * ConfigManagerRule represents a simple rule set for config fields. Certain config fields can be locked
- * by specifying "lockedFields" in [[config]]. If the user is not allowed to change the locked fields set
- * "changeLockedFields" in [[config]] to false.
+ * ConfigManagerRule represents a simple rule set for config fields. By specifying [[lockedFields]] certain
+ * fields can be locked and therefore not deleted. If the user is not allowed to change the
+ * locked fields set [[changeLockedFields]] to false.
  */
-class ConfigManagerRule extends Behavior implements ConfigManagerRuleInterface
+class ConfigManagerRule extends Object implements ConfigManagerRuleInterface
 {
     /**
-     * @var array $config configuration array for this config manager rule.
+     * @var array $lockedFields list of field names that cannot be deleted.
      */
-    protected $config = [
-        'lockedFields' => [],
-        'changeLockedFields' => true,
-    ];
+    public $lockedFields = [];
+    /**
+     * @var bool $changeLockedFields defines whether [[lockedFields]] can be changed. True if they can
+     * and false if not. Defaults to true.
+     */
+    public $changeLockedFields = true;
     /**
      * @var string $message most recent message of this rule.
      */
@@ -33,14 +34,17 @@ class ConfigManagerRule extends Behavior implements ConfigManagerRuleInterface
 
 
     /**
-     * Registers configurations for this rule. These configurations can be used when validating models
+     * Registers validation rules used in this config rule. These rules is used when validating
      * in [[onBeforeSave()]] and [[onBeforeSave()]].
      *
-     * @param array $config a configuration array for this rule.
+     * @param array $rules an array of rules for this config rule.
      */
-    public function setConfig($config)
+    public function setRules($rules)
     {
-        $this->config = ArrayHelper::merge($this->config, $config);
+        Yii::configure($this, $rules);
+        if (!is_array($this->lockedFields)) {
+            throw new InvalidConfigException('The property "lockedFields" must be an array in ' . get_class($this) . '.');
+        }
     }
 
     /**
@@ -52,9 +56,9 @@ class ConfigManagerRule extends Behavior implements ConfigManagerRuleInterface
      */
     public function onBeforeSave($model)
     {
-        if (!$model->getIsNewRecord() && in_array($model->id, $this->config['lockedFields'])) {
+        if (!$model->getIsNewRecord() && in_array($model->id, $this->lockedFields) && !$this->changeLockedFields) {
             $this->message = Yii::t('big', 'Config "{name}" is locked and cannot be changed.', ['name' => $model->id]);
-            return (bool)$this->config['changeLockedFields'];
+            return false;
         } else {
             return true;
         }
@@ -68,7 +72,7 @@ class ConfigManagerRule extends Behavior implements ConfigManagerRuleInterface
      */
     public function onBeforeDelete($model)
     {
-        if (in_array($model->id, $this->config['lockedFields'])) {
+        if (in_array($model->id, $this->lockedFields)) {
             $this->message = Yii::t('big', 'Config "{name}" is locked and cannot be deleted.', ['name' => $model->id]);
             return false;
         } else {
@@ -77,7 +81,7 @@ class ConfigManagerRule extends Behavior implements ConfigManagerRuleInterface
     }
 
     /**
-     * Returns the most message of this rule.
+     * Returns the most recent message of this rule.
      *
      * @return string a message.
      */
