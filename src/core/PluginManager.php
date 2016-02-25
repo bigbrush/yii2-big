@@ -22,7 +22,7 @@ use yii\base\Event;
  *
  * ~~~php
  * // example one - without an event object
- * Yii::$app->big->getPluginManager('pluginGroup')->trigger('user.saved');
+ * Yii::$app->big->getPluginManager()->setGroup('pluginGroup')->trigger('user.saved');
  * 
  * // example two - with a custom event object
  * use my\custom\events\MyEvent;
@@ -30,14 +30,15 @@ use yii\base\Event;
  *     'price' => 100,
  *     'quantity' => 2,
  * ]);
- * Yii::$app->big->getPluginManager('pluginGroup')->trigger('user.saved', $myEvent);
+ * Yii::$app->big->getPluginManager()->setGroup('pluginGroup')->trigger('user.saved', $myEvent);
  * // plugins can then modify parameters in $myEvent which can be retrieved later.
  * $modifiedPrice = $myEvent->price;
  * 
  * // example three - with a custom folder for plugins
- * $manager = Yii::$app->big->getPluginManager('pluginGroup');
- * $manager->pluginsFolder = '@app/my/custom/plugin/folder';
- * $manager->trigger('user.saved');
+ * $manager = Yii::$app->big->getPluginManager()
+ *                ->setFolder('@app/plugins')
+ *                ->setGroup('pluginGroup')
+ *                ->trigger('user.saved');
  * ~~~ 
  * 
  * For more information on events see the [Yii documentation on Events](http://www.yiiframework.com/doc-2.0/guide-concept-events.html).
@@ -59,6 +60,33 @@ class PluginManager extends Component
      * @var string $filename name of the bootstrap file (without the file extension) for each plugin.
      */
     public $filename = 'Plugin';
+    /**
+     * @var array $activatedGroups a list of [[group]] names that defines a group as activated.
+     * Used so a plugin group is only activated once. Ensures that each plugin object is only instantiated once.
+     *
+     * The array is indexed by the value of [[pluginsFolder]] and the values are arrays of [[group]] names.
+     *
+     * For instance:
+     *
+     * ~~~php
+     * [
+     *     '@app/plugins' => [
+     *          'group',
+     *          'group',
+     *          'group',
+     *      ],
+     *     '@app/mymodule/plugins' => [
+     *          'group',
+     *          ...
+     *      ],
+     * ];
+     * ~~~
+     *
+     * @see [[getActivatedGroup()]]
+     * @see [[setActivatedGroup()]]
+     * @see [[isGroupActivated()]]
+     */
+    protected $activatedGroups;
 
 
     /**
@@ -68,6 +96,12 @@ class PluginManager extends Component
      * 
      * If a plugin implements [[PluginInterface]] the [[PluginInterface::register()]] method is called allowing the
      * plugin to register itself as event handler in the plugin manager (or any other subclass of [[Component]]).
+     *
+     * Usage:
+     *
+     * ~~~php
+     * Yii::$app->big->pluginManager->setFolder('@app/plugins')->setGroup('users')->trigger('user.saved');
+     * ~~~
      *
      * @param string $name the event name.
      * @param Event $event the event parameter. If not set, a default [[Event]] object will be created.
@@ -85,17 +119,91 @@ class PluginManager extends Component
     }
 
     /**
-     * Activates a plugin group by calling the register() method on each plugin.
+     * Sets the specified folder as active.
+     *
+     * This is a helper method that ensures chainability when using this manager. 
+     *
+     * @param string $folder path to folder.
+     * @return PluginManager this object to support chaining.
+     */
+    public function setFolder($folder)
+    {
+        $this->pluginsFolder = $folder;
+        return $this;
+    }
+
+    /**
+     * Sets the specified group as active.
+     *
+     * This is a helper method that ensures chainability when using this manager.
+     *
+     * @param string $group a group name.
+     * @return PluginManager this object to support chaining.
+     */
+    public function setGroup($group)
+    {
+        $this->group = $group;
+        return $this;
+    }
+
+    /**
+     * Activates a plugin group by calling the `register()` method on each plugin. The `register()`
+     * method is only called when the plugin implements the `PluginInterface` interface.
+     *
+     * If a plugin doesn't implement `PluginInterface` the plugin should use the `init()` method to
+     * register itself as event handler.
      *
      * @param string $group the plugin group to activate.
      */
     public function activateGroup($group)
     {
-        foreach ($this->findPlugins($group) as $plugin) {
-            if ($plugin instanceof PluginInterface) {
-                $plugin->register($this);
+        if (!$this->isGroupActivated($group)) {
+            foreach ($this->findPlugins($group) as $plugin) {
+                if ($plugin instanceof PluginInterface) {
+                    $plugin->register($this);
+                }
             }
+            $this->setActivatedGroup($group);
         }
+    }
+
+    /**
+     * Registers the specified group as activated.
+     *
+     * @param string $group a group name.
+     */
+    public function setActivatedGroup($group)
+    {
+        if (isset($this->activatedGroups[$this->pluginsFolder])) {
+            $this->activatedGroups[$this->pluginsFolder][] = $group;
+        } else {
+            $this->activatedGroups[$this->pluginsFolder] = [$group];
+        }
+    }
+
+    /**
+     * Returns all activated items of the specified [[pluginsFolder]].
+     *
+     * @param string $folder a plugin folder to return groups from. If a folder is not
+     * specified the property [[pluginsFolder]] is used.
+     */
+    public function getActivatedGroup($folder = null)
+    {
+        $folder = $folder ?: $this->pluginsFolder;
+        return isset($this->activatedGroups[$folder]) ? $this->activatedGroups[$folder] : [];
+    }
+
+    /**
+     * Returns a boolean indicating whether the specified group has already been activated.
+     *
+     * @param string $group a group name.
+     * @param string $folder a plugin folder to return groups from. If a folder is not
+     * specified the property [[pluginsFolder]] is used.
+     * @return bool true if group has already been activated, false if not.
+     */
+    public function isGroupActivated($group, $folder = null)
+    {
+        return in_array($group, $this->getActivatedGroup($folder));
     }
 
     /**
