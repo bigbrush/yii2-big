@@ -10,12 +10,13 @@ namespace bigbrush\big\core;
 use ReflectionClass;
 use Yii;
 use yii\base\Object;
+use yii\base\ViewContextInterface;
 
 /**
  * Block is considered as a building block in views and is primarily implemented by `include statements`.
  *
  * It resembles Yii2 widgets quite a bit. The main difference is that a Block doesn't provide the
- * `widget()` method like a Yii2 widget does.
+ * `widget()` method like a Yii2 widget but it does provide the `render([...])` method.
  *
  * @property ActiveRecord $model
  * @property integer $blockId
@@ -26,7 +27,7 @@ use yii\base\Object;
  * @property string $scope
  * @property boolean $isEnabled
  */
-abstract class Block extends Object implements BlockInterface
+abstract class Block extends Object implements BlockInterface, ViewContextInterface
 {
     /**
      * @var \bigbrush\big\models\Block the model assigned to this block.
@@ -35,11 +36,11 @@ abstract class Block extends Object implements BlockInterface
 
 
     /**
-     * Runs before [[model]] is saved but after it has validated.
-     * Event handler for ActiveRecord::EVENT_BEFORE_INSERT and ActiveRecord::EVENT_BEFORE_UPDATE
-     * which is registered in BlockManager::createBlock().
+     * Runs before [[_model]] is saved but after it has validated.
+     * Event handler for `ActiveRecord::EVENT_BEFORE_INSERT` and `ActiveRecord::EVENT_BEFORE_UPDATE`
+     * which is registered in [[BlockManager::createObject()]].
      *
-     * @param \yii\base\ModelEvent the event being triggered.
+     * @param \yii\base\ModelEvent $event the event being triggered.
      */
     public function onBeforeSave($event)
     {
@@ -50,9 +51,9 @@ abstract class Block extends Object implements BlockInterface
      * This method gets called right before a block model is saved. The model is validated at this point.
      * In this method any Block specific logic should run. For example saving a block specific model.
      * 
-     * @param \bigbrush\big\models\Block the model being saved.
+     * @param \bigbrush\big\models\Block $model the model being saved.
      * @return boolean whether the current save procedure should proceed. If any block.
-     * specific logic fails false should be returned - i.e. return $blockSpecificModel->save();
+     * specific logic fails false should be returned - i.e. `return $blockSpecificModel->save()`;
      */
     public function save($model)
     {
@@ -101,11 +102,11 @@ abstract class Block extends Object implements BlockInterface
      *
      * - path alias (e.g. "@app/views/site/index");
      * - absolute path within application (e.g. "//site/index"): the view name starts with double slashes.
-     *   The actual view file will be looked for under the [[Application::viewPath|view path]] of the application.
+     *   The actual view file will be looked for under the [[\yii\base\Application::viewPath|view path]] of the application.
      * - absolute path within module (e.g. "/site/index"): the view name starts with a single slash.
-     *   The actual view file will be looked for under the [[Module::viewPath|view path]] of the currently
+     *   The actual view file will be looked for under the [[\yii\base\Module::viewPath|view path]] of the currently
      *   active module.
-     * - relative path (e.g. "index"): the actual view file will be looked for under [[viewPath]].
+     * - relative path (e.g. "index"): the actual view file will be looked for under [[getViewPath()]].
      *
      * If the view name does not contain a file extension, it will use the default one `.php`.
      *
@@ -122,6 +123,7 @@ abstract class Block extends Object implements BlockInterface
     /**
      * Returns the directory containing the view files for this widget.
      * The default implementation returns the 'views' subdirectory under the directory containing the widget class file.
+     *
      * @return string the directory containing the view files for this widget.
      */
     public function getViewPath()

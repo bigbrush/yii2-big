@@ -8,12 +8,10 @@
 namespace bigbrush\big\core;
 
 /**
- * BlockInterface ensures compatibility with [[BlockManager]].
- *
- * It extends from [[ViewContextInterface]] to provide support for relative views names
- * like regular Yii2 widgets.
+ * BlockInterface ensures that a block is compatible with the [[BlockManager]] as well as provide
+ * methods that enables a block to be edited and displayed.
  */
-interface BlockInterface extends \yii\base\ViewContextInterface
+interface BlockInterface
 {
     /**
      * Executes this block.
@@ -33,32 +31,11 @@ interface BlockInterface extends \yii\base\ViewContextInterface
     public function edit($model, $form);
 
     /**
-     * Renders a view.
-     * The view to be rendered can be specified in one of the following formats:
-     *
-     * - path alias (e.g. "@app/views/site/index");
-     * - absolute path within application (e.g. "//site/index"): the view name starts with double slashes.
-     *   The actual view file will be looked for under the [[Application::viewPath|view path]] of the application.
-     * - absolute path within module (e.g. "/site/index"): the view name starts with a single slash.
-     *   The actual view file will be looked for under the [[Module::viewPath|view path]] of the currently
-     *   active module.
-     * - relative path (e.g. "index"): the actual view file will be looked for under [[viewPath]].
-     *
-     * If the view name does not contain a file extension, it will use the default one `.php`.
-     *
-     * @param string $view the view name.
-     * @param array $params the parameters (name-value pairs) that should be made available in the view.
-     * @return string the rendering result.
-     * @throws InvalidParamException if the view file does not exist.
-     */
-    public function render($view, $params = []);
-
-    /**
      * Runs before [[\bigbrush\big\models\Block]] is saved but after it has validated.
      * Event handler for ActiveRecord::EVENT_BEFORE_INSERT and ActiveRecord::EVENT_BEFORE_UPDATE
      * which is registered in [[BlockManager::createObject()]].
      *
-     * @param ModelEvent the event being triggered
+     * @param ModelEvent $event the event being triggered
      */
     public function onBeforeSave($event);
 
@@ -76,14 +53,14 @@ interface BlockInterface extends \yii\base\ViewContextInterface
     /**
      * Sets a model in this block.
      *
-     * @param yii\db\ActiveRecord $model a model to register in this block.
+     * @param \yii\db\ActiveRecord $model a model to register in this block.
      */
     public function setModel($model);
 
     /**
      * Returns the model used in this block.
      *
-     * @return yii\db\ActiveRecord the model registered to this block.
+     * @return \yii\db\ActiveRecord the model registered to this block.
      */
     public function getModel();
 }
