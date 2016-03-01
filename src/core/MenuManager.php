@@ -218,6 +218,34 @@ class MenuManager extends Object implements ManagerInterface
     }
 
     /**
+     * Creates a drop down menu ready for [[yii\bootstrap\Nav]] and [[yii\widgets\Menu]].
+     *
+     * @param array list of menus to nest in an array.
+     * @return array nested array ready for a drop down menu.
+     */
+    public function createDropDownMenu(&$menus)
+    {
+        $items = [];
+        $active = $this->getActive();
+        while (list($id, $menu) = each($menus)) {
+            $items[$id] = [
+                'label' => $menu->title,
+                'url' => $menu->getUrl(),
+                'active' => $menu->id == $active->id,
+                'visible' => $menu->getIsEnabled(),
+            ];
+            if ($menu->rgt - $menu->lft != 1) {
+                $items[$id]['items'] = $this->createDropDownMenu($menus);
+            }
+            $next = key($menus);
+            if ($next && $menus[$next]->depth != $menu->depth) {
+                return $items;
+            }
+        }
+        return $items;
+    }
+
+    /**
      * Registers menus when big triggers a search.
      * See [[bigbrush\big\core\Big::search()]] for more information about the search process.
      *
