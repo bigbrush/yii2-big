@@ -220,7 +220,7 @@ class MenuManager extends Object implements ManagerInterface
     /**
      * Creates a drop down menu ready for [[yii\bootstrap\Nav]] and [[yii\widgets\Menu]].
      *
-     * @param array list of menus to nest in an array.
+     * @param array $menus list of menus to nest in an array.
      * @return array nested array ready for a drop down menu.
      */
     public function createDropDownMenu(&$menus)
