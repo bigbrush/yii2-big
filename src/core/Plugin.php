@@ -19,7 +19,7 @@ use yii\base\ViewContextInterface;
  *
  * A plugin is not required to extend this class, but if it does, it can use the familiar [[render()]] method
  * known from controllers and widgets in Yii2. If your plugin subclasses [[Plugin]] the method
- * [[PluginInterface::register($manager)]] must be implemented.
+ * [[\bigbrush\big\core\PluginInterface::register($manager)]] must be implemented.
  *
  * If a plugin is being used as event handler for events triggered through other objects than the [[PluginManager]]
  * then event handlers are supposed to be registered in the init() method.

@@ -92,7 +92,9 @@ class ExtensionManager extends Object implements ManagerInterface
 
     /**
      * Returns an array of available extension types.
+     *
      * Format of returned array:
+     *
      * ~~~php
      * [
      *     'blocks' => 'Block',

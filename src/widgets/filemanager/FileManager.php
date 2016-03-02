@@ -23,7 +23,27 @@ require_once(__DIR__.'/elfinder/php/elFinderVolumeDriver.class.php');
 require_once(__DIR__.'/elfinder/php/elFinderVolumeLocalFileSystem.class.php');
 
 /**
- * FileManager
+ * FileManager provides an elFinder file manager.
+ *
+ * Usage:
+ *
+ * ~~~php
+ * FileManager::widget([
+ *     'baseUrl' => '@web',
+ *     'basePath' => '@app',
+ *     'folder' => 'images/',
+ * ]);
+ * ~~~
+ *
+ * If you want to react when a file is double clicked do the following:
+ *
+ * ~~~php
+ * FileManager::widget([
+ *     'onClickCallback' => 'function(file){
+ *         console.log(file.url);
+ *     }'
+ * ]);
+ * ~~~
  */
 class FileManager extends Widget
 {

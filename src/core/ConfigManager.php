@@ -95,6 +95,7 @@ class ConfigManager extends Object implements ManagerInterface
      * @var array $rules list of objects or configuration arrays indexed by the section each one belongs to.
      *
      * For example:
+     *
      * ~~~php
      * [
      *     'SECTION NAME' => ConfigManagerRule,
@@ -304,8 +305,9 @@ class ConfigManager extends Object implements ManagerInterface
     }
 
     /**
-     * Saves the provided data to the database. The data must contain the keys "id", "value" and "section" in
+     * Saves the provided data to the database. The data must contain the keys "id", "value" and "section"
      * the "Config" namespace. For instance:
+     *
      * ~~~php
      * $data = [
      *     'Config' => [
@@ -315,6 +317,7 @@ class ConfigManager extends Object implements ManagerInterface
      *     ],
      * ];
      * ~~~
+     *
      * If a record already exist with specified "id" and "section" it will be updated with "value. Otherwise
      * a new record is saved in the database.
      * The provided data could come from Yii::$app->getRequst()->post();.
@@ -368,6 +371,7 @@ class ConfigManager extends Object implements ManagerInterface
      * Returns a boolean indicating whether the provided data array is valid. A valid array has an array set in
      * the "Config" namespace. The array in "Config" must contain the keys "id", "value" and "section".
      * For instance:
+     *
      * ~~~php
      * $data = [
      *     'Config' => [
@@ -376,6 +380,7 @@ class ConfigManager extends Object implements ManagerInterface
      *         'section' => 'REQUIRED',
      *     ],
      * ];
+     * ~~~
      *
      * @param array $data the to be saved in the database.
      * @return true if data was saved, false if not.

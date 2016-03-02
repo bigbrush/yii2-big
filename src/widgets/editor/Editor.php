@@ -17,9 +17,15 @@ use bigbrush\big\widgets\editor\assets\EditorAsset;
 use bigbrush\big\widgets\editor\assets\EditorLangAsset;
 
 /**
- * Editor
- * 
- * Provides a TinyMCE widget used in form fields
+ * Editor provides a TinyMCE 4 widget used in form fields:
+ *
+ * Usage:
+ *
+ * ~~~php
+ * $form->field($model, 'property')->widget(Editor::className());
+ * ~~~
+ *
+ * The property [[clientOptions]] can be used to configure TinyMCE.
  */
 class Editor extends InputWidget
 {

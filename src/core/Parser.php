@@ -12,7 +12,8 @@ use yii\base\Object;
 use yii\base\InvalidParamException;
 
 /**
- * Parser
+ * Parser is used to dynamically SEO optimize links and to parse layout files where
+ * `include statements` are replaced with block content.
  */
 class Parser extends Object
 {
@@ -73,15 +74,21 @@ class Parser extends Object
     }
 
     /**
-     * Identifies all "<big:block position="POSITION" ... />" and returns an array with all matches.
+     * Identifies all `<big:block position="POSITION" ... />` and returns an array with all matches.
      * 
-     * Include statements MUST include the position attribute, see below where "position" is "sidebar"
-     *     <big:block position="sidebar" />
+     * Include statements MUST include the position attribute, see below where "position" is "sidebar":
+     *
+     * ~~~html
+     * <big:block position="sidebar" />
+     * ~~~
      * 
      * THE FOLLOWING IS NOT IMPLEMENTED ANYWHERE BUT HERE.
      * You can add additional attributes to the include statement, like below (order of the attributes
      * is not important, as long as position is the first attribute)
-     *     <big:block position="sidebar" type="widget" autostart="false" color="green" />
+     * 
+     * ~~~html
+     * <big:block position="sidebar" type="widget" autostart="false" color="green" />
+     * ~~~
      * 
      * @return array all matches as an associative array
      * The structure of the $array:

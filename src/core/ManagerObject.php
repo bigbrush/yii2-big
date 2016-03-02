@@ -12,7 +12,8 @@ use yii\base\Object;
 use yii\base\NotSupportedException;
 
 /**
- * ManagerObject
+ * ManagerObject is a data container used by most `managers` in Big. It can be accessed as an
+ * object or as an array which makes it compatible with Yii2 widgets.
  */
 class ManagerObject extends Object implements ArrayAccess
 {

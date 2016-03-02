@@ -10,7 +10,8 @@ namespace bigbrush\big\core;
 use Yii;
 
 /**
- * MenuManagerObject
+ * MenuManagerObject is used by the [[MenuManager]] when retriving menu trees. Each menu item
+ * is represented by a MenuManagerObject which provides an easy way to get the `url` of a menu item.
  *
  * @property integer $id
  * @property string $title

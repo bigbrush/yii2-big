@@ -12,7 +12,7 @@ use yii\base\Event;
 use yii\helpers\ArrayHelper;
 
 /**
- * SearchEvent
+ * SearchEvent is used when Big performs searches. See [[\bigbrush\big\core\Big::search()]] for more information.
  */
 class SearchEvent extends Event
 {
