@@ -1,10 +1,11 @@
 Big Framework Change log
 ========================
 
-1.2.0 February XX, 2016
+1.2.0 March 02, 2016
 -------------------------
-- new: ConfigManager added
-- new: PluginManager added
+- Upd: ApiDocs updated across Big
+- New: ConfigManager added
+- New: PluginManager added
 - Enh: Category model now implements templates
 - Enh: A lot of fixes and improvements
 - Enh: Inactive menu items now throws an NotFoundHttpException when requested.

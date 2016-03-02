@@ -98,11 +98,14 @@ class Template extends ActiveRecord
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            $positions = $this->positions;
-            if (isset($positions[static::UNREGISTERED])) {
-                unset($positions[static::UNREGISTERED]);
+            if ($this->positions) {
+                $positions = $this->positions;
+                if (isset($positions[static::UNREGISTERED])) {
+                    unset($positions[static::UNREGISTERED]);
+                }
+                $this->positions = Json::encode($positions);
             }
-            $this->positions = Json::encode($positions);
+            
             if ($this->is_default && ($this->getIsNewRecord() || !$this->_cachedAttributes['is_default'])) {
                 $model = $this->find()->where(['is_default' => 1])->one();
                 if ($model) { // do not exist if a default is not set

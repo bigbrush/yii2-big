@@ -100,6 +100,8 @@ class TemplateManager extends Object implements ManagerInterface
         }
         if ($data) {
             $active = $this->configure($data);
+        } else {
+            $active = $this->_active;
         }
         return $active;
     }
