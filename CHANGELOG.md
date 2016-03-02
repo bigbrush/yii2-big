@@ -3,6 +3,10 @@ Big Framework Change log
 
 1.2.0 March 02, 2016
 -------------------------
+- Enh: Translations implemented properly
+- Enh: 'Slug' of Category model is now unique
+- Enh: Nested menus ready for yii\widgets\Menu can now be created with MenuManager
+- Enh: TemplateManager will always use a template even if a requested template is deleted (an empty template is used)
 - Upd: ApiDocs updated across Big
 - New: ConfigManager added
 - New: PluginManager added
