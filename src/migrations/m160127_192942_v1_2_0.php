@@ -8,6 +8,10 @@ class m160127_192942_v1_2_0 extends Migration
     {
         $this->addColumn('{{%category}}', 'template_id', $this->integer()->notNull());
 
+        // foreign key for block->namespace
+        $this->createIndex('idx-extension-namespace', '{{%extension}}', 'namespace', true);
+        $this->addForeignKey('fk-block-extension', '{{%block}}', 'namespace', '{{%extension}}', 'namespace', 'CASCADE', 'CASCADE');
+
         $tableOptions = null;
         if ($this->db->driverName === 'mysql') {
             // http://stackoverflow.com/questions/766809/whats-the-difference-between-utf8-general-ci-and-utf8-unicode-ci
