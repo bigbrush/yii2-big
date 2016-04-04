@@ -97,7 +97,7 @@ class Big extends ServiceLocator implements BootstrapInterface
     /**
      * version
      */
-    const BIG_VERSION = '1.2.0';
+    const BIG_VERSION = '1.2.1';
 
     /**
      * @var string path for the frontend theme. Is needed when identifing

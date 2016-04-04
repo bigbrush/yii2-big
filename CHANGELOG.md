@@ -1,6 +1,11 @@
 Big Framework Change log
 ========================
 
+1.2.1 April 04, 2016
+-------------------------
+- Bug #30: Fixes json decoding/encoding correctly in MenuManager and Menu model when params column is empty.
+
+
 1.2.0 March 02, 2016
 -------------------------
 - Enh: Translations implemented properly
