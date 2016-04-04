@@ -179,7 +179,9 @@ class Menu extends ActiveRecord
             return false;
         }
 
-        $this->params = Json::encode($this->params);
+        if (!empty($this->params)) {
+            $this->params = Json::encode($this->params);
+        }
 
         if ($this->is_default && ($this->getIsNewRecord() || !$this->_cachedAttributes['is_default'])) {
             $model = $this->find()->where(['is_default' => 1])->one();

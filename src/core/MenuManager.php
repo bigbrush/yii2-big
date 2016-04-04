@@ -282,7 +282,9 @@ class MenuManager extends Object implements ManagerInterface
      */
     public function createObject(array $data)
     {
-        $data['params'] = Json::decode($data['params']);
+        if (!empty($data['params'])) {
+            $data['params'] = Json::decode($data['params']);
+        }
         return $this->_createObject($data);
     }
 
