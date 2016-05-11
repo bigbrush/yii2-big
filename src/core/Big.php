@@ -123,7 +123,9 @@ class Big extends ServiceLocator implements BootstrapInterface
     public $parser = 'bigbrush\big\core\Parser';
     /**
      * @var boolean indicates whether the menu manager should set a default route in the running application.
-     * If true the default menu item will determine the default route.
+     * If true the default menu item will determine the default route. It will only be set
+     * when [[\yii\web\Request::pathinfo]] equals an empty string (meaning the application home page).
+     * The [[UrlManager]] will also be activated by setting this to true.
      * @see [[\yii\web\Application::defaultRoute]].
      */
     public $setApplicationDefaultRoute = false;
@@ -151,16 +153,19 @@ class Big extends ServiceLocator implements BootstrapInterface
             $this->setManagers([]);
         }
 
+        // enable the url manager as it is a core component of Big
+        $this->getUrlManager();
+
         // register menu manager when Big performs a search
         $menuManager = $this->getMenuManager();
         $this->searchHandlers[] = [$menuManager, 'onSearch'];
 
         // set the application default route when enabled
-        if ($this->setApplicationDefaultRoute) {
+        if ($this->setApplicationDefaultRoute && $app->getRequest()->pathInfo === '') {
             $menu = $menuManager->getDefault();
             $menuManager->setActive($menu);
             $params = $this->getUrlManager()->parseInternalUrl($menu->route);
-            Yii::$app->defaultRoute = $params[0];
+            $app->defaultRoute = $params[0];
             unset($params[0]);
             foreach ($params as $key => $value) {
                 $_GET[$key] = $value;
