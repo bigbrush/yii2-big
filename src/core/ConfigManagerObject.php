@@ -73,7 +73,7 @@ class ConfigManagerObject extends ManagerObject implements IteratorAggregate
      */
     public function set($name, $value)
     {
-        return $this->_manager->add($name, $value, $this->section);
+        return $this->_manager->set($name, $value, $this->section);
     }
 
     /**
