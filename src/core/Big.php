@@ -153,7 +153,7 @@ class Big extends ServiceLocator implements BootstrapInterface
             $this->setManagers([]);
         }
 
-        // enable the url manager as it is a core component of Big
+        // the url manager registers itself as an url rule in the running application if it is enabled.
         $this->getUrlManager();
 
         // register menu manager when Big performs a search
