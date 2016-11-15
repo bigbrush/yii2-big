@@ -14,7 +14,7 @@ use yii\web\AssetBundle;
  */
 class FileManagerAsset extends AssetBundle
 {
-    public $sourcePath = '@bigbrush/big/widgets/filemanager/elfinder/assets_v2';
+    public $sourcePath = '@bigbrush/big/widgets/filemanager/elfinder/assets';
     public $css = [
         'css/elfinder.min.css',
     ];
