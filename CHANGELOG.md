@@ -1,6 +1,12 @@
 Big Framework Change log
 ========================
 
+1.2.2 October 15, 2016
+-------------------------
+- Bug #31: Big will only set the application default route when [[yii\web\Request::pathInfo]] is en empty string. 
+- Bug: ConfigManagerObject::set now uses the correct method in ConfigManager when setting a property (incorrectly used 'add' instead of 'set' before).
+
+
 1.2.1 April 04, 2016
 -------------------------
 - Bug #30: Fixes json decoding/encoding correctly in MenuManager and Menu model when params column is empty.
