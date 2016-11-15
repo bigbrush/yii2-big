@@ -1,6 +1,11 @@
 Big Framework Change log
 ========================
 
+1.2.3 October 15, 2016
+-------------------------
+- Enh #39: elFinder updated to version 2.1.16
+
+
 1.2.2 October 15, 2016
 -------------------------
 - Bug #31: Big will only set the application default route when [[yii\web\Request::pathInfo]] is en empty string. 
