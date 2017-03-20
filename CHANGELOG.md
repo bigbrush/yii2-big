@@ -1,6 +1,11 @@
 Big Framework Change log
 ========================
 
+1.2.4 March 20, 2017
+-------------------------
+- Bug #46: Menu model assigns a default value (empty string) to params field.
+
+
 1.2.3 October 15, 2016
 -------------------------
 - Enh #39: elFinder updated to version 2.1.16
