@@ -179,9 +179,7 @@ class Menu extends ActiveRecord
             return false;
         }
 
-        if (!empty($this->params)) {
-            $this->params = Json::encode($this->params);
-        }
+        $this->params = empty($this->params) ? '' : Json::encode($this->params);
 
         if ($this->is_default && ($this->getIsNewRecord() || !$this->_cachedAttributes['is_default'])) {
             $model = $this->find()->where(['is_default' => 1])->one();
@@ -199,7 +197,7 @@ class Menu extends ActiveRecord
      */
     public function afterFind()
     {
-        $this->params = Json::decode($this->params);
+        $this->params = empty($this->params) ? '' : Json::decode($this->params);
         $this->_cachedAttributes = $this->getAttributes(['is_default']);
     }
 }
