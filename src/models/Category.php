@@ -157,6 +157,7 @@ class Category extends ActiveRecord
                 'attribute' => ['title', 'alias'],
                 'slugAttribute' => 'alias',
                 'ensureUnique' => true,
+                'immutable' => true,
             ],
         ];
     }
