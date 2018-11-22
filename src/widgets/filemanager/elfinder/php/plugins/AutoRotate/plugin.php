@@ -15,7 +15,13 @@
  *		'plugin' => array(
  *			'AutoRotate' => array(
  *				'enable'         => true,       // For control by volume driver
- *				'quality'        => 95          // JPEG image save quality
+ *				'quality'        => 95,         // JPEG image save quality
+ *				'offDropWith'    => null,       // Enabled by default. To disable it if it is dropped with pressing the meta key
+ *				                                // Alt: 8, Ctrl: 4, Meta: 2, Shift: 1 - sum of each value
+ *				                                // In case of using any key, specify it as an array
+ *				'onDropWith'     => null        // Disabled by default. To enable it if it is dropped with pressing the meta key
+ *				                                // Alt: 8, Ctrl: 4, Meta: 2, Shift: 1 - sum of each value
+ *				                                // In case of using any key, specify it as an array
  *			)
  *		),
  *		// each volume configure (optional)
@@ -27,7 +33,13 @@
  *				'plugin' => array(
  *					'AutoRotate' => array(
  *						'enable'         => true,       // For control by volume driver
- *						'quality'        => 95          // JPEG image save quality
+ *						'quality'        => 95,         // JPEG image save quality
+ *        				'offDropWith'    => null,       // Enabled by default. To disable it if it is dropped with pressing the meta key
+ *        				                                // Alt: 8, Ctrl: 4, Meta: 2, Shift: 1 - sum of each value
+ *        				                                // In case of using any key, specify it as an array
+ *        				'onDropWith'     => null        // Disabled by default. To enable it if it is dropped with pressing the meta key
+ *						                                // Alt: 8, Ctrl: 4, Meta: 2, Shift: 1 - sum of each value
+ *						                                // In case of using any key, specify it as an array
  *					)
  *				)
  *			)
@@ -38,39 +50,54 @@
  * @author Naoki Sawada
  * @license New BSD
  */
-class elFinderPluginAutoRotate {
-
-	private $opts = array();
+class elFinderPluginAutoRotate extends elFinderPlugin {
 
 	public function __construct($opts) {
 		$defaults = array(
 			'enable'         => true,       // For control by volume driver
 			'quality'        => 95,         // JPEG image save quality
+			'offDropWith'    => null,       // To disable it if it is dropped with pressing the meta key
+			                                // Alt: 8, Ctrl: 4, Meta: 2, Shift: 1 - sum of each value
+			                                // In case of using any key, specify it as an array
+			'disableWithContentSaveId' => true // Disable on URL upload with post data "contentSaveId"
 		);
 
 		$this->opts = array_merge($defaults, $opts);
 
 	}
 
-	public function onUpLoadPreSave(&$path, &$name, $src, $elfinder, $volume) {
-		$opts = $this->opts;
-		$volOpts = $volume->getOptionsPlugin('AutoRotate');
-		if (is_array($volOpts)) {
-			$opts = array_merge($this->opts, $volOpts);
-		}
+	public function onUpLoadPreSave(&$thash, &$name, $src, $elfinder, $volume) {
+		$opts = $this->getCurrentOpts($volume);
 		
-		if (! $opts['enable']) {
+		if (! $this->iaEnabled($opts, $elfinder)) {
 			return false;
 		}
 		
-		$srcImgInfo = getimagesize($src);
-		if ($srcImgInfo === false) {
-			return false;
+		$imageType = null;
+		$srcImgInfo = null;
+		if (extension_loaded('fileinfo') && function_exists('mime_content_type')) {
+			$mime = mime_content_type($src);
+			if (substr($mime, 0, 5) !== 'image') {
+				return false;
+			}
+		}
+		if (extension_loaded('exif') && function_exists('exif_imagetype')) {
+			$imageType = exif_imagetype($src);
+		} else {
+			$srcImgInfo = getimagesize($src);
+			if ($srcImgInfo === false) {
+				return false;
+			}
+			$imageType = $srcImgInfo[2];
 		}
 		
 		// check target image type
-		if ($srcImgInfo[2] !== IMAGETYPE_JPEG) {
+		if ($imageType !== IMAGETYPE_JPEG) {
 			return false;
+		}
+		
+		if (! $srcImgInfo) {
+			$srcImgInfo = getimagesize($src);
 		}
 		
 		return $this->rotate($volume, $src, $srcImgInfo, $opts['quality']);
@@ -97,7 +124,8 @@ class elFinderPluginAutoRotate {
 		}
 		$opts = array(
 			'degree' => $degree,
-			'jpgQuality' => $quality
+			'jpgQuality' => $quality,
+			'checkAnimated' => true
 		);
 		return $volume->imageUtil('rotate', $src, $opts);
 	}
