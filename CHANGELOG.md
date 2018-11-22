@@ -1,6 +1,11 @@
 Big Framework Change log
 ========================
 
+1.2.6 October 22, 2018
+-------------------------
+- Enh: Menu model complies with MySql strict mode by setting default values to meta_title, meta_description and meta_keywords.
+
+
 1.2.5 March 20, 2017
 -------------------------
 - Enh: Menu model complies with MySql strict mode by setting default values to meta_title, meta_description and meta_keywords.
