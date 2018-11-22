@@ -144,6 +144,19 @@ class FileManager extends Widget
                 $.fn.btn = $.fn.button.noConflict();
             }
         ');
+        $options = $this->getJsOptions();
+        $view->registerJs("$('#elfinder').elfinder($options);");
+        return $this->render('index');
+    }
+
+    /**
+     * Returns the JS options used to instantiate elFinder.
+     *
+     * @return string the js options for elFinder.
+     */
+    public function getJsOptions()
+    {
+        $view = $this->getView();
         $bundle = FileManagerAsset::register($view);
         // save assets bundle url so the volume driver file icon is displayed in elFinder
         Yii::$app->getSession()->set(self::SESSION_VAR_ICON_URL, Url::to($bundle->baseUrl . '/'));
@@ -168,8 +181,7 @@ class FileManager extends Widget
         }
         $options = ArrayHelper::merge($options, $this->clientOptions);
         $options = Json::encode($options);
-        $view->registerJs("$('#elfinder').elfinder($options);");
-        return $this->render('index');
+        return $options;
     }
 
     /**
@@ -184,14 +196,19 @@ class FileManager extends Widget
         } else {
             $callback = $this->onClickCallback;
         }
+
         // file.tmb is only set when selecting images (not when selecting .pdf for example)
         return new JsExpression('
             function(file) {
+                console.log(file);
                 var callback = ' . $callback . ';
                 file.url = file.url.slice("' . strlen($this->baseUrl) . '");
                 file.baseUrl = "' . $this->baseUrl . '";
                 if (file.tmb !== undefined) {
                     file.tmb = file.tmb.slice("' . strlen($this->baseUrl) . '");
+                }
+                if (file.url.substr(0, 3) == "../") {
+                    file.url = file.url.slice(3);
                 }
                 callback(file);
             }
