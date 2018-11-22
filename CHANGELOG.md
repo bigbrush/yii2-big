@@ -1,6 +1,11 @@
 Big Framework Change log
 ========================
 
+1.2.7 November 22, 2018
+-------------------------
+- Enh: FileManager widget made more flexible (now able to get the elfinder client options through the widget).
+
+
 1.2.6 November 22, 2018
 -------------------------
 - Enh: Menu model complies with MySql strict mode by setting default values to meta_title, meta_description and meta_keywords.
