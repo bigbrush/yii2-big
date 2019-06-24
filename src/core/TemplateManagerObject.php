@@ -8,7 +8,6 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
 use yii\db\Query;
 use yii\helpers\Json;
 

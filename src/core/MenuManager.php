@@ -227,7 +227,9 @@ class MenuManager extends BaseObject implements ManagerInterface
     {
         $items = [];
         $active = $this->getActive();
-        while (list($id, $menu) = each($menus)) {
+        while ($menu = current($menus)) {
+            $id = key($menus);
+            $next = next($menus);
             $items[$id] = [
                 'label' => $menu->title,
                 'url' => $menu->getUrl(),
@@ -237,8 +239,7 @@ class MenuManager extends BaseObject implements ManagerInterface
             if ($menu->rgt - $menu->lft != 1) {
                 $items[$id]['items'] = $this->createDropDownMenu($menus);
             }
-            $next = key($menus);
-            if ($next && $menus[$next]->depth != $menu->depth) {
+            if ($next && $next->depth < $menu->depth) {
                 return $items;
             }
         }
