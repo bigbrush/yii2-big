@@ -97,7 +97,7 @@ class Big extends ServiceLocator implements BootstrapInterface
     /**
      * version
      */
-    const BIG_VERSION = '1.2.7';
+    const BIG_VERSION = '1.2.8';
 
     /**
      * @var string path for the frontend theme. Is needed when identifing
@@ -134,7 +134,7 @@ class Big extends ServiceLocator implements BootstrapInterface
     /**
      * Bootstraps Big by registering all managers in this locator. Also hooks into the main application
      * via the event system to parse layout files.
-     * 
+     *
      * Is called after the application, and Big, has been configured.
      *
      * @param yii\base\Application $app the application currently running
@@ -148,7 +148,7 @@ class Big extends ServiceLocator implements BootstrapInterface
             'basePath' => '@bigbrush/big/messages',
         ]);
 
-        // check whether managers has been registered 
+        // check whether managers has been registered
         if (!$this->has('urlManager')) {
             $this->setManagers([]);
         }
@@ -317,7 +317,7 @@ class Big extends ServiceLocator implements BootstrapInterface
      * [[UrlManager::createInternalUrl()]] for more information.
      * @return array list of search results.
      *
-     * Default format of the returned array is: 
+     * Default format of the returned array is:
      *
      * ~~~php
      * [
@@ -335,7 +335,7 @@ class Big extends ServiceLocator implements BootstrapInterface
     public function search($event, $name, $dynamicUrls = false)
     {
         $app = Yii::$app;
-        
+
         // register search event handlers
         if (!empty($this->searchHandlers)) {
             foreach ($this->searchHandlers as $handler) {
@@ -446,13 +446,13 @@ class Big extends ServiceLocator implements BootstrapInterface
     /**
      * Returns positions used in the provided [theme](yii\base\Theme). If the file "positions.php" does not exist in the
      * root directory of the provided theme an empty array is returned.
-     * 
+     *
      * A file named "positions.php" can be placed in the root directory of the specified theme. The file must return
      * an array where the keys are position ids and the values are position names.
      * The position ids (the keys) are similar to the ones used in layout files. The names (the values) are used when displaying the
      * positions in the user interface.
      *
-     * Example of file content: 
+     * Example of file content:
      *
      * ~~~php
      * return [

@@ -1,6 +1,12 @@
 Big Framework Change log
 ========================
 
+1.2.8 June 24, 2019
+------------------
+- Enh: Support of PHP 7.2
+- Enh: TinyMCE limited to version 4.9 because version 5 breaks backwards compatibility
+
+
 1.2.7 November 22, 2018
 -------------------------
 - Enh: FileManager widget made more flexible (now able to get the elfinder client options through the widget).
@@ -28,7 +34,7 @@ Big Framework Change log
 
 1.2.2 October 15, 2016
 -------------------------
-- Bug #31: Big will only set the application default route when [[yii\web\Request::pathInfo]] is en empty string. 
+- Bug #31: Big will only set the application default route when [[yii\web\Request::pathInfo]] is en empty string.
 - Bug: ConfigManagerObject::set now uses the correct method in ConfigManager when setting a property (incorrectly used 'add' instead of 'set' before).
 
 
