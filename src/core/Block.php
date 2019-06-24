@@ -9,7 +9,7 @@ namespace bigbrush\big\core;
 
 use ReflectionClass;
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\ViewContextInterface;
 
 /**
@@ -27,7 +27,7 @@ use yii\base\ViewContextInterface;
  * @property string $scope
  * @property boolean $isEnabled
  */
-abstract class Block extends Object implements BlockInterface, ViewContextInterface
+abstract class Block extends BaseObject implements BlockInterface, ViewContextInterface
 {
     /**
      * @var \bigbrush\big\models\Block the model assigned to this block.
@@ -50,7 +50,7 @@ abstract class Block extends Object implements BlockInterface, ViewContextInterf
     /**
      * This method gets called right before a block model is saved. The model is validated at this point.
      * In this method any Block specific logic should run. For example saving a block specific model.
-     * 
+     *
      * @param \bigbrush\big\models\Block $model the model being saved.
      * @return boolean whether the current save procedure should proceed. If any block.
      * specific logic fails false should be returned - i.e. `return $blockSpecificModel->save()`;

@@ -9,7 +9,7 @@ namespace bigbrush\big\core;
 
 use Yii;
 use yii\base\InvalidParamException;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
@@ -20,20 +20,20 @@ use yii\helpers\Json;
  * with block include statements.
  *
  * Register a template as active like so:
- * 
+ *
  * ~~~php
  * Yii::$app->big->templateManager->setActive('TEMPLATE ID');
  * ~~~
- * 
+ *
  * Or get the default template like so:
- * 
+ *
  * ~~~php
  * Yii::$app->big->templateManager->getItem();
  * ~~~
- * 
+ *
  * An ID can be specified in [[getItem()]] which returns the specified template.
  */
-class TemplateManager extends Object implements ManagerInterface
+class TemplateManager extends BaseObject implements ManagerInterface
 {
     /**
      * @var string name of a database table to load templates from.

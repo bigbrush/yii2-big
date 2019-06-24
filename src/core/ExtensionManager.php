@@ -8,7 +8,7 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\InvalidCallException;
 use yii\base\InvalidParamException;
 use yii\db\Query;
@@ -18,7 +18,7 @@ use bigbrush\big\models\Extension;
  * ExtensionManager handles installation and management of extensions. Currently only block
  * extension exists within Big.
  */
-class ExtensionManager extends Object implements ManagerInterface
+class ExtensionManager extends BaseObject implements ManagerInterface
 {
     /**
      * @var string represents the model class when creating/editing an item.
@@ -41,7 +41,7 @@ class ExtensionManager extends Object implements ManagerInterface
     /**
      * Returns installed extension by the provided type. If type is not provided
      * all installed extensions are returned.
-     * 
+     *
      * @param string $type optional type of extensions to load.
      * @param boolean|int $state optional state to load extensions by. Can be "0"/false (inactive) or "1"/true (active).
      * Defaults to null meaning load all installed extensions.

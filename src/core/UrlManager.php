@@ -8,7 +8,7 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\InvalidValueException;
 use yii\web\NotFoundHttpException;
 use yii\web\UrlRuleInterface;
@@ -27,14 +27,14 @@ use yii\web\UrlRuleInterface;
  * Inserted links will be parsed (SEO optimzed) by Big right before the application renders its response.
  *
  * Create a dynamic url:
- * 
+ *
  * ~~~php
  * // creates the url: 'index.php?r=module/controller/action&param1=value1'
  * $url = Yii::$app->urlManager->createInternalUrl(['module/controller/action', 'param1' => 'value1'], true);
  * ~~~
  *
  * Parse a dynamic url:
- * 
+ *
  * ~~~php
  * // creates the route: ['module/controller/action', 'param1' => 'value1']
  * $route = Yii::$app->urlManager->parseInternalUrl('index.php?r=/module/controller/action&param1=value1');
@@ -62,13 +62,13 @@ use yii\web\UrlRuleInterface;
  * ~~~
  *
  * Or with code like so:
- * 
+ *
  * ~~~php
  * Yii::$app->urlManager->setRules(['myCustomName' => 'namespace\of\my\custom\UrlRule']);
  * ~~~
  *
  */
-class UrlManager extends Object implements UrlRuleInterface
+class UrlManager extends BaseObject implements UrlRuleInterface
 {
     /**
      * @var boolean defines if this url manager should be used as a url rule in the application
@@ -278,7 +278,7 @@ class UrlManager extends Object implements UrlRuleInterface
 
     /**
      * Converts a url created with [[createInternalUrl()]] into an array with route params.
-     * 
+     *
      * For instance:
      * ~~~php
      * // ['pages/page/show', 'id' => '28', 'alias' => 'something']
@@ -301,19 +301,19 @@ class UrlManager extends Object implements UrlRuleInterface
             $params[0] = $params[$manager->routeParam];
             unset($params[$manager->routeParam]);
         } elseif (strpos($pathInfo, '&') !== false) {
-            // non-dynamic url with route params 
+            // non-dynamic url with route params
             list($route, $params) = explode('&', $pathInfo, 2);
             parse_str($params, $params);
             $params[0] = $route;
         } else {
-            // non-dynamic url without route params 
+            // non-dynamic url without route params
             $params = [$pathInfo];
         }
         return $params;
     }
 
     /**
-     * Registers the provided rules. 
+     * Registers the provided rules.
      *
      * @param array $rules an array of rule objects or rule configurations.
      * @throws InvalidValueException if one of the provided rules doesn't implement UrlRuleInterface.

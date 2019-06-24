@@ -8,14 +8,14 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\InvalidParamException;
 
 /**
  * Parser is used to dynamically SEO optimize links and to parse layout files where
  * `include statements` are replaced with block content.
  */
-class Parser extends Object
+class Parser extends BaseObject
 {
     /**
      * @var string the data currently being parsed.
@@ -75,21 +75,21 @@ class Parser extends Object
 
     /**
      * Identifies all `<big:block position="POSITION" ... />` and returns an array with all matches.
-     * 
+     *
      * Include statements MUST include the position attribute, see below where "position" is "sidebar":
      *
      * ~~~html
      * <big:block position="sidebar" />
      * ~~~
-     * 
+     *
      * THE FOLLOWING IS NOT IMPLEMENTED ANYWHERE BUT HERE.
      * You can add additional attributes to the include statement, like below (order of the attributes
      * is not important, as long as position is the first attribute)
-     * 
+     *
      * ~~~html
      * <big:block position="sidebar" type="widget" autostart="false" color="green" />
      * ~~~
-     * 
+     *
      * @return array all matches as an associative array
      * The structure of the $array:
      *    $array[0] => array of all include statements
@@ -110,7 +110,7 @@ class Parser extends Object
      *     [
      *         INCLUDE_STATEMENT => [
      *             'position' => POSITION_ATTRIBUTE (must be set and not empty to be included)
-     *             'config' => [ 
+     *             'config' => [
      *                  ATTRIBUTE_KEY  => ATTRIBUTE_VALUE,
      *                  ATTRIBUTE_KEY  => ATTRIBUTE_VALUE,
      *                  ...
@@ -189,7 +189,7 @@ class Parser extends Object
     /**
      * Callback for a preg_replace_callback() - see [[parseUrls()]] for information.
      * Tries to construct a seo friendly url from a dynamic url.
-     * 
+     *
      * @param array $matches array of matches .
      * @return string the constructed url.
      */

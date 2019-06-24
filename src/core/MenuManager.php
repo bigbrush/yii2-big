@@ -10,7 +10,7 @@ namespace bigbrush\big\core;
 use Yii;
 use yii\base\InvalidParamException;
 use yii\base\InvalidConfigException;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\helpers\Json;
 
 /**
@@ -35,7 +35,7 @@ use yii\helpers\Json;
  * ~~~
  *
  */
-class MenuManager extends Object implements ManagerInterface
+class MenuManager extends BaseObject implements ManagerInterface
 {
     use NestedSetManagerTrait {
         getItems as _getItems;
@@ -204,7 +204,7 @@ class MenuManager extends Object implements ManagerInterface
     /**
      * Returns the active menu item.
      * If [[setApplicationDefaultRoute]] is enabled a default menu will always be registered.
-     * 
+     *
      * @return MenuManagerObject|null the active menu if set and null if not.
      * @throws InvalidParamException see [[getDefault()]].
      */

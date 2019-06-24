@@ -8,7 +8,7 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\ErrorException;
 use yii\base\InvalidParamException;
 use yii\helpers\ArrayHelper;
@@ -35,7 +35,7 @@ use yii\helpers\Json;
  * ~~~
  *
  */
-class CategoryManager extends Object implements ManagerInterface
+class CategoryManager extends BaseObject implements ManagerInterface
 {
     use NestedSetManagerTrait {
         getItems as _getItems;
@@ -90,7 +90,7 @@ class CategoryManager extends Object implements ManagerInterface
      *
      * If no category has been created for the module id a new category tree
      * will be automatically created.
-     * 
+     *
      * @param string $id a module id to load categories for.
      * @return array a category tree. Empty array if a category tree is automatically created.
      * @throws ErrorException in [[createRootNode()]].
@@ -158,7 +158,7 @@ class CategoryManager extends Object implements ManagerInterface
         if ($model->load(Yii::$app->getRequest()->post()) && $model->validate()) {
             $parent = $model->parents(1)->one();
             $root = $model->find()->where(['module' => $id])->one();
-            
+
             if (!$model->parent_id) {
                 if (!$parent || $parent->id !== $root->id) {
                     return $model->appendTo($root, false);

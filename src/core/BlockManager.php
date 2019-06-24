@@ -8,7 +8,7 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidParamException;
@@ -41,7 +41,7 @@ use yii\db\ActiveRecord;
  * ~~~
  *
  */
-class BlockManager extends Object implements ManagerInterface
+class BlockManager extends BaseObject implements ManagerInterface
 {
     /**
      * @var string represents the model class when creating/editing an item.

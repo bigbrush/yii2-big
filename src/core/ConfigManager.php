@@ -8,7 +8,7 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\InvalidParamException;
 use yii\db\ActiveRecord;
 use yii\db\Query;
@@ -21,18 +21,18 @@ use yii\db\Query;
  * ~~~php
  * $manager = Yii::$app->big->configManager;
  * $config = $manager->getItems('SECTION NAME');
- * 
+ *
  * $systemEmail = $config->get('systemEmail'); // will return null if "systemEmail" is not set.
  * // or
  * $systemEmail = $config->systemEmail; // will throw exception if "systemEmail" is not set.
- * 
+ *
  * $isNull = $config->get('name_does_not_exist', null);
- * 
+ *
  * // setting properties
  * $config->set('name', 'value');
  * // or
  * $manager->set('name', 'value', 'section');
- * 
+ *
  * // the manager has a shorthand method for retrieving config values:
  * $manager->get('section.name', 'defaultValue');
  * $manager->get('cms.systemEmail', 'noreply@noreply.com');
@@ -42,7 +42,7 @@ use yii\db\Query;
  *
  * The ConfigManager can be configured for each section specifically. Either by a custom rule
  * object that implements [[ConfigManagerRuleInterface]] or a configuration array for the default
- * rule object [[ConfigManagerRule]]. 
+ * rule object [[ConfigManagerRule]].
  * The ConfigManager can be configured through the application configuration like so:
  *
  * ~~~php
@@ -63,9 +63,9 @@ use yii\db\Query;
  * ]
  * ...
  * ~~~
- * 
+ *
  * And through code like so:
- * 
+ *
  * ~~~php
  * Yii::$app->big->configManager->configureSection('cms', [
  *    'lockedFields' => ['appName', 'systemEmail'],
@@ -75,9 +75,9 @@ use yii\db\Query;
  * // with a custom rule object
  * Yii::$app->big->configManager->configureSection('cms', new MyConfigManagerRule());
  * ~~~
- * 
+ *
  */
-class ConfigManager extends Object implements ManagerInterface
+class ConfigManager extends BaseObject implements ManagerInterface
 {
     /**
      * @var string $modelClass a class name of the model used by this manager.
@@ -164,7 +164,7 @@ class ConfigManager extends Object implements ManagerInterface
 
     /**
      * Returns a config object with configurations for the specified section.
-     * 
+     *
      * @param string $section a section to return config items for.
      * @return ConfigManagerObject a config object.
      */
@@ -182,7 +182,7 @@ class ConfigManager extends Object implements ManagerInterface
     /**
      * Saves/updates a config value in the database. If the save is successful the
      * [[ConfigManagerObject]] for the specified section is updated.
-     * 
+     *
      * @param string $name name of a config value to set.
      * @param string $value the value to set.
      * @param string $section a section to register the config to.
@@ -206,7 +206,7 @@ class ConfigManager extends Object implements ManagerInterface
 
     /**
      * Removes the specified config name from the specified section.
-     * 
+     *
      * @param string $name name of a config value to remove.
      * @param string $section the section to remove the config name from.
      * @return bool true if value was removed, false if not.
@@ -268,7 +268,7 @@ class ConfigManager extends Object implements ManagerInterface
     /**
      * Returns a rule object that implements [[ConfigManagerRuleInterface]] for the specified section.
      *
-     * @param string $section a section to return a rule object for. 
+     * @param string $section a section to return a rule object for.
      * @return ConfigManagerRuleInterface a rule object.
      * @throws InvalidParamException if a registered rule object does not implement [[ConfigManagerRuleInterface]].
      */
@@ -322,7 +322,7 @@ class ConfigManager extends Object implements ManagerInterface
      * a new record is saved in the database.
      * The provided data could come from Yii::$app->getRequst()->post();.
      *
-     * @param array $data the data to save. 
+     * @param array $data the data to save.
      * @return bool true if data was saved, false if not.
      */
     public function save($data)

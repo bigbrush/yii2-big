@@ -9,7 +9,7 @@ namespace bigbrush\big\core;
 
 use ReflectionClass;
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\ViewContextInterface;
 
 /**
@@ -24,7 +24,7 @@ use yii\base\ViewContextInterface;
  * If a plugin is being used as event handler for events triggered through other objects than the [[PluginManager]]
  * then event handlers are supposed to be registered in the init() method.
  */
-abstract class Plugin extends Object implements PluginInterface, ViewContextInterface
+abstract class Plugin extends BaseObject implements PluginInterface, ViewContextInterface
 {
     /**
      * Renders a view.

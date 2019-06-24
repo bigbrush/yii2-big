@@ -8,7 +8,7 @@
 namespace bigbrush\big\core;
 
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\InvalidConfigException;
 
 /**
@@ -16,7 +16,7 @@ use yii\base\InvalidConfigException;
  * fields can be locked and therefore not deleted. If the user is not allowed to change the
  * locked fields set [[changeLockedFields]] to false.
  */
-class ConfigManagerRule extends Object implements ConfigManagerRuleInterface
+class ConfigManagerRule extends BaseObject implements ConfigManagerRuleInterface
 {
     /**
      * @var array $lockedFields list of field names that cannot be deleted.

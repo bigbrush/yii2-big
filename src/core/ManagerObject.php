@@ -8,14 +8,14 @@
 namespace bigbrush\big\core;
 
 use ArrayAccess;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\NotSupportedException;
 
 /**
  * ManagerObject is a data container used by most `managers` in Big. It can be accessed as an
  * object or as an array which makes it compatible with Yii2 widgets.
  */
-class ManagerObject extends Object implements ArrayAccess
+class ManagerObject extends BaseObject implements ArrayAccess
 {
 	/**
 	 * @var array|object $data holds object properties.
@@ -23,7 +23,7 @@ class ManagerObject extends Object implements ArrayAccess
 	 */
     protected $data;
 
-    
+
     /**
      * Constructor
      *
