@@ -9,7 +9,6 @@ namespace bigbrush\big\core;
 
 use ArrayIterator;
 use IteratorAggregate;
-use yii\base\Object;
 
 /**
  * ConfigManagerObject represents a section within [[ConfigManager]]. It provides methods for retrieving
@@ -51,8 +50,8 @@ class ConfigManagerObject extends ManagerObject implements IteratorAggregate
     /**
      * Returns a config value from this section.
      * By using this method you will receive a default value if the specified name is not set in the config
-     * for this section. If you retrieve a config value as a property ($config->property) an exception is thrown 
-     * when the name is not set. 
+     * for this section. If you retrieve a config value as a property ($config->property) an exception is thrown
+     * when the name is not set.
      *
      * @param string $name the name of a config entry.
      * @param mixed $defaultValue a default value returned if $name could not be found in this config object.

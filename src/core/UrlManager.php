@@ -337,7 +337,7 @@ class UrlManager extends BaseObject implements UrlRuleInterface
      * Searches for an url rule for the provided module id and registers it in this manager as an url rule.
      *
      * @param string $id the id of a module.
-     * @param array|string|yii\base\Object $module array or string if the module has not been instantiated and
+     * @param array|string|BaseObject $module array or string if the module has not been instantiated and
      * an object if it has.
      * @throws InvalidValueException if an identified url rule doesn't implement [[UrlRuleInterface]].
      */
