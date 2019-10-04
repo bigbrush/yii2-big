@@ -53,7 +53,7 @@ class MenuManagerObject extends ManagerObject
             } else {
                 $this->_url = $this->getQuery();
                 // only append suffix on internal urls
-                if ($this->route !== '#' && strpos($this->route, 'http://') !== 0 && strpos($this->route, 'www') !== 0) {
+                if ($this->route !== '#' && strpos($this->route, 'http') !== 0 && strpos($this->route, 'www') !== 0) {
                     $this->_url .= Yii::$app->getUrlManager()->suffix;
                 }
             }
@@ -69,7 +69,7 @@ class MenuManagerObject extends ManagerObject
     public function getQuery()
     {
         if ($this->_query === null) {
-            if ($this->route === '#' || strpos($this->route, 'http://') === 0) {
+            if ($this->route === '#' || strpos($this->route, 'http') === 0) {
                 $this->_query = $this->route;
             } elseif (strpos($this->route, 'www') === 0) {
                 $this->_query = 'http://' . $this->route;
