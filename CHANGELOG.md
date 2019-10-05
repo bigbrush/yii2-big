@@ -1,6 +1,11 @@
 Big Framework Change log
 ========================
 
+1.2.9 October 5, 2019
+------------------
+- Enh: Better handling of external links
+
+
 1.2.8 June 24, 2019
 ------------------
 - Enh: Support of PHP 7.2
