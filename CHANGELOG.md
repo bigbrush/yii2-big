@@ -1,6 +1,11 @@
 Big Framework Change log
 ========================
 
+1.2.10 November 13, 2020
+------------------
+- Enh: Updated elFinder to version 2.1.57
+
+
 1.2.9 October 5, 2019
 ------------------
 - Enh: Better handling of external links
