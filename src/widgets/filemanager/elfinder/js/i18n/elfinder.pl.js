@@ -1,8 +1,8 @@
 /**
- * Polski translation
+ * Polskie tłumaczenie
  * @author Marcin Mikołajczyk <marcin@pjwstk.edu.pl>
  * @author Bogusław Zięba <bobi@poczta.fm>
- * @version 2018-11-16
+ * @version 2020-03-29
  */
 (function(root, factory) {
 	if (typeof define === 'function' && define.amd) {
@@ -14,12 +14,12 @@
 	}
 }(this, function(elFinder) {
 	elFinder.prototype.i18.pl = {
-		translator : 'Marcin Mikołajczyk &lt;marcin@pjwstk.edu.pl&gt;, Bogusław Zięba &lt;bobi@poczta.fm&gt;',
+		translator : 'Marcin Mikołajczyk &lt;marcin@pjwstk.edu.pl&gt;, Bogusław Zięba &lt;bobi@poczta.fm&gt;, Bogusław Zięba &lt;bobi@poczta.fm&gt;',
 		language   : 'Polski',
 		direction  : 'ltr',
-		dateFormat : 'd.m.Y H:i', // will show like: 16.11.2018 11:13
-		fancyDateFormat : '$1 H:i', // will show like: Dzisiaj 11:13
-		nonameDateFormat : 'ymd-His', // noname upload will show like: 181116-111302
+		dateFormat : 'd.m.Y H:i', // will show like: 29.03.2020 06:58
+		fancyDateFormat : '$1 H:i', // will show like: Dzisiaj 06:58
+		nonameDateFormat : 'ymd-His', // noname upload will show like: 200329-065813
 		messages   : {
 
 			/********************************** errors **********************************/
@@ -115,6 +115,7 @@
 			'errEditorNotFound'    : 'Nie znaleziono edytora tego typu pliku.', // from v2.1.25 added 23.5.2017
 			'errServerError'       : 'Wystąpił błąd po stronie serwera .', // from v2.1.25 added 16.6.2017
 			'errEmpty'             : 'Nie można do pustego folderu "$1".', // from v2.1.25 added 22.6.2017
+			'moreErrors'           : 'Jest jeszcze $1 błąd/błędy.', // from v2.1.44 added 9.12.2018
 
 			/******************************* commands names ********************************/
 			'cmdarchive'   : 'Utwórz archiwum',
@@ -302,6 +303,7 @@
 			'confirmNonUTF8'  : 'Nie można wykryć kodowania tego pliku. Musi być tymczasowo przekształcony do UTF-8. <br/> Proszę wybrać kodowanie znaków tego pliku.', // from v2.1.19 added 28.11.2016
 			'confirmNotSave'  : 'Został zmodyfikowany.<br/>Utracisz pracę, jeśli nie zapiszesz zmian.', // from v2.1 added 15.7.2015
 			'confirmTrash'    : 'Czy na pewno chcesz przenieść elementy do kosza?', //from v2.1.24 added 29.4.2017
+			'confirmMove'     : 'Czy na pewno chcesz przenieść elementy do "$1"?', //from v2.1.50 added 27.7.2019
 			'apllyAll'        : 'Zastosuj do wszystkich',
 			'name'            : 'Nazwa',
 			'size'            : 'Rozmiar',
@@ -441,6 +443,7 @@
 			'clearBrowserData': 'Zainicjuj ustawienia zapisane w tej przeglądarce', // from v2.1.26 added 28.6.2017
 			'toolbarPref'     : 'Ustawienia paska narzędzi', // from v2.1.27 added 2.8.2017
 			'charsLeft'       : '... pozostało $1 znak(ów).',  // from v2.1.29 added 30.8.2017
+			'linesLeft'       : '... pozostało $1 lini.',  // from v2.1.52 added 16.1.2020
 			'sum'             : 'Suma', // from v2.1.29 added 28.9.2017
 			'roughFileSize'   : 'Przybliżony rozmiar pliku', // from v2.1.30 added 2.11.2017
 			'autoFocusDialog' : 'Skoncentruj się na elemencie dialogowym po najechaniu myszą',  // from v2.1.30 added 2.11.2017
@@ -486,6 +489,9 @@
 			'author'          : 'Autor', // from v2.1.43 added 19.10.2018
 			'email'           : 'E-mail', // from v2.1.43 added 19.10.2018
 			'license'         : 'Licencja', // from v2.1.43 added 19.10.2018
+			'exportToSave'    : 'Tego elementu nie można zapisać. Aby uniknąć utraty zmian, musisz wyeksportować go na swój komputer.', // from v2.1.44 added 1.12.2018
+			'dblclickToSelect': 'Kliknij dwukrotnie plik, aby go wybrać.', // from v2.1.47 added 22.1.2019
+			'useFullscreen'   : 'Użyj trybu pełnoekranowego', // from v2.1.47 added 19.2.2019
 
 			/********************************** mimetypes **********************************/
 			'kindUnknown'     : 'Nieznany',
